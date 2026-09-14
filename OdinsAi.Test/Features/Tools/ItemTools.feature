@@ -20,3 +20,7 @@ Feature: Item tools
   Scenario: The item tool requires its query argument
     When I call the "search_items" tool without arguments
     Then the tool fails with "Missing required argument 'query'."
+
+  Scenario: Known item types are listed
+    When I list the item types
+    Then the item types are "food, material, twohandedweapon"

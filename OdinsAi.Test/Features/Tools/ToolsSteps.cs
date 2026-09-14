@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using OdinsAi.Query;
 using OdinsAi.Test.Support;
 using OdinsAi.Tool;
 using Reqnroll;
@@ -19,6 +20,20 @@ namespace OdinsAi.Test.Features.Tools
         }
 
         private World World => Hooks.GetWorld(_context);
+
+        private IReadOnlyList<string> _itemTypes;
+
+        [When("I list the item types")]
+        public void WhenIListTheItemTypes()
+        {
+            _itemTypes = new ItemIndex(World.Items).GetTypes();
+        }
+
+        [Then("the item types are {string}")]
+        public void ThenTheItemTypesAre(string expected)
+        {
+            string.Join(", ", _itemTypes).ShouldBe(expected);
+        }
 
         [When("I call the {string} tool with query {string}")]
         public void WhenICallTheToolWithQuery(string tool, string query)

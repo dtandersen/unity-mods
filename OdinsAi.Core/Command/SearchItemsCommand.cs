@@ -18,5 +18,11 @@ namespace OdinsAi.Command
         {
             return _index.Search(query);
         }
+
+        /// <summary>The distinct item types present in the item list.</summary>
+        public IReadOnlyList<string> GetTypes()
+        {
+            return _index.GetTypes();
+        }
     }
 }

@@ -17,12 +17,13 @@ namespace OdinsAi.Tool
         public SearchItemsTool(SearchItemsCommand command)
         {
             _command = command;
+            Definition = new ToolDefinition(
+                "search_items",
+                $"Look up items in the game's item list by name. Returns CSV with columns Name, Type. Known types: {string.Join(", ", command.GetTypes())}.",
+                new[] { new ToolParameter("query", "Text to match against item names, e.g. 'battle idol'.") });
         }
 
-        public ToolDefinition Definition { get; } = new ToolDefinition(
-            "search_items",
-            "Look up items in the game's item list by name. Returns CSV with columns Name, Type. Use to check whether an item exists and what kind of item it is.",
-            new[] { new ToolParameter("query", "Text to match against item names, e.g. 'battle idol'.") });
+        public ToolDefinition Definition { get; }
 
         public ToolResult Execute(ToolArguments arguments)
         {

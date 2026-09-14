@@ -45,5 +45,16 @@ namespace OdinsAi.Query
                                item.Name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
                 .ToArray();
         }
+
+        /// <summary>The distinct item types present, sorted.</summary>
+        public IReadOnlyList<string> GetTypes()
+        {
+            return _items.GetAll()
+                .Select(item => item.Type)
+                .Where(type => !string.IsNullOrWhiteSpace(type))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(type => type, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
     }
 }
