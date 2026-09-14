@@ -37,7 +37,9 @@ namespace OdinsAi.Repository
                 {
                     foreach (var resource in recipe.m_resources)
                     {
-                        if (resource == null || resource.m_resItem == null)
+                        // Skip upgrader-only resources (e.g. the 1.0 "idols" used at a hidden
+                        // forge). They are not part of the base crafting recipe.
+                        if (resource == null || resource.m_resItem == null || resource.m_upgraderResource)
                         {
                             continue;
                         }
