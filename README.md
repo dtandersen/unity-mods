@@ -84,6 +84,21 @@ specs run without the game.
 - an ArchUnitNET rule that `OdinsAi.Core` types do not depend on
   `BepInEx`/`HarmonyLib`/`UnityEngine`/`Unity`/`Jotunn`/`Valheim` namespaces.
 
+### Integration tests
+
+Tests that talk to a real OpenAI-compatible endpoint are marked with
+`[Category("Integration")]` and `[Explicit]`, so a normal `dotnet test` never hits the
+network. Provide credentials either through environment variables
+(`ODINSAI_ENDPOINT`, `ODINSAI_API_KEY`, `ODINSAI_MODEL`) or a git-ignored
+`OdinsAi.Test/integration.settings.json` (copy `integration.settings.example.json`),
+then run them explicitly:
+
+```bash
+dotnet run --project OdinsAi.Test -- --treenode-filter "/*/*/*/*[Category=Integration]"
+```
+
+Credentials are never committed.
+
 ## Toolchain
 
 | Package | Version | Purpose |

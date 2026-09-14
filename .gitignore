@@ -32,6 +32,9 @@ local.props
 local.props.*
 !local.props.example
 
+# Local secrets (integration test credentials)
+integration.settings.json
+
 # OS
 .DS_Store
 Thumbs.db
