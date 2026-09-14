@@ -13,8 +13,9 @@ Feature: Storage tools
   Scenario: Search totals matching items across nearby containers
     When I call the "search_storage" tool with query "turnip"
     Then the tool succeeds
-    And the storage result contains "Turnip" x25
-    And the storage result does not contain "Wood"
+    And the storage result is:
+      | Name   | Amount |
+      | Turnip | 25     |
 
   Scenario: The storage tool requires its query argument
     When I call the "search_storage" tool without arguments

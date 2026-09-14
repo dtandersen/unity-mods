@@ -93,32 +93,29 @@ namespace OdinsAi.Test.Features.Tools
             FoodResults().Any(food => food.Name == name).ShouldBeFalse($"did not expect '{name}'");
         }
 
-        [Then("the inventory result contains {string} x{int}")]
-        public void ThenTheInventoryResultContains(string name, int amount)
+        [Then("the inventory result is:")]
+        public void ThenTheInventoryResultIs(Table table)
         {
-            var item = InventoryItems().SingleOrDefault(i => i.Name == name);
-            item.ShouldNotBeNull($"expected '{name}' in: {Describe(InventoryItems())}");
-            item.Amount.ShouldBe(amount);
+            AssertStackTotals(InventoryItems(), table);
         }
 
-        [Then("the inventory result does not contain {string}")]
-        public void ThenTheInventoryResultDoesNotContain(string name)
+        [Then("the storage result is:")]
+        public void ThenTheStorageResultIs(Table table)
         {
-            InventoryItems().Any(item => item.Name == name).ShouldBeFalse($"did not expect '{name}'");
+            AssertStackTotals(StorageItems(), table);
         }
 
-        [Then("the storage result contains {string} x{int}")]
-        public void ThenTheStorageResultContains(string name, int amount)
+        private static void AssertStackTotals(IReadOnlyList<ItemStackSummary> items, Table table)
         {
-            var item = StorageItems().SingleOrDefault(i => i.Name == name);
-            item.ShouldNotBeNull($"expected '{name}' in: {Describe(StorageItems())}");
-            item.Amount.ShouldBe(amount);
-        }
+            var actual = items.ToDictionary(item => item.Name, item => item.Amount);
+            actual.Count.ShouldBe(table.Rows.Count);
 
-        [Then("the storage result does not contain {string}")]
-        public void ThenTheStorageResultDoesNotContain(string name)
-        {
-            StorageItems().Any(item => item.Name == name).ShouldBeFalse($"did not expect '{name}'");
+            foreach (var row in table.Rows)
+            {
+                var name = row["Name"];
+                actual.ContainsKey(name).ShouldBeTrue($"expected '{name}' in the result");
+                actual[name].ShouldBe(int.Parse(row["Amount"]));
+            }
         }
 
         private IReadOnlyList<RecipeSummary> RecipeResults()
@@ -139,11 +136,6 @@ namespace OdinsAi.Test.Features.Tools
         private IReadOnlyList<ItemStackSummary> StorageItems()
         {
             return World.ToolResult.ShouldBeOfType<ToolSuccess<StorageSearchResult>>().Value.Items;
-        }
-
-        private static string Describe(IEnumerable<ItemStackSummary> items)
-        {
-            return string.Join(", ", items.Select(item => $"{item.Name} x{item.Amount}"));
         }
 
         private static ToolArguments Arguments(string name, string value)

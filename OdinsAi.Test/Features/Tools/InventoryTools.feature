@@ -16,15 +16,17 @@ Feature: Inventory tools
   Scenario: Search totals matching items by name, ignoring case
     When I call the "search_inventory" tool with query "TURNIP"
     Then the tool succeeds
-    And the inventory result contains "Turnip" x8
-    And the inventory result contains "Turnip seeds" x2
-    And the inventory result does not contain "Wood"
+    And the inventory result is:
+      | Name         | Amount |
+      | Turnip       | 8      |
+      | Turnip seeds | 2      |
 
   Scenario: Filter carried items by type
     When I call the "search_inventory" tool with type "food"
     Then the tool succeeds
-    And the inventory result contains "Cooked meat" x4
-    And the inventory result does not contain "Turnip"
+    And the inventory result is:
+      | Name        | Amount |
+      | Cooked meat | 4      |
 
   Scenario: The inventory tool needs a query or a type
     When I call the "search_inventory" tool without arguments
