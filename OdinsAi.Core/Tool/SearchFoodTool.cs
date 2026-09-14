@@ -1,0 +1,72 @@
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using OdinsAi.Command;
+using OdinsAi.Entity;
+
+namespace OdinsAi.Tool
+{
+    /// <summary>
+    /// Tool: find food by name and return its stats. Parses/validates the model's
+    /// arguments and shapes the result, then delegates to <see cref="SearchFoodCommand"/>.
+    /// </summary>
+    public sealed class SearchFoodTool : ITool
+    {
+        private readonly SearchFoodCommand _command;
+
+        public SearchFoodTool(SearchFoodCommand command)
+        {
+            _command = command;
+        }
+
+        public ToolDefinition Definition { get; } = new ToolDefinition(
+            "search_food",
+            "Search the game's food by name and return its stats (health, stamina, eitr, burn time, regen).",
+            new[] { new ToolParameter("query", "Text to match against food names, e.g. 'cooked'.") });
+
+        public ToolResult Execute(ToolArguments arguments)
+        {
+            var query = arguments.Get("query");
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return new ToolFailure("Missing required argument 'query'.");
+            }
+
+            var foods = _command.Execute(query)
+                .Select(ToSummary)
+                .ToArray();
+
+            return new ToolSuccess<SearchFoodResult>(
+                new SearchFoodResult(foods),
+                FormatContent(query, foods));
+        }
+
+        private static FoodSummary ToSummary(Item item)
+        {
+            return new FoodSummary(
+                item.Name,
+                item.Food.Health,
+                item.Food.Stamina,
+                item.Food.Eitr,
+                item.Food.BurnTime,
+                item.Food.Regen);
+        }
+
+        private static string FormatContent(string query, IReadOnlyList<FoodSummary> foods)
+        {
+            if (foods.Count == 0)
+            {
+                return $"No food found for '{query}'.";
+            }
+
+            return string.Join("\n", foods.Select(food =>
+                $"{food.Name}: {Number(food.Health)} health, {Number(food.Stamina)} stamina, " +
+                $"{Number(food.Eitr)} eitr, {Number(food.BurnTime)}s burn, {Number(food.Regen)} regen"));
+        }
+
+        private static string Number(float value)
+        {
+            return value.ToString("0.##", CultureInfo.InvariantCulture);
+        }
+    }
+}

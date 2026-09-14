@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ namespace OdinsAi.Test.Features.Assistant
     public sealed class RecipeAssistantSteps
     {
         private readonly ScenarioContext _context;
+        private int _nextCallId;
 
         public RecipeAssistantSteps(ScenarioContext context)
         {
@@ -25,18 +27,22 @@ namespace OdinsAi.Test.Features.Assistant
         [Given("the AI model will request the tool {string} with query {string}")]
         public void GivenTheAiModelWillRequestTheToolWithQuery(string tool, string query)
         {
-            World.Ai = new FakeAiClient();
-            World.Ai.RespondWith(new AiCompletion(null, new[]
+            Model().RespondWith(new AiCompletion(null, new[]
             {
-                new ToolCall("call_1", tool, Arguments("query", query)),
+                new ToolCall($"call_{++_nextCallId}", tool, Arguments("query", query)),
             }));
         }
 
         [Given("the AI model will answer by repeating the last tool result")]
         public void GivenTheAiModelWillAnswerByRepeatingTheLastToolResult()
         {
-            World.Ai.ShouldNotBeNull();
-            World.Ai.EchoLastToolResult = true;
+            Model().EchoLastToolResult = true;
+        }
+
+        [Given("the AI model will answer {string}")]
+        public void GivenTheAiModelWillAnswer(string answer)
+        {
+            Model().RespondWith(new AiCompletion(answer, Array.Empty<ToolCall>()));
         }
 
         [When("I ask the assistant {string}")]
@@ -48,10 +54,10 @@ namespace OdinsAi.Test.Features.Assistant
         [Then("the request sent back to the AI model should contain these messages:")]
         public void ThenTheRequestSentBackToTheAiModelShouldContain(Table table)
         {
-            // The model's second request carries the tool result. transcript[0] is
-            // the first request (the user question alone).
-            World.Ai.Transcript.Count.ShouldBeGreaterThanOrEqualTo(2);
-            var messages = World.Ai.Transcript[1];
+            // The model's final request: it carries every tool result accumulated
+            // so far, so it shows the whole conversation.
+            World.Ai.Transcript.Count.ShouldBeGreaterThanOrEqualTo(1);
+            var messages = World.Ai.Transcript[World.Ai.Transcript.Count - 1];
 
             messages.Count.ShouldBe(table.Rows.Count);
 
@@ -83,6 +89,16 @@ namespace OdinsAi.Test.Features.Assistant
         public void ThenTheAssistantReplies(string expected)
         {
             World.Reply.ShouldBe(expected);
+        }
+
+        private FakeAiClient Model()
+        {
+            if (World.Ai == null)
+            {
+                World.Ai = new FakeAiClient();
+            }
+
+            return World.Ai;
         }
 
         private static ToolArguments Arguments(string name, string value)

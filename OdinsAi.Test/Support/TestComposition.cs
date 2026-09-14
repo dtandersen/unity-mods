@@ -17,6 +17,7 @@ namespace OdinsAi.Test.Support
             return new ToolHandler(new ITool[]
             {
                 new SearchRecipesTool(new SearchRecipesCommand(new RecipeIndex(world.Recipes))),
+                new SearchFoodTool(new SearchFoodCommand(new ItemIndex(world.Items))),
             });
         }
 

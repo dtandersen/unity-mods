@@ -1,17 +1,19 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using OdinsAi.Entity;
 using Reqnroll;
 
 namespace OdinsAi.Test.Support
 {
-    /// <summary>Steps that seed the recipe repository (arrange for both suites).</summary>
+    /// <summary>Seeds the in-memory repositories (arrange for both suites).</summary>
     [Binding]
-    public sealed class RecipeDatabaseSteps
+    public sealed class DatabaseSteps
     {
         private readonly ScenarioContext _context;
 
-        public RecipeDatabaseSteps(ScenarioContext context)
+        public DatabaseSteps(ScenarioContext context)
         {
             _context = context;
         }
@@ -32,7 +34,28 @@ namespace OdinsAi.Test.Support
             Hooks.GetWorld(_context).Recipes.Add(NewRecipe(name, ingredients));
         }
 
-        private static Recipe NewRecipe(string name, System.Collections.Generic.IReadOnlyList<Ingredient> ingredients = null)
+        [Given("the item database contains food:")]
+        public void GivenTheItemDatabaseContainsFood(Table table)
+        {
+            foreach (var row in table.Rows)
+            {
+                var stats = new FoodStats(
+                    Number(row["Health"]),
+                    Number(row["Stamina"]),
+                    Number(row["Eitr"]),
+                    Number(row["BurnTime"]),
+                    Number(row["Regen"]));
+
+                Hooks.GetWorld(_context).Items.Add(new Item(row["Name"], row["Name"], stats));
+            }
+        }
+
+        private static float Number(string value)
+        {
+            return float.Parse(value, CultureInfo.InvariantCulture);
+        }
+
+        private static Recipe NewRecipe(string name, IReadOnlyList<Ingredient> ingredients = null)
         {
             return new Recipe(
                 Id: name,

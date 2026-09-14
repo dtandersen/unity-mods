@@ -8,11 +8,11 @@ using Shouldly;
 namespace OdinsAi.Test.Features.Tools
 {
     [Binding]
-    public sealed class RecipeToolSteps
+    public sealed class ToolsSteps
     {
         private readonly ScenarioContext _context;
 
-        public RecipeToolSteps(ScenarioContext context)
+        public ToolsSteps(ScenarioContext context)
         {
             _context = context;
         }
@@ -22,13 +22,15 @@ namespace OdinsAi.Test.Features.Tools
         [When("I call the {string} tool with query {string}")]
         public void WhenICallTheToolWithQuery(string tool, string query)
         {
-            World.ToolResult = TestComposition.Tools(World).Handle(new ToolCall("call_1", tool, Arguments("query", query)));
+            World.ToolResult = TestComposition.Tools(World)
+                .Handle(new ToolCall("call_1", tool, Arguments("query", query)));
         }
 
         [When("I call the {string} tool without arguments")]
         public void WhenICallTheToolWithoutArguments(string tool)
         {
-            World.ToolResult = TestComposition.Tools(World).Handle(new ToolCall("call_1", tool, ToolArguments.Empty));
+            World.ToolResult = TestComposition.Tools(World)
+                .Handle(new ToolCall("call_1", tool, ToolArguments.Empty));
         }
 
         [Then("the tool succeeds")]
@@ -47,27 +49,45 @@ namespace OdinsAi.Test.Features.Tools
         [Then("the tool result contains a recipe {string}")]
         public void ThenTheToolResultContainsARecipe(string name)
         {
-            Recipes().Any(recipe => recipe.Name == name).ShouldBeTrue(
-                $"expected '{name}' in: {string.Join(", ", Recipes().Select(r => r.Name))}");
+            RecipeResults().Any(recipe => recipe.Name == name).ShouldBeTrue(
+                $"expected '{name}' in: {string.Join(", ", RecipeResults().Select(r => r.Name))}");
         }
 
         [Then("the tool result does not contain a recipe {string}")]
         public void ThenTheToolResultDoesNotContainARecipe(string name)
         {
-            Recipes().Any(recipe => recipe.Name == name).ShouldBeFalse(
-                $"did not expect '{name}'");
+            RecipeResults().Any(recipe => recipe.Name == name).ShouldBeFalse($"did not expect '{name}'");
         }
 
         [Then("the tool result contains a recipe {string} with {int} ingredients")]
         public void ThenTheToolResultContainsARecipeWithIngredients(string name, int count)
         {
-            var recipe = Recipes().Single(r => r.Name == name);
-            recipe.Ingredients.Count.ShouldBe(count);
+            RecipeResults().Single(recipe => recipe.Name == name).Ingredients.Count.ShouldBe(count);
         }
 
-        private IReadOnlyList<RecipeSummary> Recipes()
+        [Then("the tool result contains food {string} with {float} health, {float} stamina and {float} eitr")]
+        public void ThenTheToolResultContainsFood(string name, float health, float stamina, float eitr)
+        {
+            var food = FoodResults().Single(f => f.Name == name);
+            food.Health.ShouldBe(health);
+            food.Stamina.ShouldBe(stamina);
+            food.Eitr.ShouldBe(eitr);
+        }
+
+        [Then("the tool result does not contain food {string}")]
+        public void ThenTheToolResultDoesNotContainFood(string name)
+        {
+            FoodResults().Any(food => food.Name == name).ShouldBeFalse($"did not expect '{name}'");
+        }
+
+        private IReadOnlyList<RecipeSummary> RecipeResults()
         {
             return World.ToolResult.ShouldBeOfType<ToolSuccess<SearchRecipesResult>>().Value.Recipes;
+        }
+
+        private IReadOnlyList<FoodSummary> FoodResults()
+        {
+            return World.ToolResult.ShouldBeOfType<ToolSuccess<SearchFoodResult>>().Value.Foods;
         }
 
         private static ToolArguments Arguments(string name, string value)

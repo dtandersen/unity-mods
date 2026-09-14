@@ -1,6 +1,6 @@
-using OdinsAi.Tool;
 using OdinsAi.Repository;
 using OdinsAi.Test.Fakes;
+using OdinsAi.Tool;
 
 namespace OdinsAi.Test.Support
 {
@@ -11,6 +11,8 @@ namespace OdinsAi.Test.Support
     public sealed class World
     {
         public InMemoryRecipeRepository Recipes { get; } = new InMemoryRecipeRepository();
+
+        public InMemoryItemRepository Items { get; } = new InMemoryItemRepository();
 
         public FakeAiClient Ai { get; set; }
 
