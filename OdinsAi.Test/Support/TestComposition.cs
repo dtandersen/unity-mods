@@ -27,6 +27,8 @@ namespace OdinsAi.Test.Support
                 new SearchDungeonsTool(new SearchDungeonsCommand(new DungeonIndex(world.Dungeons))),
                 new SearchCreaturesTool(new SearchCreaturesCommand(new CreatureIndex(world.Creatures))),
                 new SearchResourcesTool(new SearchResourcesCommand(new ResourceIndex(world.Resources))),
+                new SearchCompendiumTool(new SearchCompendiumCommand(new CompendiumIndex(world.Compendium))),
+                new ReadCompendiumTool(new ReadCompendiumCommand(new CompendiumIndex(world.Compendium))),
             });
         }
 

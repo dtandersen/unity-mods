@@ -104,6 +104,17 @@ namespace OdinsAi.Test.Support
             }
         }
 
+        [Given("the compendium contains:")]
+        public void GivenTheCompendiumContains(Table table)
+        {
+            var world = Hooks.GetWorld(_context);
+
+            foreach (var row in table.Rows)
+            {
+                world.Compendium.Add(new CompendiumEntry(row["Topic"], row["Text"]));
+            }
+        }
+
         [Given("my inventory contains:")]
         public void GivenMyInventoryContains(Table table)
         {

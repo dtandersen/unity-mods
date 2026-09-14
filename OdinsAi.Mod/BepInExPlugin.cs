@@ -37,6 +37,7 @@ namespace OdinsAi.Mod
         public static ConfigEntry<bool> showThinking;
         public static ConfigEntry<bool> showToolResults;
         public static ConfigEntry<bool> enableCheats;
+        public static ConfigEntry<string> aiName;
         public static ConfigEntry<string> endpoint;
         public static ConfigEntry<string> apiKey;
         public static ConfigEntry<string> model;
@@ -65,13 +66,15 @@ namespace OdinsAi.Mod
                 "Post each tool's raw output (CSV) to chat.");
             enableCheats = Config.Bind("General", "EnableCheats", false,
                 "Allow Odin's Eye to scan the world (dungeons, creatures, resources). Off by default.");
+            aiName = Config.Bind("General", "Name", "Odin",
+                "Name the assistant uses in chat. Default: Odin.");
 
             endpoint = Config.Bind("AI", "Endpoint", "https://api.openai.com/v1/chat/completions",
                 "OpenAI-compatible chat completions URL.");
             apiKey = Config.Bind("AI", "ApiKey", "", "API key for the endpoint.");
             model = Config.Bind("AI", "Model", "gpt-4o-mini", "Model name.");
             systemPrompt = Config.Bind("AI", "SystemPrompt",
-                "You are Odin's Eye, a Valheim assistant. Use the provided tools to look up game data before answering. Keep answers short and use simple Markdown (**bold** and bullet lists); do not use tables.",
+                $"You are {AssistantName}, a Valheim assistant. Use the provided tools to look up game data before answering. Keep answers short and use simple Markdown (**bold**, bullet lists, and small tables).",
                 "System prompt sent to the model.");
             maxIterations = Config.Bind("AI", "MaxToolIterations", 5, "Maximum tool round-trips per question.");
             timeoutSeconds = Config.Bind("AI", "TimeoutSeconds", 120, "HTTP timeout for model requests, in seconds. Raise it if the model is slow with a large conversation.");
@@ -101,6 +104,8 @@ namespace OdinsAi.Mod
         {
             try
             {
+                EchoQuestion(terminal, prompt);
+
                 var assistant = BuildAssistant(terminal);
                 if (assistant == null)
                 {
@@ -108,7 +113,7 @@ namespace OdinsAi.Mod
                     return;
                 }
 
-                Post(terminal, "thinking...");
+                Post(terminal, "Thinking...");
                 var answer = await assistant.AskAsync(prompt, contextMessages.Value > 0 ? Conversation : null);
                 Post(terminal, MarkdownToTmp.ToTmpRichText(answer));
             }
@@ -126,7 +131,31 @@ namespace OdinsAi.Mod
 
         private static void Post(Terminal terminal, string text)
         {
-            terminal.AddString($"{ModName}: {text}");
+            terminal.AddString(ChatNaming.Apply(aiName?.Value, text));
+            OpenChatWindow();
+        }
+
+        /// <summary>
+        /// Display name for the assistant's chat messages. Configurable via the
+        /// <c>General/Name</c> entry; falls back to "Odin" when blank.
+        /// </summary>
+        public static string AssistantName => ChatNaming.Resolve(aiName?.Value);
+
+        /// <summary>
+        /// Echoes the player's question so it stays in the chat log. Command input
+        /// (including <c>/ai</c>) is not shown by the game, so the question would
+        /// otherwise vanish once the answer arrives.
+        /// </summary>
+        private static void EchoQuestion(Terminal terminal, string prompt)
+        {
+            var player = Player.m_localPlayer;
+            var name = player != null ? player.GetPlayerName() : null;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = "You";
+            }
+
+            terminal.AddString($"{name}: {prompt}");
             OpenChatWindow();
         }
 
@@ -188,6 +217,7 @@ namespace OdinsAi.Mod
             IInventoryRepository inventory = new ValheimInventoryRepository();
 
             var itemIndex = new ItemIndex(items);
+            var compendium = new CompendiumIndex(new ValheimCompendiumRepository(enableCheats.Value));
 
             var toolList = new List<ITool>
             {
@@ -196,6 +226,8 @@ namespace OdinsAi.Mod
                 new SearchItemsTool(new SearchItemsCommand(itemIndex)),
                 new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(inventory))),
                 new SearchStorageTool(new SearchStorageCommand(new StorageIndex(new ValheimStorageRepository()))),
+                new SearchCompendiumTool(new SearchCompendiumCommand(compendium)),
+                new ReadCompendiumTool(new ReadCompendiumCommand(compendium)),
             };
 
             // World scanning is opt-in: without cheats the model can't see through

@@ -1,7 +1,8 @@
 # Odin's Eye (OdinsAi)
 
 An LLM assistant for Valheim, delivered as a BepInEx 5 plugin, plus an in-game
-tool that can answer questions about recipes and food stats.
+tool that can answer questions about recipes, food stats, and the in-game
+compendium of lore and Munin's hints.
 
 Named after Odin's eye — the all-seeing assistant. 👁️
 

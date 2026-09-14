@@ -12,7 +12,8 @@ namespace OdinsAi.Mod
     {
         public override string Name => "ai";
 
-        public override string Help => "Ask Odin's Eye. Usage: /ai <question>  (also: /ai clear, /ai compact)";
+        public override string Help =>
+            $"Ask {BepInExPlugin.AssistantName}. Usage: /ai <question>  (also: /ai clear, /ai compact)";
 
         public override void Run(string[] args, Terminal context)
         {

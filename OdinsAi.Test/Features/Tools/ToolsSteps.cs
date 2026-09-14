@@ -49,6 +49,13 @@ namespace OdinsAi.Test.Features.Tools
                 .Handle(new ToolCall("call_1", tool, Arguments("type", type)));
         }
 
+        [When("I call the {string} tool with topic {string}")]
+        public void WhenICallTheToolWithTopic(string tool, string topic)
+        {
+            World.ToolResult = TestComposition.Tools(World)
+                .Handle(new ToolCall("call_1", tool, Arguments("topic", topic)));
+        }
+
         [When("I call the {string} tool without arguments")]
         public void WhenICallTheToolWithoutArguments(string tool)
         {
@@ -80,6 +87,21 @@ namespace OdinsAi.Test.Features.Tools
         public void ThenTheToolResultContains(string expected)
         {
             World.ToolResult.Content.ShouldContain(expected.Replace("\r\n", "\n").Trim());
+        }
+
+        [Then("the compendium result topics are {string}")]
+        public void ThenTheCompendiumResultTopicsAre(string expected)
+        {
+            var topics = World.ToolResult.ShouldBeOfType<ToolSuccess<SearchCompendiumResult>>().Value.Entries;
+            string.Join(", ", topics.Select(entry => entry.Topic)).ShouldBe(expected);
+        }
+
+        [Then("the compendium page {string} reads:")]
+        public void ThenTheCompendiumPageReads(string topic, string expected)
+        {
+            var page = World.ToolResult.ShouldBeOfType<ToolSuccess<ReadCompendiumResult>>().Value;
+            page.Topic.ShouldBe(topic);
+            page.Text.ShouldBe(expected.Replace("\r\n", "\n").Trim());
         }
 
         [Then("the item result is:")]

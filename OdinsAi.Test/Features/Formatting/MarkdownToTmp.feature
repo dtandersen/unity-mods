@@ -2,7 +2,7 @@ Feature: Markdown to TextMeshPro
 
   The assistant replies in Markdown, but Valheim renders TextMeshPro rich text.
   This converter turns a small subset of Markdown into TMP tags before display.
-  Tables are intentionally not handled.
+  Tables are rendered as monospaced, padded columns.
 
   Scenario Outline: Inline styles are converted
     When I convert the markdown "<markdown>"
@@ -54,3 +54,55 @@ Feature: Markdown to TextMeshPro
       var x = 1;
       after
       """
+
+  Scenario: Tables become monospaced padded columns
+    When I convert the markdown:
+      """
+      | Name  | Qty |
+      |-------|-----|
+      | Arrow | 20  |
+      | Torch | 5   |
+      """
+    Then the text is:
+      """
+      <mspace=0.7em>Name   Qty
+      -----  ---
+      Arrow  20
+      Torch  5</mspace>
+      """
+
+  Scenario: Column alignment follows the separator row
+    When I convert the markdown:
+      """
+      | Item | Qty |
+      |------|----:|
+      | Arrow | 20 |
+      | Torch | 5  |
+      """
+    Then the text is:
+      """
+      <mspace=0.7em>Item   Qty
+      -----  ---
+      Arrow   20
+      Torch    5</mspace>
+      """
+
+  Scenario: Text after a table is not monospaced
+    When I convert the markdown:
+      """
+      | A | B |
+      |---|---|
+      | 1 | 2 |
+      after
+      """
+    Then the text is:
+      """
+      <mspace=0.7em>A  B
+      -  -
+      1  2</mspace>
+      after
+      """
+
+  Scenario: A lone pipe is not a table
+    When I convert the markdown "a | b"
+    Then the text is "a | b"
