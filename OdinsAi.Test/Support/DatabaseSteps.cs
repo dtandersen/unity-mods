@@ -61,6 +61,20 @@ namespace OdinsAi.Test.Support
             }
         }
 
+        [Given("the nearby dungeons are:")]
+        public void GivenTheNearbyDungeonsAre(Table table)
+        {
+            var world = Hooks.GetWorld(_context);
+
+            foreach (var row in table.Rows)
+            {
+                world.Dungeons.Add(new Dungeon(
+                    row["Name"],
+                    Number(row["Distance"]),
+                    row["Direction"]));
+            }
+        }
+
         [Given("my inventory contains:")]
         public void GivenMyInventoryContains(Table table)
         {

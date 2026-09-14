@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using OdinsAi.Test.Support;
 using OdinsAi.Tool;
@@ -40,6 +41,13 @@ namespace OdinsAi.Test.Features.Tools
                 .Handle(new ToolCall("call_1", tool, ToolArguments.Empty));
         }
 
+        [When("I call the {string} tool")]
+        public void WhenICallTheTool(string tool)
+        {
+            World.ToolResult = TestComposition.Tools(World)
+                .Handle(new ToolCall("call_1", tool, ToolArguments.Empty));
+        }
+
         [Then("the tool succeeds")]
         public void ThenTheToolSucceeds()
         {
@@ -70,6 +78,21 @@ namespace OdinsAi.Test.Features.Tools
                 var name = row["Name"];
                 actual.ContainsKey(name).ShouldBeTrue($"expected '{name}' in the result");
                 actual[name].ShouldBe(row["Type"]);
+            }
+        }
+
+        [Then("the dungeon result is:")]
+        public void ThenTheDungeonResultIs(Table table)
+        {
+            var actual = DungeonResults().ToDictionary(dungeon => dungeon.Name, dungeon => dungeon);
+            actual.Count.ShouldBe(table.Rows.Count);
+
+            foreach (var row in table.Rows)
+            {
+                var name = row["Name"];
+                actual.ContainsKey(name).ShouldBeTrue($"expected '{name}' in the result");
+                actual[name].Distance.ShouldBe(float.Parse(row["Distance"], CultureInfo.InvariantCulture));
+                actual[name].Direction.ShouldBe(row["Direction"]);
             }
         }
 
@@ -130,6 +153,11 @@ namespace OdinsAi.Test.Features.Tools
                 actual.ContainsKey(name).ShouldBeTrue($"expected '{name}' in the result");
                 actual[name].ShouldBe(int.Parse(row["Amount"]));
             }
+        }
+
+        private IReadOnlyList<DungeonSummary> DungeonResults()
+        {
+            return World.ToolResult.ShouldBeOfType<ToolSuccess<SearchDungeonsResult>>().Value.Dungeons;
         }
 
         private IReadOnlyList<ItemSummary> ItemResults()

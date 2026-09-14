@@ -183,6 +183,7 @@ namespace OdinsAi.Mod
             IRecipeRepository recipes = new ValheimRecipeRepository(database);
             IInventoryRepository inventory = new ValheimInventoryRepository();
             IStorageRepository storage = new ValheimStorageRepository();
+            IDungeonRepository dungeons = new ValheimDungeonRepository();
 
             var itemIndex = new ItemIndex(items);
 
@@ -193,6 +194,7 @@ namespace OdinsAi.Mod
                 new SearchItemsTool(new SearchItemsCommand(itemIndex)),
                 new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(inventory))),
                 new SearchStorageTool(new SearchStorageCommand(new StorageIndex(storage))),
+                new SearchDungeonsTool(new SearchDungeonsCommand(new DungeonIndex(dungeons))),
             });
 
             var client = new OpenAiChatClient(

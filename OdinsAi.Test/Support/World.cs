@@ -21,6 +21,8 @@ namespace OdinsAi.Test.Support
 
         public InMemoryStorageRepository Storage { get; } = new InMemoryStorageRepository();
 
+        public InMemoryDungeonRepository Dungeons { get; } = new InMemoryDungeonRepository();
+
         public FakeAiClient Ai { get; set; }
 
         public Conversation Conversation { get; set; } = new Conversation();
