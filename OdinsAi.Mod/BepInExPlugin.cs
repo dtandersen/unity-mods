@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using BepInEx;
@@ -35,6 +36,7 @@ namespace OdinsAi.Mod
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> showThinking;
         public static ConfigEntry<bool> showToolResults;
+        public static ConfigEntry<bool> enableCheats;
         public static ConfigEntry<string> endpoint;
         public static ConfigEntry<string> apiKey;
         public static ConfigEntry<string> model;
@@ -61,6 +63,8 @@ namespace OdinsAi.Mod
                 "Post the assistant's tool activity to chat while it works.");
             showToolResults = Config.Bind("General", "ShowToolResults", false,
                 "Post each tool's raw output (CSV) to chat.");
+            enableCheats = Config.Bind("General", "EnableCheats", false,
+                "Allow Odin's Eye to scan the world (nearby containers, dungeons, creatures, resources). Off by default.");
 
             endpoint = Config.Bind("AI", "Endpoint", "https://api.openai.com/v1/chat/completions",
                 "OpenAI-compatible chat completions URL.");
@@ -182,24 +186,28 @@ namespace OdinsAi.Mod
             IItemRepository items = new ValheimItemRepository(database);
             IRecipeRepository recipes = new ValheimRecipeRepository(database);
             IInventoryRepository inventory = new ValheimInventoryRepository();
-            IStorageRepository storage = new ValheimStorageRepository();
-            IDungeonRepository dungeons = new ValheimDungeonRepository();
-            ICreatureRepository creatures = new ValheimCreatureRepository();
-            IResourceRepository resources = new ValheimResourceRepository();
 
             var itemIndex = new ItemIndex(items);
 
-            var tools = new ToolHandler(new ITool[]
+            var toolList = new List<ITool>
             {
                 new SearchRecipesTool(new SearchRecipesCommand(new RecipeIndex(recipes))),
                 new SearchFoodTool(new SearchFoodCommand(itemIndex)),
                 new SearchItemsTool(new SearchItemsCommand(itemIndex)),
                 new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(inventory))),
-                new SearchStorageTool(new SearchStorageCommand(new StorageIndex(storage))),
-                new SearchDungeonsTool(new SearchDungeonsCommand(new DungeonIndex(dungeons))),
-                new SearchCreaturesTool(new SearchCreaturesCommand(new CreatureIndex(creatures))),
-                new SearchResourcesTool(new SearchResourcesCommand(new ResourceIndex(resources))),
-            });
+            };
+
+            // World scanning is opt-in: without cheats the model can't look through
+            // walls or dig through containers it hasn't opened.
+            if (enableCheats.Value)
+            {
+                toolList.Add(new SearchStorageTool(new SearchStorageCommand(new StorageIndex(new ValheimStorageRepository()))));
+                toolList.Add(new SearchDungeonsTool(new SearchDungeonsCommand(new DungeonIndex(new ValheimDungeonRepository()))));
+                toolList.Add(new SearchCreaturesTool(new SearchCreaturesCommand(new CreatureIndex(new ValheimCreatureRepository()))));
+                toolList.Add(new SearchResourcesTool(new SearchResourcesCommand(new ResourceIndex(new ValheimResourceRepository()))));
+            }
+
+            var tools = new ToolHandler(toolList);
 
             var client = new OpenAiChatClient(
                 new UnityWebRequestTransport(timeoutSeconds.Value),
