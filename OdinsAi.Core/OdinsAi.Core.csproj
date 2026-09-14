@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>OdinsAi.Core</AssemblyName>
+    <RootNamespace>OdinsAi.Core</RootNamespace>
+    <Version>0.1.0</Version>
+    <Description>Unity-free core logic for Odin's Eye (LLM assistant for Valheim).</Description>
+  </PropertyGroup>
+
+  <!--
+    Deliberately no Unity / Valheim / BepInEx references. Everything here must be
+    testable from OdinsAi.Test without the game running.
+  -->
+
+</Project>

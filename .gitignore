@@ -1,0 +1,37 @@
+# Build results
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+artifacts/
+
+# Test output
+TestResults/
+*.feature.cs
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+*.user
+*.suo
+*.userprefs
+*.DotSettings.user
+.vscode/
+
+# NuGet
+*.nupkg
+packages/
+.nuget/
+
+# MSBuild
+*.binlog
+
+# Local machine-specific build paths (game/BepInEx install locations)
+local.props
+local.props.*
+!local.props.example
+
+# OS
+.DS_Store
+Thumbs.db

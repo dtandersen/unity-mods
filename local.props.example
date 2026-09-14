@@ -1,0 +1,27 @@
+<!--
+  Copy this file to "local.props" (git-ignored) and adjust the paths for your machine.
+
+  All properties are optional; valheim.targets tries to auto-detect GamePath via the
+  Steam registry and falls back to common install locations.
+-->
+<Project>
+  <PropertyGroup>
+    <!-- Valheim install directory (contains valheim.exe and valheim_Data/). -->
+    <GamePath>D:\SteamLibrary\steamapps\common\Valheim</GamePath>
+
+    <!-- Where BepInEx.dll / 0Harmony.dll live. Default: $(GamePath)\BepInEx -->
+    <BepInExPath>C:\Users\<you>\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Mods\BepInEx</BepInExPath>
+
+    <!-- Where built plugins are copied. Default: $(BepInExPath)\plugins -->
+    <PluginDeployDir>C:\Users\<you>\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Mods\BepInEx\plugins</PluginDeployDir>
+
+    <!-- Valheim managed assemblies. Default: $(GamePath)\valheim_Data\Managed -->
+    <!-- <ManagedDataPath>...</ManagedDataPath> -->
+
+    <!-- Set to false to skip copying the build into the plugin folder. -->
+    <!-- <DeployOnBuild>false</DeployOnBuild> -->
+
+    <!-- Set to true to also produce artifacts\<Mod>.zip on build. -->
+    <!-- <PackageOnBuild>true</PackageOnBuild> -->
+  </PropertyGroup>
+</Project>

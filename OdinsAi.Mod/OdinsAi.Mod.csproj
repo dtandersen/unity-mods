@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <Description>Odin's Eye - an LLM assistant for Valheim.</Description>
+  </PropertyGroup>
+
+  <!-- The plugin consumes the Unity-free core library. -->
+  <ItemGroup>
+    <ProjectReference Include="..\OdinsAi.Core\OdinsAi.Core.csproj" />
+  </ItemGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory)..\valheim.targets" />
+
+</Project>
