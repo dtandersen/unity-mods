@@ -18,6 +18,8 @@ namespace OdinsAi.Test.Support
             {
                 new SearchRecipesTool(new SearchRecipesCommand(new RecipeIndex(world.Recipes))),
                 new SearchFoodTool(new SearchFoodCommand(new ItemIndex(world.Items))),
+                new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(world.Inventory))),
+                new SearchStorageTool(new SearchStorageCommand(new StorageIndex(world.Storage))),
             });
         }
 

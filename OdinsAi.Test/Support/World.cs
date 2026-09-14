@@ -16,6 +16,10 @@ namespace OdinsAi.Test.Support
 
         public InMemoryItemRepository Items { get; } = new InMemoryItemRepository();
 
+        public InMemoryInventoryRepository Inventory { get; } = new InMemoryInventoryRepository();
+
+        public InMemoryStorageRepository Storage { get; } = new InMemoryStorageRepository();
+
         public FakeAiClient Ai { get; set; }
 
         public ToolResult ToolResult { get; set; }

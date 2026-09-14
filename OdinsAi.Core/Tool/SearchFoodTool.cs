@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -6,10 +7,7 @@ using OdinsAi.Entity;
 
 namespace OdinsAi.Tool
 {
-    /// <summary>
-    /// Tool: find food by name and return its stats. Parses/validates the model's
-    /// arguments and shapes the result, then delegates to <see cref="SearchFoodCommand"/>.
-    /// </summary>
+    /// <summary>Tool: find food by name and return its stats.</summary>
     public sealed class SearchFoodTool : ITool
     {
         private readonly SearchFoodCommand _command;
@@ -33,6 +31,8 @@ namespace OdinsAi.Tool
             }
 
             var foods = _command.Execute(query)
+                .OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+                .Take(ToolLimits.MaxResults)
                 .Select(ToSummary)
                 .ToArray();
 

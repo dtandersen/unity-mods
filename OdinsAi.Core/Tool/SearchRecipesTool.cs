@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using OdinsAi.Command;
@@ -5,10 +6,7 @@ using OdinsAi.Entity;
 
 namespace OdinsAi.Tool
 {
-    /// <summary>
-    /// Tool: find recipes whose name matches a query. Parses/validates the model's
-    /// arguments and shapes the result, then delegates to <see cref="SearchRecipesCommand"/>.
-    /// </summary>
+    /// <summary>Tool: find recipes whose name matches a query.</summary>
     public sealed class SearchRecipesTool : ITool
     {
         private readonly SearchRecipesCommand _command;
@@ -32,6 +30,8 @@ namespace OdinsAi.Tool
             }
 
             var summaries = _command.Execute(query)
+                .OrderBy(recipe => recipe.Name, StringComparer.OrdinalIgnoreCase)
+                .Take(ToolLimits.MaxResults)
                 .Select(ToSummary)
                 .ToArray();
 

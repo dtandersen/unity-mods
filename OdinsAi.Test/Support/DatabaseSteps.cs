@@ -7,7 +7,7 @@ using Reqnroll;
 
 namespace OdinsAi.Test.Support
 {
-    /// <summary>Seeds the in-memory repositories (arrange for both suites).</summary>
+    /// <summary>Seeds the in-memory repositories (arrange for the suites).</summary>
     [Binding]
     public sealed class DatabaseSteps
     {
@@ -47,6 +47,34 @@ namespace OdinsAi.Test.Support
                     Number(row["Regen"]));
 
                 Hooks.GetWorld(_context).Items.Add(new Item(row["Name"], row["Name"], stats));
+            }
+        }
+
+        [Given("my inventory contains:")]
+        public void GivenMyInventoryContains(Table table)
+        {
+            var world = Hooks.GetWorld(_context);
+
+            foreach (var row in table.Rows)
+            {
+                world.Inventory.Add(new ItemStack(
+                    row["Item"], row["Item"], int.Parse(row["Amount"]), 1, row["Type"]));
+            }
+        }
+
+        [Given("the nearby containers contain:")]
+        public void GivenTheNearbyContainersContain(Table table)
+        {
+            var world = Hooks.GetWorld(_context);
+
+            foreach (var group in table.Rows.GroupBy(row => row["Container"]))
+            {
+                var items = group
+                    .Select(row => new ItemStack(
+                        row["Item"], row["Item"], int.Parse(row["Amount"]), 1, row["Type"]))
+                    .ToArray();
+
+                world.Storage.Add(new StorageContainer(group.Key, items));
             }
         }
 

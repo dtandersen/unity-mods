@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using BepInEx;
 using BepInEx.Configuration;
@@ -7,6 +8,7 @@ using OdinsAi.Ai;
 using OdinsAi.Ai.OpenAi;
 using OdinsAi.Command;
 using OdinsAi.Core;
+using OdinsAi.Formatting;
 using OdinsAi.Mod.Ai;
 using OdinsAi.Query;
 using OdinsAi.Repository;
@@ -31,25 +33,36 @@ namespace OdinsAi.Mod
         public static BepInExPlugin context;
 
         public static ConfigEntry<bool> modEnabled;
+        public static ConfigEntry<bool> showThinking;
         public static ConfigEntry<string> endpoint;
         public static ConfigEntry<string> apiKey;
         public static ConfigEntry<string> model;
         public static ConfigEntry<string> systemPrompt;
         public static ConfigEntry<int> maxIterations;
+        public static ConfigEntry<int> timeoutSeconds;
+
+        // Chat.Update() keeps the chat window active while m_hideTimer < m_hideDelay,
+        // so resetting the timer to zero pops the window open.
+        private static readonly FieldInfo ChatHideTimer =
+            typeof(Chat).GetField("m_hideTimer", BindingFlags.Instance | BindingFlags.NonPublic);
 
         public void Awake()
         {
             context = this;
 
             modEnabled = Config.Bind("General", "Enabled", true, "Enable Odin's Eye.");
+            showThinking = Config.Bind("General", "ShowThinking", false,
+                "Post the assistant's tool activity to chat while it works.");
+
             endpoint = Config.Bind("AI", "Endpoint", "https://api.openai.com/v1/chat/completions",
                 "OpenAI-compatible chat completions URL.");
             apiKey = Config.Bind("AI", "ApiKey", "", "API key for the endpoint.");
             model = Config.Bind("AI", "Model", "gpt-4o-mini", "Model name.");
             systemPrompt = Config.Bind("AI", "SystemPrompt",
-                "You are Odin's Eye, a Valheim assistant. Use the provided tools to look up recipes and food stats before answering.",
+                "You are Odin's Eye, a Valheim assistant. Use the provided tools to look up game data before answering. Keep answers short and use simple Markdown (**bold** and bullet lists); do not use tables.",
                 "System prompt sent to the model.");
             maxIterations = Config.Bind("AI", "MaxToolIterations", 5, "Maximum tool round-trips per question.");
+            timeoutSeconds = Config.Bind("AI", "TimeoutSeconds", 120, "HTTP timeout for model requests, in seconds. Raise it if the model is slow with a large conversation.");
 
             if (!modEnabled.Value)
             {
@@ -75,30 +88,44 @@ namespace OdinsAi.Mod
         {
             try
             {
-                var assistant = BuildAssistant();
+                var assistant = BuildAssistant(terminal);
                 if (assistant == null)
                 {
-                    terminal.AddString($"{ModName}: game data is not loaded yet.");
+                    Post(terminal, "game data is not loaded yet.");
                     return;
                 }
 
-                terminal.AddString($"{ModName}: thinking...");
+                Post(terminal, "thinking...");
                 var answer = await assistant.AskAsync(prompt);
-                terminal.AddString($"{ModName}: {answer}");
+                Post(terminal, MarkdownToTmp.ToTmpRichText(answer));
             }
             catch (AiClientException ex)
             {
-                terminal.AddString($"{ModName} error: {ex.Message}");
+                Post(terminal, $"error: {ex.Message}");
                 Dbgl(ex.ToString());
             }
             catch (Exception ex)
             {
-                terminal.AddString($"{ModName} error: {ex.Message}");
+                Post(terminal, $"error: {ex.Message}");
                 Dbgl(ex.ToString());
             }
         }
 
-        private static AiAssistant BuildAssistant()
+        private static void Post(Terminal terminal, string text)
+        {
+            terminal.AddString($"{ModName}: {text}");
+            OpenChatWindow();
+        }
+
+        private static void OpenChatWindow()
+        {
+            if (Chat.instance != null && ChatHideTimer != null)
+            {
+                ChatHideTimer.SetValue(Chat.instance, 0f);
+            }
+        }
+
+        private static AiAssistant BuildAssistant(Terminal terminal)
         {
             var database = ObjectDB.instance;
             if (database == null)
@@ -108,18 +135,26 @@ namespace OdinsAi.Mod
 
             IItemRepository items = new ValheimItemRepository(database);
             IRecipeRepository recipes = new ValheimRecipeRepository(database);
+            IInventoryRepository inventory = new ValheimInventoryRepository();
+            IStorageRepository storage = new ValheimStorageRepository();
 
             var tools = new ToolHandler(new ITool[]
             {
                 new SearchRecipesTool(new SearchRecipesCommand(new RecipeIndex(recipes))),
                 new SearchFoodTool(new SearchFoodCommand(new ItemIndex(items))),
+                new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(inventory))),
+                new SearchStorageTool(new SearchStorageCommand(new StorageIndex(storage))),
             });
 
             var client = new OpenAiChatClient(
-                new UnityWebRequestTransport(),
+                new UnityWebRequestTransport(timeoutSeconds.Value),
                 new OpenAiOptions(endpoint.Value, apiKey.Value, model.Value));
 
-            return new AiAssistant(client, tools, systemPrompt.Value, maxIterations.Value);
+            Action<string> thinking = showThinking.Value
+                ? line => Post(terminal, line)
+                : (Action<string>)null;
+
+            return new AiAssistant(client, tools, systemPrompt.Value, maxIterations.Value, Dbgl, thinking);
         }
     }
 }

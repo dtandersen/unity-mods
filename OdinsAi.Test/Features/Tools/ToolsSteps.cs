@@ -26,6 +26,13 @@ namespace OdinsAi.Test.Features.Tools
                 .Handle(new ToolCall("call_1", tool, Arguments("query", query)));
         }
 
+        [When("I call the {string} tool with type {string}")]
+        public void WhenICallTheToolWithType(string tool, string type)
+        {
+            World.ToolResult = TestComposition.Tools(World)
+                .Handle(new ToolCall("call_1", tool, Arguments("type", type)));
+        }
+
         [When("I call the {string} tool without arguments")]
         public void WhenICallTheToolWithoutArguments(string tool)
         {
@@ -80,6 +87,34 @@ namespace OdinsAi.Test.Features.Tools
             FoodResults().Any(food => food.Name == name).ShouldBeFalse($"did not expect '{name}'");
         }
 
+        [Then("the inventory result contains {string} x{int}")]
+        public void ThenTheInventoryResultContains(string name, int amount)
+        {
+            var item = InventoryItems().SingleOrDefault(i => i.Name == name);
+            item.ShouldNotBeNull($"expected '{name}' in: {Describe(InventoryItems())}");
+            item.Amount.ShouldBe(amount);
+        }
+
+        [Then("the inventory result does not contain {string}")]
+        public void ThenTheInventoryResultDoesNotContain(string name)
+        {
+            InventoryItems().Any(item => item.Name == name).ShouldBeFalse($"did not expect '{name}'");
+        }
+
+        [Then("the storage result contains {string} x{int}")]
+        public void ThenTheStorageResultContains(string name, int amount)
+        {
+            var item = StorageItems().SingleOrDefault(i => i.Name == name);
+            item.ShouldNotBeNull($"expected '{name}' in: {Describe(StorageItems())}");
+            item.Amount.ShouldBe(amount);
+        }
+
+        [Then("the storage result does not contain {string}")]
+        public void ThenTheStorageResultDoesNotContain(string name)
+        {
+            StorageItems().Any(item => item.Name == name).ShouldBeFalse($"did not expect '{name}'");
+        }
+
         private IReadOnlyList<RecipeSummary> RecipeResults()
         {
             return World.ToolResult.ShouldBeOfType<ToolSuccess<SearchRecipesResult>>().Value.Recipes;
@@ -88,6 +123,21 @@ namespace OdinsAi.Test.Features.Tools
         private IReadOnlyList<FoodSummary> FoodResults()
         {
             return World.ToolResult.ShouldBeOfType<ToolSuccess<SearchFoodResult>>().Value.Foods;
+        }
+
+        private IReadOnlyList<ItemStackSummary> InventoryItems()
+        {
+            return World.ToolResult.ShouldBeOfType<ToolSuccess<InventorySearchResult>>().Value.Items;
+        }
+
+        private IReadOnlyList<ItemStackSummary> StorageItems()
+        {
+            return World.ToolResult.ShouldBeOfType<ToolSuccess<StorageSearchResult>>().Value.Items;
+        }
+
+        private static string Describe(IEnumerable<ItemStackSummary> items)
+        {
+            return string.Join(", ", items.Select(item => $"{item.Name} x{item.Amount}"));
         }
 
         private static ToolArguments Arguments(string name, string value)

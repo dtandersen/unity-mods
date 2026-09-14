@@ -36,7 +36,7 @@ namespace OdinsAi.Repository
                 }
 
                 FoodStats food = null;
-                if (shared.m_food > 0f || shared.m_foodStamina > 0f || shared.m_foodEitr > 0f)
+                if (ValheimItems.IsFood(shared))
                 {
                     food = new FoodStats(
                         shared.m_food,

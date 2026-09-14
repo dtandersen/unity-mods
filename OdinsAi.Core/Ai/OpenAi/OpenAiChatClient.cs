@@ -57,10 +57,21 @@ namespace OdinsAi.Ai.OpenAi
 
             if (reply.StatusCode < 200 || reply.StatusCode >= 300)
             {
-                throw new AiClientException($"The AI service returned HTTP {reply.StatusCode}: {reply.Body}");
+                throw new AiClientException(
+                    $"The AI service returned HTTP {reply.StatusCode}: {Truncate(reply.Body, 300)}");
             }
 
             return Parse(reply.Body);
+        }
+
+        private static string Truncate(string value, int max)
+        {
+            if (string.IsNullOrEmpty(value) || value.Length <= max)
+            {
+                return value;
+            }
+
+            return value.Substring(0, max) + "...(truncated)";
         }
 
         private string BuildBody(IReadOnlyList<ChatMessage> messages, IReadOnlyList<ToolDefinition> tools)
