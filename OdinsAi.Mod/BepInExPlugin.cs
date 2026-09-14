@@ -34,6 +34,7 @@ namespace OdinsAi.Mod
 
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> showThinking;
+        public static ConfigEntry<bool> showToolResults;
         public static ConfigEntry<string> endpoint;
         public static ConfigEntry<string> apiKey;
         public static ConfigEntry<string> model;
@@ -58,6 +59,8 @@ namespace OdinsAi.Mod
             modEnabled = Config.Bind("General", "Enabled", true, "Enable Odin's Eye.");
             showThinking = Config.Bind("General", "ShowThinking", false,
                 "Post the assistant's tool activity to chat while it works.");
+            showToolResults = Config.Bind("General", "ShowToolResults", false,
+                "Post each tool's raw output (CSV) to chat.");
 
             endpoint = Config.Bind("AI", "Endpoint", "https://api.openai.com/v1/chat/completions",
                 "OpenAI-compatible chat completions URL.");
@@ -196,8 +199,11 @@ namespace OdinsAi.Mod
             Action<string> thinking = showThinking.Value
                 ? line => Post(terminal, line)
                 : (Action<string>)null;
+            Action<string> toolOutput = showToolResults.Value
+                ? line => Post(terminal, line)
+                : (Action<string>)null;
 
-            return new AiAssistant(client, tools, systemPrompt.Value, maxIterations.Value, Dbgl, thinking);
+            return new AiAssistant(client, tools, systemPrompt.Value, maxIterations.Value, Dbgl, thinking, toolOutput);
         }
     }
 }

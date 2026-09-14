@@ -25,6 +25,7 @@ namespace OdinsAi.Ai
         private readonly int _maxIterations;
         private readonly Action<string> _log;
         private readonly Action<string> _thinking;
+        private readonly Action<string> _toolOutput;
 
         public AiAssistant(
             IAiClient client,
@@ -32,7 +33,8 @@ namespace OdinsAi.Ai
             string systemPrompt = null,
             int maxIterations = 5,
             Action<string> log = null,
-            Action<string> thinking = null)
+            Action<string> thinking = null,
+            Action<string> toolOutput = null)
         {
             _client = client;
             _tools = tools;
@@ -40,6 +42,7 @@ namespace OdinsAi.Ai
             _maxIterations = maxIterations;
             _log = log;
             _thinking = thinking;
+            _toolOutput = toolOutput;
         }
 
         /// <summary>
@@ -99,6 +102,7 @@ namespace OdinsAi.Ai
 
                     var result = _tools.Handle(call);
                     Log($"tool result: {result.Content}");
+                    ToolOutput(result.Content);
                     messages.Add(new ChatMessage(ChatRole.Tool, result.Content, ToolCallId: call.Id));
                 }
             }
@@ -147,6 +151,11 @@ namespace OdinsAi.Ai
         private void Thinking(string message)
         {
             _thinking?.Invoke(message);
+        }
+
+        private void ToolOutput(string message)
+        {
+            _toolOutput?.Invoke(message);
         }
 
         private static string Describe(ToolArguments arguments)

@@ -1,3 +1,4 @@
+using System;
 using OdinsAi.Ai;
 using OdinsAi.Command;
 using OdinsAi.Query;
@@ -26,6 +27,11 @@ namespace OdinsAi.Test.Support
         public static AiAssistant Assistant(World world)
         {
             return new AiAssistant(world.Ai, Tools(world));
+        }
+
+        public static AiAssistant Assistant(World world, Action<string> thinking, Action<string> toolOutput)
+        {
+            return new AiAssistant(world.Ai, Tools(world), null, 5, null, thinking, toolOutput);
         }
     }
 }

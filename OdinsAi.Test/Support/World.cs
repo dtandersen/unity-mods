@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using OdinsAi.Ai;
 using OdinsAi.Repository;
 using OdinsAi.Test.Fakes;
@@ -23,6 +24,10 @@ namespace OdinsAi.Test.Support
         public FakeAiClient Ai { get; set; }
 
         public Conversation Conversation { get; set; } = new Conversation();
+
+        public List<string> Thinking { get; set; } = new List<string>();
+
+        public List<string> ToolOutput { get; set; } = new List<string>();
 
         public ToolResult ToolResult { get; set; }
 
