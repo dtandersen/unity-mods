@@ -22,11 +22,13 @@ namespace OdinsAi.Test.Features.Assistant
         public async Task WhenIAskTheAssistantReportingActivity(string prompt)
         {
             World.Thinking = new List<string>();
+            World.ToolCalls = new List<string>();
             World.ToolOutput = new List<string>();
 
             var assistant = TestComposition.Assistant(
                 World,
                 line => World.Thinking.Add(line),
+                line => World.ToolCalls.Add(line),
                 line => World.ToolOutput.Add(line));
 
             World.Reply = await assistant.AskAsync(prompt);
@@ -36,6 +38,12 @@ namespace OdinsAi.Test.Features.Assistant
         public void ThenTheThinkingReported(string expected)
         {
             World.Thinking.ShouldContain(expected);
+        }
+
+        [Then("the tool calls reported {string}")]
+        public void ThenTheToolCallsReported(string expected)
+        {
+            World.ToolCalls.ShouldContain(expected);
         }
 
         [Then("the tool output reported:")]

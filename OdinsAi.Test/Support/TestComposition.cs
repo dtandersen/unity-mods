@@ -29,6 +29,8 @@ namespace OdinsAi.Test.Support
                 new SearchResourcesTool(new SearchResourcesCommand(new ResourceIndex(world.Resources))),
                 new SearchCompendiumTool(new SearchCompendiumCommand(new CompendiumIndex(world.Compendium))),
                 new ReadCompendiumTool(new ReadCompendiumCommand(new CompendiumIndex(world.Compendium))),
+                new GetLocationTool(new GetLocationCommand(world.Location)),
+                new ListBossesTool(new GetBossStatusCommand(world.Bosses)),
             });
         }
 
@@ -37,18 +39,20 @@ namespace OdinsAi.Test.Support
             return new AiAssistant(world.Ai, Tools(world));
         }
 
-        public static AiAssistant Assistant(World world, Action<string> thinking, Action<string> toolOutput)
+        public static AiAssistant Assistant(World world, Action<string> thinking, Action<string> toolCall, Action<string> toolOutput)
         {
-            return new AiAssistant(world.Ai, Tools(world), null, 5, null, thinking, toolOutput);
+            return new AiAssistant(world.Ai, Tools(world), null, 5, null, thinking, toolCall, toolOutput);
         }
 
         public static ChatPresenter Presenter(World world)
         {
             return new ChatPresenter(
                 world.Chat,
-                say => world.GameDataLoaded ? Assistant(world, say, say) : null,
+                say => world.GameDataLoaded ? Assistant(world, say, say, say) : null,
                 () => world.PlayerName,
-                world.AssistantName);
+                world.AssistantName,
+                showThinking: world.ShowThinking,
+                clock: world.Clock);
         }
     }
 }

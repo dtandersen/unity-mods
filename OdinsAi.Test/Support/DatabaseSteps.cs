@@ -115,6 +115,25 @@ namespace OdinsAi.Test.Support
             }
         }
 
+        [Given("my position is {string}, {string}, {string} in the {string} biome")]
+        public void GivenMyPositionIs(string x, string y, string z, string biome)
+        {
+            Hooks.GetWorld(_context).Location.Current = new Location(Number(x), Number(y), Number(z), biome);
+        }
+
+        [Given("the bosses are:")]
+        public void GivenTheBossesAre(Table table)
+        {
+            var world = Hooks.GetWorld(_context);
+
+            foreach (var row in table.Rows)
+            {
+                world.Bosses.Add(new BossStatus(
+                    row["Boss"],
+                    row["Defeated"].Equals("Yes", System.StringComparison.OrdinalIgnoreCase)));
+            }
+        }
+
         [Given("my inventory contains:")]
         public void GivenMyInventoryContains(Table table)
         {

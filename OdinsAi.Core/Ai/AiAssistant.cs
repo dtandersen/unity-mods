@@ -13,9 +13,11 @@ namespace OdinsAi.Ai
     /// </summary>
     /// <remarks>
     /// The optional callbacks keep the core free of any logging/UI framework:
-    /// <paramref name="log"/> receives the full trace (plugin logs it) and
-    /// <paramref name="thinking"/> receives the user-facing intermediate steps
-    /// (the plugin can post them to chat).
+    /// <paramref name="log"/> receives the full trace (plugin logs it),
+    /// <paramref name="thinking"/> receives the model's reasoning and narration,
+    /// <paramref name="toolCall"/> receives each requested tool call, and
+    /// <paramref name="toolOutput"/> receives each tool's result. The plugin decides
+    /// independently which of these to post to chat.
     /// </remarks>
     public sealed class AiAssistant
     {
@@ -25,6 +27,7 @@ namespace OdinsAi.Ai
         private readonly int _maxIterations;
         private readonly Action<string> _log;
         private readonly Action<string> _thinking;
+        private readonly Action<string> _toolCall;
         private readonly Action<string> _toolOutput;
 
         public AiAssistant(
@@ -34,6 +37,7 @@ namespace OdinsAi.Ai
             int maxIterations = 5,
             Action<string> log = null,
             Action<string> thinking = null,
+            Action<string> toolCall = null,
             Action<string> toolOutput = null)
         {
             _client = client;
@@ -42,6 +46,7 @@ namespace OdinsAi.Ai
             _maxIterations = maxIterations;
             _log = log;
             _thinking = thinking;
+            _toolCall = toolCall;
             _toolOutput = toolOutput;
         }
 
@@ -78,6 +83,12 @@ namespace OdinsAi.Ai
                     Log($"assistant: {completion.Content}");
                 }
 
+                if (!string.IsNullOrEmpty(completion?.Reasoning))
+                {
+                    Log($"reasoning: {completion.Reasoning}");
+                    Thinking(completion.Reasoning);
+                }
+
                 if (completion == null || !completion.HasToolCalls)
                 {
                     var answer = completion?.Content ?? string.Empty;
@@ -98,7 +109,7 @@ namespace OdinsAi.Ai
                 {
                     var described = $"{call.Name}({Describe(call.Arguments)})";
                     Log($"tool call: {described}");
-                    Thinking(described);
+                    ToolCall(described);
 
                     var result = _tools.Handle(call);
                     Log($"tool result: {result.Content}");
@@ -151,6 +162,11 @@ namespace OdinsAi.Ai
         private void Thinking(string message)
         {
             _thinking?.Invoke(message);
+        }
+
+        private void ToolCall(string message)
+        {
+            _toolCall?.Invoke(message);
         }
 
         private void ToolOutput(string message)

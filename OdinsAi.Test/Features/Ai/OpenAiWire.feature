@@ -35,3 +35,20 @@ Feature: OpenAI chat client over HTTP
       """
     When I complete a chat with "Hi" using model "test-model"
     Then the completion fails with "401"
+
+  Scenario: A reasoning reply is parsed
+    Given the server will reply 200 with:
+      """
+      {"choices":[{"message":{"role":"assistant","content":"42","reasoning_content":"I counted on my claws."}}]}
+      """
+    When I complete a chat with "Hi" using model "test-model"
+    Then the completion content is "42"
+    And the completion reasoning is "I counted on my claws."
+
+  Scenario: The reasoning effort is sent when configured
+    Given the server will reply 200 with:
+      """
+      {"choices":[{"message":{"role":"assistant","content":"ok"}}]}
+      """
+    When I complete a chat with "Hi" using reasoning effort "high"
+    Then the request body contains "reasoning_effort"

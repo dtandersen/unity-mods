@@ -45,6 +45,12 @@ namespace OdinsAi.Test.Features.Assistant
             Model().RespondWith(new AiCompletion(answer, Array.Empty<ToolCall>()));
         }
 
+        [Given("the AI model reasons {string} and answers {string}")]
+        public void GivenTheAiModelReasonsAndAnswers(string reasoning, string answer)
+        {
+            Model().RespondWith(new AiCompletion(answer, Array.Empty<ToolCall>(), reasoning));
+        }
+
         [When("I ask the assistant {string}")]
         public async Task WhenIAskTheAssistant(string prompt)
         {

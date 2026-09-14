@@ -34,12 +34,14 @@ namespace OdinsAi.Mod
 
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> showThinking;
+        public static ConfigEntry<bool> showToolCalls;
         public static ConfigEntry<bool> showToolResults;
         public static ConfigEntry<bool> enableCheats;
         public static ConfigEntry<string> aiName;
         public static ConfigEntry<string> endpoint;
         public static ConfigEntry<string> apiKey;
         public static ConfigEntry<string> model;
+        public static ConfigEntry<string> reasoningEffort;
         public static ConfigEntry<string> systemPrompt;
         public static ConfigEntry<int> maxIterations;
         public static ConfigEntry<int> timeoutSeconds;
@@ -55,7 +57,9 @@ namespace OdinsAi.Mod
 
             modEnabled = Config.Bind("General", "Enabled", true, "Enable Odin's Eye.");
             showThinking = Config.Bind("General", "ShowThinking", false,
-                "Post the assistant's tool activity to chat while it works.");
+                "Post the model's reasoning and narration to chat while it works.");
+            showToolCalls = Config.Bind("General", "ShowToolCalls", false,
+                "Post each tool call (name and arguments) to chat.");
             showToolResults = Config.Bind("General", "ShowToolResults", false,
                 "Post each tool's raw output (CSV) to chat.");
             enableCheats = Config.Bind("General", "EnableCheats", false,
@@ -67,6 +71,8 @@ namespace OdinsAi.Mod
                 "OpenAI-compatible chat completions URL.");
             apiKey = Config.Bind("AI", "ApiKey", "", "API key for the endpoint.");
             model = Config.Bind("AI", "Model", "gpt-4o-mini", "Model name.");
+            reasoningEffort = Config.Bind("AI", "ReasoningEffort", "",
+                "Optional reasoning effort for reasoning models (e.g. low, medium, high). Leave blank to omit; valid values are model/provider specific.");
             systemPrompt = Config.Bind("AI", "SystemPrompt",
                 $"You are {AssistantName}, a Valheim assistant. Use the provided tools to look up game data before answering. Keep answers short and use simple Markdown (**bold**, bullet lists, and small tables).",
                 "System prompt sent to the model.");
@@ -106,7 +112,8 @@ namespace OdinsAi.Mod
                 say => BuildAssistant(say),
                 LocalPlayerName,
                 AssistantName,
-                Dbgl);
+                Dbgl,
+                showThinking: showThinking.Value);
         }
 
         /// <summary>
@@ -156,6 +163,8 @@ namespace OdinsAi.Mod
                 new SearchStorageTool(new SearchStorageCommand(new StorageIndex(new ValheimStorageRepository()))),
                 new SearchCompendiumTool(new SearchCompendiumCommand(compendium)),
                 new ReadCompendiumTool(new ReadCompendiumCommand(compendium)),
+                new GetLocationTool(new GetLocationCommand(new ValheimLocationRepository())),
+                new ListBossesTool(new GetBossStatusCommand(new ValheimBossRepository())),
             };
 
             // World scanning is opt-in: without cheats the model can't see through
@@ -171,12 +180,13 @@ namespace OdinsAi.Mod
 
             var client = new OpenAiChatClient(
                 new UnityWebRequestTransport(timeoutSeconds.Value),
-                new OpenAiOptions(endpoint.Value, apiKey.Value, model.Value));
+                new OpenAiOptions(endpoint.Value, apiKey.Value, model.Value, reasoningEffort.Value));
 
             Action<string> thinking = showThinking.Value ? say : null;
+            Action<string> toolCall = showToolCalls.Value ? say : null;
             Action<string> toolOutput = showToolResults.Value ? say : null;
 
-            return new AiAssistant(client, tools, systemPrompt.Value, maxIterations.Value, Dbgl, thinking, toolOutput);
+            return new AiAssistant(client, tools, systemPrompt.Value, maxIterations.Value, Dbgl, thinking, toolCall, toolOutput);
         }
     }
 }

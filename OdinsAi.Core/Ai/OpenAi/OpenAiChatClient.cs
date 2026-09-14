@@ -88,6 +88,12 @@ namespace OdinsAi.Ai.OpenAi
                 payload["tool_choice"] = "auto";
             }
 
+            // Sent only when configured: not every provider/model understands it.
+            if (!string.IsNullOrWhiteSpace(_options.ReasoningEffort))
+            {
+                payload["reasoning_effort"] = _options.ReasoningEffort;
+            }
+
             return JsonConvert.SerializeObject(payload);
         }
 
@@ -182,7 +188,15 @@ namespace OdinsAi.Ai.OpenAi
                 throw new AiClientException("The AI service response contained no message.");
             }
 
-            return new AiCompletion(message.Content, ParseToolCalls(message.ToolCalls));
+            return new AiCompletion(message.Content, ParseToolCalls(message.ToolCalls), Reasoning(message));
+        }
+
+        private static string Reasoning(ResponseMessage message)
+        {
+            // Providers vary: DeepSeek/OpenRouter use reasoning_content, some use reasoning.
+            return !string.IsNullOrWhiteSpace(message.ReasoningContent)
+                ? message.ReasoningContent
+                : message.Reasoning;
         }
 
         private static IReadOnlyList<ToolCall> ParseToolCalls(List<ResponseToolCall> calls)
@@ -246,6 +260,12 @@ namespace OdinsAi.Ai.OpenAi
         {
             [JsonProperty("content")]
             public string Content { get; set; }
+
+            [JsonProperty("reasoning_content")]
+            public string ReasoningContent { get; set; }
+
+            [JsonProperty("reasoning")]
+            public string Reasoning { get; set; }
 
             [JsonProperty("tool_calls")]
             public List<ResponseToolCall> ToolCalls { get; set; }

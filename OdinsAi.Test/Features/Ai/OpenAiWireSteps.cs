@@ -53,11 +53,24 @@ namespace OdinsAi.Test.Features.Ai
             return CompleteAsync(user, "test-model", definitions);
         }
 
+        [When("I complete a chat with {string} using reasoning effort {string}")]
+        public Task WhenICompleteAChatWithReasoningEffort(string user, string effort)
+        {
+            return CompleteAsync(user, "test-model", Array.Empty<ToolDefinition>(), effort);
+        }
+
         [Then("the completion content is {string}")]
         public void ThenTheCompletionContentIs(string expected)
         {
             World.Completion.ShouldNotBeNull();
             World.Completion.Content.ShouldBe(expected);
+        }
+
+        [Then("the completion reasoning is {string}")]
+        public void ThenTheCompletionReasoningIs(string expected)
+        {
+            World.Completion.ShouldNotBeNull();
+            World.Completion.Reasoning.ShouldBe(expected);
         }
 
         [Then("the completion requests the tool {string}")]
@@ -93,11 +106,11 @@ namespace OdinsAi.Test.Features.Ai
             World.CompletionError.Message.ShouldContain(text);
         }
 
-        private async Task CompleteAsync(string user, string model, IReadOnlyList<ToolDefinition> tools)
+        private async Task CompleteAsync(string user, string model, IReadOnlyList<ToolDefinition> tools, string reasoningEffort = null)
         {
             var client = new OpenAiChatClient(
                 new HttpChatTransport(),
-                new OpenAiOptions(World.Server.ChatCompletionsUrl, "test-key", model));
+                new OpenAiOptions(World.Server.ChatCompletionsUrl, "test-key", model, reasoningEffort));
 
             try
             {

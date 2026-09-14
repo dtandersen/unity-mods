@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -102,6 +103,32 @@ namespace OdinsAi.Test.Features.Tools
             var page = World.ToolResult.ShouldBeOfType<ToolSuccess<ReadCompendiumResult>>().Value;
             page.Topic.ShouldBe(topic);
             page.Text.ShouldBe(expected.Replace("\r\n", "\n").Trim());
+        }
+
+        [Then("the location result is:")]
+        public void ThenTheLocationResultIs(Table table)
+        {
+            var location = World.ToolResult.ShouldBeOfType<ToolSuccess<LocationResult>>().Value;
+            var row = table.Rows.Single();
+
+            location.X.ShouldBe(float.Parse(row["X"], CultureInfo.InvariantCulture));
+            location.Y.ShouldBe(float.Parse(row["Y"], CultureInfo.InvariantCulture));
+            location.Z.ShouldBe(float.Parse(row["Z"], CultureInfo.InvariantCulture));
+            location.Biome.ShouldBe(row["Biome"]);
+        }
+
+        [Then("the boss result is:")]
+        public void ThenTheBossResultIs(Table table)
+        {
+            var bosses = World.ToolResult.ShouldBeOfType<ToolSuccess<ListBossesResult>>().Value.Bosses;
+            bosses.Count.ShouldBe(table.Rows.Count);
+
+            for (var i = 0; i < table.Rows.Count; i++)
+            {
+                bosses[i].Name.ShouldBe(table.Rows[i]["Boss"]);
+                bosses[i].Defeated.ShouldBe(
+                    table.Rows[i]["Defeated"].Equals("Yes", StringComparison.OrdinalIgnoreCase));
+            }
         }
 
         [Then("the item result is:")]

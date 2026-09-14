@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using OdinsAi.Ai;
 using OdinsAi.Repository;
 using OdinsAi.Test.Fakes;
@@ -29,6 +30,10 @@ namespace OdinsAi.Test.Support
 
         public InMemoryCompendiumRepository Compendium { get; } = new InMemoryCompendiumRepository();
 
+        public InMemoryLocationRepository Location { get; } = new InMemoryLocationRepository();
+
+        public InMemoryBossRepository Bosses { get; } = new InMemoryBossRepository();
+
         public FakeAiClient Ai { get; set; }
 
         public RecordingChatSink Chat { get; } = new RecordingChatSink();
@@ -39,9 +44,17 @@ namespace OdinsAi.Test.Support
 
         public string AssistantName { get; set; } = "Odin";
 
+        public FakeClock Clock { get; } = new FakeClock();
+
+        public bool ShowThinking { get; set; }
+
+        public Task AskTask { get; set; }
+
         public Conversation Conversation { get; set; } = new Conversation();
 
         public List<string> Thinking { get; set; } = new List<string>();
+
+        public List<string> ToolCalls { get; set; } = new List<string>();
 
         public List<string> ToolOutput { get; set; } = new List<string>();
 
