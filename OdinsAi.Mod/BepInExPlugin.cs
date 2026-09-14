@@ -64,7 +64,7 @@ namespace OdinsAi.Mod
             showToolResults = Config.Bind("General", "ShowToolResults", false,
                 "Post each tool's raw output (CSV) to chat.");
             enableCheats = Config.Bind("General", "EnableCheats", false,
-                "Allow Odin's Eye to scan the world (nearby containers, dungeons, creatures, resources). Off by default.");
+                "Allow Odin's Eye to scan the world (dungeons, creatures, resources). Off by default.");
 
             endpoint = Config.Bind("AI", "Endpoint", "https://api.openai.com/v1/chat/completions",
                 "OpenAI-compatible chat completions URL.");
@@ -195,13 +195,13 @@ namespace OdinsAi.Mod
                 new SearchFoodTool(new SearchFoodCommand(itemIndex)),
                 new SearchItemsTool(new SearchItemsCommand(itemIndex)),
                 new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(inventory))),
+                new SearchStorageTool(new SearchStorageCommand(new StorageIndex(new ValheimStorageRepository()))),
             };
 
-            // World scanning is opt-in: without cheats the model can't look through
-            // walls or dig through containers it hasn't opened.
+            // World scanning is opt-in: without cheats the model can't see through
+            // walls to dungeons, creatures or resource nodes.
             if (enableCheats.Value)
             {
-                toolList.Add(new SearchStorageTool(new SearchStorageCommand(new StorageIndex(new ValheimStorageRepository()))));
                 toolList.Add(new SearchDungeonsTool(new SearchDungeonsCommand(new DungeonIndex(new ValheimDungeonRepository()))));
                 toolList.Add(new SearchCreaturesTool(new SearchCreaturesCommand(new CreatureIndex(new ValheimCreatureRepository()))));
                 toolList.Add(new SearchResourcesTool(new SearchResourcesCommand(new ResourceIndex(new ValheimResourceRepository()))));
