@@ -42,13 +42,25 @@ namespace OdinsAi.Ai
             _thinking = thinking;
         }
 
-        public async Task<string> AskAsync(string prompt, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Answers a question. If <paramref name="conversation"/> is supplied, prior
+        /// turns are sent with the request and this turn is appended to it.
+        /// </summary>
+        public async Task<string> AskAsync(
+            string prompt,
+            Conversation conversation = null,
+            CancellationToken cancellationToken = default)
         {
             var messages = new List<ChatMessage>();
 
             if (!string.IsNullOrWhiteSpace(_systemPrompt))
             {
                 messages.Add(new ChatMessage(ChatRole.System, _systemPrompt));
+            }
+
+            if (conversation != null)
+            {
+                messages.AddRange(conversation.Messages);
             }
 
             messages.Add(new ChatMessage(ChatRole.User, prompt));
@@ -65,11 +77,13 @@ namespace OdinsAi.Ai
 
                 if (completion == null || !completion.HasToolCalls)
                 {
+                    var answer = completion?.Content ?? string.Empty;
+                    conversation?.Add(new ChatMessage(ChatRole.User, prompt));
+                    conversation?.Add(new ChatMessage(ChatRole.Assistant, answer));
                     Log($"done after {i + 1} turn(s)");
-                    return completion?.Content ?? string.Empty;
+                    return answer;
                 }
 
-                // Intermediate reasoning text (if the model produced any).
                 if (!string.IsNullOrEmpty(completion.Content))
                 {
                     Thinking(completion.Content);
@@ -91,6 +105,38 @@ namespace OdinsAi.Ai
 
             Log($"gave up: reached MaxToolIterations ({_maxIterations}) without a final answer");
             return "I couldn't complete that request.";
+        }
+
+        /// <summary>
+        /// Condenses the conversation into a single summary message, using the model,
+        /// so older context can be dropped without losing the important facts.
+        /// </summary>
+        public async Task<string> CompactAsync(Conversation conversation, CancellationToken cancellationToken = default)
+        {
+            if (conversation == null || conversation.Messages.Count == 0)
+            {
+                return null;
+            }
+
+            var transcript = string.Join("\n", conversation.Messages.Select(m => $"{m.Role}: {m.Content}"));
+            var messages = new List<ChatMessage>
+            {
+                new ChatMessage(ChatRole.System,
+                    "Summarise the conversation below in a short paragraph. Preserve names, numbers and facts the user may refer back to."),
+                new ChatMessage(ChatRole.User, transcript),
+            };
+
+            Log("compacting conversation...");
+            var completion = await _client.CompleteAsync(messages, Array.Empty<ToolDefinition>(), cancellationToken);
+            var summary = completion?.Content;
+
+            if (!string.IsNullOrWhiteSpace(summary))
+            {
+                conversation.Replace(new[] { new ChatMessage(ChatRole.Assistant, summary) });
+                Log("compacted conversation to a single summary message");
+            }
+
+            return summary;
         }
 
         private void Log(string message)

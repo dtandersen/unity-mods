@@ -12,15 +12,29 @@ namespace OdinsAi.Mod
     {
         public override string Name => "ai";
 
-        public override string Help => "Ask Odin's Eye. Usage: /ai <question>";
+        public override string Help => "Ask Odin's Eye. Usage: /ai <question>  (also: /ai clear, /ai compact)";
 
         public override void Run(string[] args, Terminal context)
         {
-            var prompt = string.Join(" ", args).Trim();
+            if (args.Length > 0)
+            {
+                switch (args[0].ToLowerInvariant())
+                {
+                    case "clear":
+                    case "reset":
+                        _ = BepInExPlugin.context.ClearContextAsync(context);
+                        return;
 
+                    case "compact":
+                        _ = BepInExPlugin.context.CompactContextAsync(context);
+                        return;
+                }
+            }
+
+            var prompt = string.Join(" ", args).Trim();
             if (prompt.Length == 0)
             {
-                context.AddString("Usage: /ai <question>");
+                context.AddString("Usage: /ai <question>  (also: /ai clear, /ai compact)");
                 return;
             }
 

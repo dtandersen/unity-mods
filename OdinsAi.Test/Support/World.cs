@@ -22,6 +22,8 @@ namespace OdinsAi.Test.Support
 
         public FakeAiClient Ai { get; set; }
 
+        public Conversation Conversation { get; set; } = new Conversation();
+
         public ToolResult ToolResult { get; set; }
 
         public string Reply { get; set; }

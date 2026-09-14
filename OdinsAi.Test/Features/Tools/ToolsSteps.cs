@@ -53,6 +53,12 @@ namespace OdinsAi.Test.Features.Tools
             World.ToolResult.Content.ShouldBe(message);
         }
 
+        [Then("the tool result contains:")]
+        public void ThenTheToolResultContains(string expected)
+        {
+            World.ToolResult.Content.ShouldContain(expected.Replace("\r\n", "\n").Trim());
+        }
+
         [Then("the tool result contains a recipe {string}")]
         public void ThenTheToolResultContainsARecipe(string name)
         {

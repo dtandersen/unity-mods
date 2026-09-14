@@ -40,11 +40,16 @@ namespace OdinsAi.Mod
         public static ConfigEntry<string> systemPrompt;
         public static ConfigEntry<int> maxIterations;
         public static ConfigEntry<int> timeoutSeconds;
+        public static ConfigEntry<int> contextMessages;
 
         // Chat.Update() keeps the chat window active while m_hideTimer < m_hideDelay,
         // so resetting the timer to zero pops the window open.
         private static readonly FieldInfo ChatHideTimer =
             typeof(Chat).GetField("m_hideTimer", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        private static Conversation conversation;
+
+        private static Conversation Conversation => conversation ??= new Conversation(contextMessages.Value);
 
         public void Awake()
         {
@@ -63,6 +68,7 @@ namespace OdinsAi.Mod
                 "System prompt sent to the model.");
             maxIterations = Config.Bind("AI", "MaxToolIterations", 5, "Maximum tool round-trips per question.");
             timeoutSeconds = Config.Bind("AI", "TimeoutSeconds", 120, "HTTP timeout for model requests, in seconds. Raise it if the model is slow with a large conversation.");
+            contextMessages = Config.Bind("AI", "ContextMessages", 20, "How many previous messages to send with each question. 0 disables conversation history.");
 
             if (!modEnabled.Value)
             {
@@ -96,7 +102,7 @@ namespace OdinsAi.Mod
                 }
 
                 Post(terminal, "thinking...");
-                var answer = await assistant.AskAsync(prompt);
+                var answer = await assistant.AskAsync(prompt, contextMessages.Value > 0 ? Conversation : null);
                 Post(terminal, MarkdownToTmp.ToTmpRichText(answer));
             }
             catch (AiClientException ex)
@@ -122,6 +128,43 @@ namespace OdinsAi.Mod
             if (Chat.instance != null && ChatHideTimer != null)
             {
                 ChatHideTimer.SetValue(Chat.instance, 0f);
+            }
+        }
+
+        public Task ClearContextAsync(Terminal terminal)
+        {
+            Conversation.Clear();
+            Post(terminal, $"context cleared ({Conversation.Messages.Count} messages).");
+            return Task.CompletedTask;
+        }
+
+        public async Task CompactContextAsync(Terminal terminal)
+        {
+            try
+            {
+                var assistant = BuildAssistant(terminal);
+                if (assistant == null)
+                {
+                    Post(terminal, "game data is not loaded yet.");
+                    return;
+                }
+
+                if (Conversation.Messages.Count == 0)
+                {
+                    Post(terminal, "nothing to compact.");
+                    return;
+                }
+
+                Post(terminal, "compacting context...");
+                var summary = await assistant.CompactAsync(Conversation);
+                Post(terminal, string.IsNullOrWhiteSpace(summary)
+                    ? "compaction produced no summary."
+                    : "context compacted.");
+            }
+            catch (Exception ex)
+            {
+                Post(terminal, $"error: {ex.Message}");
+                Dbgl(ex.ToString());
             }
         }
 

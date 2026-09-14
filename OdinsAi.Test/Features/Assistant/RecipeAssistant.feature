@@ -42,6 +42,6 @@ Feature: Ask an AI model for recipes
       | assistant |                                                                | search_recipes |
       | tool      | Turnip stew: Turnip x3, Boar meat x1                           |                |
       | assistant |                                                                | search_food    |
-      | tool      | Cooked meat: 40 health, 30 stamina, 0 eitr, 1200s burn, 1 regen |                |
+      | tool      | Name,Health,Stamina,Eitr,BurnTime,Regen\nCooked meat,40,30,0,1200,1 |                |
 
     And the assistant replies "Turnip stew needs Turnip x3 and Boar meat x1; Cooked meat gives 40 health."

@@ -59,9 +59,28 @@ namespace OdinsAi.Tool
                 return $"No food found for '{query}'.";
             }
 
-            return string.Join("\n", foods.Select(food =>
-                $"{food.Name}: {Number(food.Health)} health, {Number(food.Stamina)} stamina, " +
-                $"{Number(food.Eitr)} eitr, {Number(food.BurnTime)}s burn, {Number(food.Regen)} regen"));
+            var lines = new List<string> { "Name,Health,Stamina,Eitr,BurnTime,Regen" };
+            lines.AddRange(foods.Select(food => string.Join(",",
+                Csv(food.Name),
+                Number(food.Health),
+                Number(food.Stamina),
+                Number(food.Eitr),
+                Number(food.BurnTime),
+                Number(food.Regen))));
+
+            return string.Join("\n", lines);
+        }
+
+        private static string Csv(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return string.Empty;
+            }
+
+            return value.IndexOfAny(new[] { ',', '"', '\n', '\r' }) < 0
+                ? value
+                : "\"" + value.Replace("\"", "\"\"") + "\"";
         }
 
         private static string Number(float value)

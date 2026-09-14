@@ -69,7 +69,8 @@ namespace OdinsAi.Test.Features.Assistant
                 actual.Role.ToString().ToLowerInvariant()
                     .ShouldBe(expected["Role"].ToLowerInvariant());
 
-                (actual.Content ?? string.Empty).ShouldBe(expected["Content"]);
+                (actual.Content ?? string.Empty)
+                    .ShouldBe((expected["Content"] ?? string.Empty).Replace("\\n", "\n"));
 
                 var expectedTool = expected["Tool call"];
                 if (string.IsNullOrEmpty(expectedTool))
