@@ -13,18 +13,27 @@ namespace OdinsAi.Ai
     {
         private readonly IAiClient _client;
         private readonly ToolHandler _tools;
+        private readonly string _systemPrompt;
         private readonly int _maxIterations;
 
-        public AiAssistant(IAiClient client, ToolHandler tools, int maxIterations = 5)
+        public AiAssistant(IAiClient client, ToolHandler tools, string systemPrompt = null, int maxIterations = 5)
         {
             _client = client;
             _tools = tools;
+            _systemPrompt = systemPrompt;
             _maxIterations = maxIterations;
         }
 
         public async Task<string> AskAsync(string prompt, CancellationToken cancellationToken = default)
         {
-            var messages = new List<ChatMessage> { new ChatMessage(ChatRole.User, prompt) };
+            var messages = new List<ChatMessage>();
+
+            if (!string.IsNullOrWhiteSpace(_systemPrompt))
+            {
+                messages.Add(new ChatMessage(ChatRole.System, _systemPrompt));
+            }
+
+            messages.Add(new ChatMessage(ChatRole.User, prompt));
 
             for (var i = 0; i < _maxIterations; i++)
             {

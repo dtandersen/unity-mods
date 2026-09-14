@@ -15,6 +15,11 @@
     <!-- Where built plugins are copied. Default: $(BepInExPath)\plugins -->
     <PluginDeployDir>C:\Users\<you>\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Mods\BepInEx\plugins</PluginDeployDir>
 
+    <!-- Folder under PluginDeployDir that builds deploy into. Default: $(ProjectName).
+         Set to the folder r2modman used for a locally imported mod so builds update
+         that copy rather than creating a second one. -->
+    <!-- <DeployFolderName>Author-ModName</DeployFolderName> -->
+
     <!-- Valheim managed assemblies. Default: $(GamePath)\valheim_Data\Managed -->
     <!-- <ManagedDataPath>...</ManagedDataPath> -->
 

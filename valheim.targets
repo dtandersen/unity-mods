@@ -55,6 +55,9 @@
     <ManagedDataPath Condition="'$(ManagedDataPath)' == ''">$(GamePath)\valheim_Data\Managed</ManagedDataPath>
     <UnityPath Condition="'$(UnityPath)' == ''">$(ManagedDataPath)</UnityPath>
     <PluginDeployDir Condition="'$(PluginDeployDir)' == ''">$(BepInExPath)\plugins</PluginDeployDir>
+    <!-- Folder the plugin is deployed into. Set this to the name r2modman used for a
+         locally imported mod so builds update the managed copy instead of adding a second one. -->
+    <DeployFolderName Condition="'$(DeployFolderName)' == ''">$(ProjectName)</DeployFolderName>
     <DeployOnBuild Condition="'$(DeployOnBuild)' == ''">true</DeployOnBuild>
     <PackageOnBuild Condition="'$(PackageOnBuild)' == ''">false</PackageOnBuild>
   </PropertyGroup>
@@ -72,6 +75,14 @@
     </Reference>
     <Reference Include="0Harmony">
       <HintPath>$(BepInExPath)\core\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Jotunn (optional dependency; present when installed via the mod manager) -->
+  <ItemGroup Condition="Exists('$(PluginDeployDir)\ValheimModding-Jotunn\Jotunn.dll')">
+    <Reference Include="Jotunn">
+      <HintPath>$(PluginDeployDir)\ValheimModding-Jotunn\Jotunn.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
@@ -154,6 +165,10 @@
       <HintPath>$(UnityPath)\UnityEngine.JSONSerializeModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestModule">
+      <HintPath>$(UnityPath)\UnityEngine.UnityWebRequestModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.TextMeshPro">
       <HintPath>$(ManagedDataPath)\Unity.TextMeshPro.dll</HintPath>
       <Private>False</Private>
@@ -163,7 +178,7 @@
   <!-- Copy the built plugin into the BepInEx plugins folder. -->
   <Target Name="Deploy" AfterTargets="Build" Condition="'$(DeployOnBuild)' == 'true'">
     <PropertyGroup>
-      <_DeployDir>$(PluginDeployDir)\$(ProjectName)</_DeployDir>
+      <_DeployDir>$(PluginDeployDir)\$(DeployFolderName)</_DeployDir>
     </PropertyGroup>
     <ItemGroup>
       <!-- Target DLL/pdb plus any copy-local dependencies (e.g. OdinsAi.Core.dll). -->
@@ -175,10 +190,22 @@
     <Message Importance="high" Text="Deployed $(ProjectName) to $(_DeployDir)" />
   </Target>
 
-  <!-- Optionally package a distributable zip. -->
-  <Target Name="Package" AfterTargets="Deploy" Condition="'$(PackageOnBuild)' == 'true'">
+  <!-- Optionally package an importable (Thunderstore/r2modman) zip. -->
+  <Target Name="Package" AfterTargets="Build" Condition="'$(PackageOnBuild)' == 'true'">
+    <PropertyGroup>
+      <_PackageStage>$(IntermediateOutputPath)package\</_PackageStage>
+    </PropertyGroup>
+    <ItemGroup>
+      <!-- Target DLL plus copy-local dependencies (e.g. OdinsAi.Core.dll). -->
+      <_PackageFiles Include="$(TargetDir)*.dll" />
+    </ItemGroup>
+    <RemoveDir Directories="$(_PackageStage)" />
+    <MakeDir Directories="$(_PackageStage)plugins" />
+    <Copy SourceFiles="@(_PackageFiles)" DestinationFolder="$(_PackageStage)plugins" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\manifest.json" DestinationFolder="$(_PackageStage)" Condition="Exists('$(MSBuildProjectDirectory)\manifest.json')" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\..\README.md" DestinationFolder="$(_PackageStage)" Condition="Exists('$(MSBuildProjectDirectory)\..\README.md')" />
     <MakeDir Directories="$(ProjectDir)artifacts" />
-    <ZipDirectory SourceDirectory="$(PluginDeployDir)\$(ProjectName)"
+    <ZipDirectory SourceDirectory="$(_PackageStage)"
                   DestinationFile="$(ProjectDir)artifacts\$(ProjectName).zip"
                   Overwrite="true" />
     <Message Importance="high" Text="Packaged $(ProjectDir)artifacts\$(ProjectName).zip" />
