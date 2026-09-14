@@ -31,6 +31,14 @@ namespace OdinsAi.Test.Support
 
         public FakeAiClient Ai { get; set; }
 
+        public RecordingChatSink Chat { get; } = new RecordingChatSink();
+
+        public string PlayerName { get; set; } = "Tester";
+
+        public bool GameDataLoaded { get; set; } = true;
+
+        public string AssistantName { get; set; } = "Odin";
+
         public Conversation Conversation { get; set; } = new Conversation();
 
         public List<string> Thinking { get; set; } = new List<string>();

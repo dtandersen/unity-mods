@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Threading.Tasks;
 using BepInEx;
 using BepInEx.Configuration;
@@ -45,11 +44,6 @@ namespace OdinsAi.Mod
         public static ConfigEntry<int> maxIterations;
         public static ConfigEntry<int> timeoutSeconds;
         public static ConfigEntry<int> contextMessages;
-
-        // Chat.Update() keeps the chat window active while m_hideTimer < m_hideDelay,
-        // so resetting the timer to zero pops the window open.
-        private static readonly FieldInfo ChatHideTimer =
-            typeof(Chat).GetField("m_hideTimer", BindingFlags.Instance | BindingFlags.NonPublic);
 
         private static Conversation conversation;
 
@@ -100,39 +94,19 @@ namespace OdinsAi.Mod
         /// first await, so the game-data snapshot and the HTTP request are created on
         /// the main thread; later continuations only touch plain C# data.
         /// </summary>
-        public async Task AskAsync(Terminal terminal, string prompt)
+        public Task AskAsync(Terminal terminal, string prompt)
         {
-            try
-            {
-                EchoQuestion(terminal, prompt);
-
-                var assistant = BuildAssistant(terminal);
-                if (assistant == null)
-                {
-                    Post(terminal, "game data is not loaded yet.");
-                    return;
-                }
-
-                Post(terminal, "Thinking...");
-                var answer = await assistant.AskAsync(prompt, contextMessages.Value > 0 ? Conversation : null);
-                Post(terminal, MarkdownToTmp.ToTmpRichText(answer));
-            }
-            catch (AiClientException ex)
-            {
-                Post(terminal, $"error: {ex.Message}");
-                Dbgl(ex.ToString());
-            }
-            catch (Exception ex)
-            {
-                Post(terminal, $"error: {ex.Message}");
-                Dbgl(ex.ToString());
-            }
+            return CreatePresenter(terminal).AskAsync(prompt, contextMessages.Value > 0 ? Conversation : null);
         }
 
-        private static void Post(Terminal terminal, string text)
+        private static ChatPresenter CreatePresenter(Terminal terminal)
         {
-            terminal.AddString(ChatNaming.Apply(aiName?.Value, text));
-            OpenChatWindow();
+            return new ChatPresenter(
+                new TerminalChatSink(terminal),
+                say => BuildAssistant(say),
+                LocalPlayerName,
+                AssistantName,
+                Dbgl);
         }
 
         /// <summary>
@@ -141,70 +115,24 @@ namespace OdinsAi.Mod
         /// </summary>
         public static string AssistantName => ChatNaming.Resolve(aiName?.Value);
 
-        /// <summary>
-        /// Echoes the player's question so it stays in the chat log. Command input
-        /// (including <c>/ai</c>) is not shown by the game, so the question would
-        /// otherwise vanish once the answer arrives.
-        /// </summary>
-        private static void EchoQuestion(Terminal terminal, string prompt)
+        private static string LocalPlayerName()
         {
             var player = Player.m_localPlayer;
-            var name = player != null ? player.GetPlayerName() : null;
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                name = "You";
-            }
-
-            terminal.AddString($"{name}: {prompt}");
-            OpenChatWindow();
-        }
-
-        private static void OpenChatWindow()
-        {
-            if (Chat.instance != null && ChatHideTimer != null)
-            {
-                ChatHideTimer.SetValue(Chat.instance, 0f);
-            }
+            return player?.GetPlayerName();
         }
 
         public Task ClearContextAsync(Terminal terminal)
         {
-            Conversation.Clear();
-            Post(terminal, $"context cleared ({Conversation.Messages.Count} messages).");
+            CreatePresenter(terminal).Clear(Conversation);
             return Task.CompletedTask;
         }
 
-        public async Task CompactContextAsync(Terminal terminal)
+        public Task CompactContextAsync(Terminal terminal)
         {
-            try
-            {
-                var assistant = BuildAssistant(terminal);
-                if (assistant == null)
-                {
-                    Post(terminal, "game data is not loaded yet.");
-                    return;
-                }
-
-                if (Conversation.Messages.Count == 0)
-                {
-                    Post(terminal, "nothing to compact.");
-                    return;
-                }
-
-                Post(terminal, "compacting context...");
-                var summary = await assistant.CompactAsync(Conversation);
-                Post(terminal, string.IsNullOrWhiteSpace(summary)
-                    ? "compaction produced no summary."
-                    : "context compacted.");
-            }
-            catch (Exception ex)
-            {
-                Post(terminal, $"error: {ex.Message}");
-                Dbgl(ex.ToString());
-            }
+            return CreatePresenter(terminal).CompactAsync(Conversation);
         }
 
-        private static AiAssistant BuildAssistant(Terminal terminal)
+        private static AiAssistant BuildAssistant(Action<string> say)
         {
             var database = ObjectDB.instance;
             if (database == null)
@@ -245,12 +173,8 @@ namespace OdinsAi.Mod
                 new UnityWebRequestTransport(timeoutSeconds.Value),
                 new OpenAiOptions(endpoint.Value, apiKey.Value, model.Value));
 
-            Action<string> thinking = showThinking.Value
-                ? line => Post(terminal, line)
-                : (Action<string>)null;
-            Action<string> toolOutput = showToolResults.Value
-                ? line => Post(terminal, line)
-                : (Action<string>)null;
+            Action<string> thinking = showThinking.Value ? say : null;
+            Action<string> toolOutput = showToolResults.Value ? say : null;
 
             return new AiAssistant(client, tools, systemPrompt.Value, maxIterations.Value, Dbgl, thinking, toolOutput);
         }
