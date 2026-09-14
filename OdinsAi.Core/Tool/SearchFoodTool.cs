@@ -69,7 +69,9 @@ namespace OdinsAi.Tool
                 Number(food.Regen),
             });
 
-            return Csv.Build(new[] { "Name", "Health", "Stamina", "Eitr", "Duration", "Healing" }, rows);
+            return Csv.Build(
+                new[] { "Name", "Health", "Stamina", "Eitr", "Duration (minutes)", "Healing (hp/tick)" },
+                rows);
         }
 
         private static string Number(float value)

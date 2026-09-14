@@ -15,7 +15,7 @@ Feature: Food tools
     Then the tool succeeds
     And the tool result contains:
       """
-      Name,Health,Stamina,Eitr,Duration,Healing
+      Name,Health,Stamina,Eitr,Duration (minutes),Healing (hp/tick)
       Cooked meat,40,30,0,20,1
       """
     And the tool result does not contain food "Magecap"
@@ -25,7 +25,7 @@ Feature: Food tools
     Then the tool succeeds
     And the tool result contains:
       """
-      Name,Health,Stamina,Eitr,Duration,Healing
+      Name,Health,Stamina,Eitr,Duration (minutes),Healing (hp/tick)
       Magecap,0,0,25,30,0
       """
 
