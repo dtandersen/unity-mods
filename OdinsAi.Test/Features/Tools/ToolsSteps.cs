@@ -59,6 +59,20 @@ namespace OdinsAi.Test.Features.Tools
             World.ToolResult.Content.ShouldContain(expected.Replace("\r\n", "\n").Trim());
         }
 
+        [Then("the item result is:")]
+        public void ThenTheItemResultIs(Table table)
+        {
+            var actual = ItemResults().ToDictionary(item => item.Name, item => item.Type);
+            actual.Count.ShouldBe(table.Rows.Count);
+
+            foreach (var row in table.Rows)
+            {
+                var name = row["Name"];
+                actual.ContainsKey(name).ShouldBeTrue($"expected '{name}' in the result");
+                actual[name].ShouldBe(row["Type"]);
+            }
+        }
+
         [Then("the tool result contains a recipe {string}")]
         public void ThenTheToolResultContainsARecipe(string name)
         {
@@ -116,6 +130,11 @@ namespace OdinsAi.Test.Features.Tools
                 actual.ContainsKey(name).ShouldBeTrue($"expected '{name}' in the result");
                 actual[name].ShouldBe(int.Parse(row["Amount"]));
             }
+        }
+
+        private IReadOnlyList<ItemSummary> ItemResults()
+        {
+            return World.ToolResult.ShouldBeOfType<ToolSuccess<SearchItemsResult>>().Value.Items;
         }
 
         private IReadOnlyList<RecipeSummary> RecipeResults()

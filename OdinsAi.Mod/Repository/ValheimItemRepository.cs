@@ -46,7 +46,7 @@ namespace OdinsAi.Repository
                         shared.m_foodRegen);
                 }
 
-                _items.Add(new Item(prefab.name, Localize(shared.m_name), food));
+                _items.Add(new Item(prefab.name, Localize(shared.m_name), ValheimItems.TypeOf(shared), food));
             }
         }
 

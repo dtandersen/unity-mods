@@ -46,7 +46,18 @@ namespace OdinsAi.Test.Support
                     Number(row["BurnTime"]),
                     Number(row["Regen"]));
 
-                Hooks.GetWorld(_context).Items.Add(new Item(row["Name"], row["Name"], stats));
+                Hooks.GetWorld(_context).Items.Add(new Item(row["Name"], row["Name"], "food", stats));
+            }
+        }
+
+        [Given("the item database contains:")]
+        public void GivenTheItemDatabaseContains(Table table)
+        {
+            var world = Hooks.GetWorld(_context);
+
+            foreach (var row in table.Rows)
+            {
+                world.Items.Add(new Item(row["Name"], row["Name"], row["Type"], null));
             }
         }
 

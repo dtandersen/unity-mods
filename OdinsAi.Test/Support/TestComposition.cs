@@ -15,10 +15,13 @@ namespace OdinsAi.Test.Support
     {
         public static ToolHandler Tools(World world)
         {
+            var itemIndex = new ItemIndex(world.Items);
+
             return new ToolHandler(new ITool[]
             {
                 new SearchRecipesTool(new SearchRecipesCommand(new RecipeIndex(world.Recipes))),
-                new SearchFoodTool(new SearchFoodCommand(new ItemIndex(world.Items))),
+                new SearchFoodTool(new SearchFoodCommand(itemIndex)),
+                new SearchItemsTool(new SearchItemsCommand(itemIndex)),
                 new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(world.Inventory))),
                 new SearchStorageTool(new SearchStorageCommand(new StorageIndex(world.Storage))),
             });

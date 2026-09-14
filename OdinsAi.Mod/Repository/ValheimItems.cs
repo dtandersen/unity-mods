@@ -19,7 +19,7 @@ namespace OdinsAi.Repository
                    (shared.m_food > 0f || shared.m_foodStamina > 0f || shared.m_foodEitr > 0f);
         }
 
-        private static string TypeOf(ItemDrop.ItemData.SharedData shared)
+        public static string TypeOf(ItemDrop.ItemData.SharedData shared)
         {
             if (shared == null)
             {

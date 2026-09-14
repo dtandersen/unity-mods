@@ -184,10 +184,13 @@ namespace OdinsAi.Mod
             IInventoryRepository inventory = new ValheimInventoryRepository();
             IStorageRepository storage = new ValheimStorageRepository();
 
+            var itemIndex = new ItemIndex(items);
+
             var tools = new ToolHandler(new ITool[]
             {
                 new SearchRecipesTool(new SearchRecipesCommand(new RecipeIndex(recipes))),
-                new SearchFoodTool(new SearchFoodCommand(new ItemIndex(items))),
+                new SearchFoodTool(new SearchFoodCommand(itemIndex)),
+                new SearchItemsTool(new SearchItemsCommand(itemIndex)),
                 new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(inventory))),
                 new SearchStorageTool(new SearchStorageCommand(new StorageIndex(storage))),
             });

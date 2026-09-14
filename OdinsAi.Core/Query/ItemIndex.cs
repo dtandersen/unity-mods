@@ -7,9 +7,8 @@ using OdinsAi.Repository;
 namespace OdinsAi.Query
 {
     /// <summary>
-    /// Search over items. Food search matches only items that have food stats, and
-    /// like recipe search is a case-insensitive substring on the name with
-    /// insignificant ordering.
+    /// Search over the game's items. Matching is a case-insensitive substring on
+    /// the name with insignificant ordering.
     /// </summary>
     public sealed class ItemIndex
     {
@@ -20,6 +19,20 @@ namespace OdinsAi.Query
             _items = items;
         }
 
+        /// <summary>All items whose name matches <paramref name="query"/>.</summary>
+        public IReadOnlyList<Item> Search(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return Array.Empty<Item>();
+            }
+
+            return _items.GetAll()
+                .Where(item => item.Name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
+                .ToArray();
+        }
+
+        /// <summary>Only food items whose name matches <paramref name="query"/>.</summary>
         public IReadOnlyList<Item> SearchFood(string query)
         {
             if (string.IsNullOrWhiteSpace(query))
