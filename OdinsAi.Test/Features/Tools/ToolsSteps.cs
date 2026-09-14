@@ -81,6 +81,37 @@ namespace OdinsAi.Test.Features.Tools
             }
         }
 
+        [Then("the creature result is:")]
+        public void ThenTheCreatureResultIs(Table table)
+        {
+            var actual = CreatureResults().ToDictionary(creature => creature.Name, creature => creature);
+            actual.Count.ShouldBe(table.Rows.Count);
+
+            foreach (var row in table.Rows)
+            {
+                var name = row["Name"];
+                actual.ContainsKey(name).ShouldBeTrue($"expected '{name}' in the result");
+                actual[name].Distance.ShouldBe(float.Parse(row["Distance"], CultureInfo.InvariantCulture));
+                actual[name].Direction.ShouldBe(row["Direction"]);
+            }
+        }
+
+        [Then("the resource result is:")]
+        public void ThenTheResourceResultIs(Table table)
+        {
+            var actual = ResourceResults().ToDictionary(resource => resource.Name, resource => resource);
+            actual.Count.ShouldBe(table.Rows.Count);
+
+            foreach (var row in table.Rows)
+            {
+                var name = row["Name"];
+                actual.ContainsKey(name).ShouldBeTrue($"expected '{name}' in the result");
+                actual[name].Type.ShouldBe(row["Type"]);
+                actual[name].Distance.ShouldBe(float.Parse(row["Distance"], CultureInfo.InvariantCulture));
+                actual[name].Direction.ShouldBe(row["Direction"]);
+            }
+        }
+
         [Then("the dungeon result is:")]
         public void ThenTheDungeonResultIs(Table table)
         {
@@ -153,6 +184,16 @@ namespace OdinsAi.Test.Features.Tools
                 actual.ContainsKey(name).ShouldBeTrue($"expected '{name}' in the result");
                 actual[name].ShouldBe(int.Parse(row["Amount"]));
             }
+        }
+
+        private IReadOnlyList<CreatureSummary> CreatureResults()
+        {
+            return World.ToolResult.ShouldBeOfType<ToolSuccess<SearchCreaturesResult>>().Value.Creatures;
+        }
+
+        private IReadOnlyList<ResourceSummary> ResourceResults()
+        {
+            return World.ToolResult.ShouldBeOfType<ToolSuccess<SearchResourcesResult>>().Value.Resources;
         }
 
         private IReadOnlyList<DungeonSummary> DungeonResults()

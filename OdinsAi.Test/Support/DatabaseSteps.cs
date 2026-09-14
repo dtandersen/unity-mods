@@ -75,6 +75,35 @@ namespace OdinsAi.Test.Support
             }
         }
 
+        [Given("the nearby creatures are:")]
+        public void GivenTheNearbyCreaturesAre(Table table)
+        {
+            var world = Hooks.GetWorld(_context);
+
+            foreach (var row in table.Rows)
+            {
+                world.Creatures.Add(new Creature(
+                    row["Name"],
+                    Number(row["Distance"]),
+                    row["Direction"]));
+            }
+        }
+
+        [Given("the nearby resources are:")]
+        public void GivenTheNearbyResourcesAre(Table table)
+        {
+            var world = Hooks.GetWorld(_context);
+
+            foreach (var row in table.Rows)
+            {
+                world.Resources.Add(new ResourceNode(
+                    row["Name"],
+                    row["Type"],
+                    Number(row["Distance"]),
+                    row["Direction"]));
+            }
+        }
+
         [Given("my inventory contains:")]
         public void GivenMyInventoryContains(Table table)
         {

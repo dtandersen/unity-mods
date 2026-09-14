@@ -184,6 +184,8 @@ namespace OdinsAi.Mod
             IInventoryRepository inventory = new ValheimInventoryRepository();
             IStorageRepository storage = new ValheimStorageRepository();
             IDungeonRepository dungeons = new ValheimDungeonRepository();
+            ICreatureRepository creatures = new ValheimCreatureRepository();
+            IResourceRepository resources = new ValheimResourceRepository();
 
             var itemIndex = new ItemIndex(items);
 
@@ -195,6 +197,8 @@ namespace OdinsAi.Mod
                 new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(inventory))),
                 new SearchStorageTool(new SearchStorageCommand(new StorageIndex(storage))),
                 new SearchDungeonsTool(new SearchDungeonsCommand(new DungeonIndex(dungeons))),
+                new SearchCreaturesTool(new SearchCreaturesCommand(new CreatureIndex(creatures))),
+                new SearchResourcesTool(new SearchResourcesCommand(new ResourceIndex(resources))),
             });
 
             var client = new OpenAiChatClient(

@@ -25,6 +25,8 @@ namespace OdinsAi.Test.Support
                 new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(world.Inventory))),
                 new SearchStorageTool(new SearchStorageCommand(new StorageIndex(world.Storage))),
                 new SearchDungeonsTool(new SearchDungeonsCommand(new DungeonIndex(world.Dungeons))),
+                new SearchCreaturesTool(new SearchCreaturesCommand(new CreatureIndex(world.Creatures))),
+                new SearchResourcesTool(new SearchResourcesCommand(new ResourceIndex(world.Resources))),
             });
         }
 
