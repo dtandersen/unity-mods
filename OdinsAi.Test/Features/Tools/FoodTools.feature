@@ -1,7 +1,7 @@
 Feature: Food tools
 
   The search_food tool returns the stats of food items the model asks about as
-  CSV (name, health, stamina, eitr, burn time, regen).
+  CSV (name, health, stamina, eitr, duration in minutes, healing per tick).
 
   Background:
     Given the item database contains food:
@@ -15,8 +15,8 @@ Feature: Food tools
     Then the tool succeeds
     And the tool result contains:
       """
-      Name,Health,Stamina,Eitr,BurnTime,Regen
-      Cooked meat,40,30,0,1200,1
+      Name,Health,Stamina,Eitr,Duration,Healing
+      Cooked meat,40,30,0,20,1
       """
     And the tool result does not contain food "Magecap"
 
@@ -25,8 +25,8 @@ Feature: Food tools
     Then the tool succeeds
     And the tool result contains:
       """
-      Name,Health,Stamina,Eitr,BurnTime,Regen
-      Magecap,0,0,25,1800,0
+      Name,Health,Stamina,Eitr,Duration,Healing
+      Magecap,0,0,25,30,0
       """
 
   Scenario: The food tool requires its query argument

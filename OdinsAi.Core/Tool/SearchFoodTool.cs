@@ -7,7 +7,7 @@ using OdinsAi.Entity;
 
 namespace OdinsAi.Tool
 {
-    /// <summary>Tool: find food by name and return its stats.</summary>
+    /// <summary>Tool: find food by name and return its stats as CSV.</summary>
     public sealed class SearchFoodTool : ITool
     {
         private readonly SearchFoodCommand _command;
@@ -19,7 +19,7 @@ namespace OdinsAi.Tool
 
         public ToolDefinition Definition { get; } = new ToolDefinition(
             "search_food",
-            "Search the game's food by name and return its stats (health, stamina, eitr, burn time, regen).",
+            "Search the game's food by name. Returns CSV with columns Name, Health, Stamina, Eitr, Duration (minutes), Healing (health per tick).",
             new[] { new ToolParameter("query", "Text to match against food names, e.g. 'cooked'.") });
 
         public ToolResult Execute(ToolArguments arguments)
@@ -59,28 +59,17 @@ namespace OdinsAi.Tool
                 return $"No food found for '{query}'.";
             }
 
-            var lines = new List<string> { "Name,Health,Stamina,Eitr,BurnTime,Regen" };
-            lines.AddRange(foods.Select(food => string.Join(",",
-                Csv(food.Name),
+            var rows = foods.Select(food => new[]
+            {
+                food.Name,
                 Number(food.Health),
                 Number(food.Stamina),
                 Number(food.Eitr),
-                Number(food.BurnTime),
-                Number(food.Regen))));
+                Number(food.BurnTime / 60f),
+                Number(food.Regen),
+            });
 
-            return string.Join("\n", lines);
-        }
-
-        private static string Csv(string value)
-        {
-            if (string.IsNullOrEmpty(value))
-            {
-                return string.Empty;
-            }
-
-            return value.IndexOfAny(new[] { ',', '"', '\n', '\r' }) < 0
-                ? value
-                : "\"" + value.Replace("\"", "\"\"") + "\"";
+            return Csv.Build(new[] { "Name", "Health", "Stamina", "Eitr", "Duration", "Healing" }, rows);
         }
 
         private static string Number(float value)

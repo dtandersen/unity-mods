@@ -6,7 +6,7 @@ using OdinsAi.Entity;
 
 namespace OdinsAi.Tool
 {
-    /// <summary>Tool: find recipes whose name matches a query.</summary>
+    /// <summary>Tool: find recipes whose name matches a query, as CSV.</summary>
     public sealed class SearchRecipesTool : ITool
     {
         private readonly SearchRecipesCommand _command;
@@ -18,7 +18,7 @@ namespace OdinsAi.Tool
 
         public ToolDefinition Definition { get; } = new ToolDefinition(
             "search_recipes",
-            "Search the game's recipes by name. Use for questions like 'how do I make stew?'.",
+            "Search the game's recipes by name. Returns CSV with columns Name, Station, Ingredients.",
             new[] { new ToolParameter("query", "Text to match against recipe names, e.g. 'stew'.") });
 
         public ToolResult Execute(ToolArguments arguments)
@@ -55,9 +55,14 @@ namespace OdinsAi.Tool
                 return $"No recipes found for '{query}'.";
             }
 
-            return string.Join("\n", summaries.Select(summary =>
-                $"{summary.Name}: " +
-                string.Join(", ", summary.Ingredients.Select(i => $"{i.ItemId} x{i.Amount}"))));
+            var rows = summaries.Select(summary => new[]
+            {
+                summary.Name,
+                summary.CraftingStation ?? string.Empty,
+                string.Join("; ", summary.Ingredients.Select(i => $"{i.ItemId} x{i.Amount}")),
+            });
+
+            return Csv.Build(new[] { "Name", "Station", "Ingredients" }, rows);
         }
     }
 }

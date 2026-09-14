@@ -22,12 +22,12 @@ Feature: Ask an AI model for recipes
     When I ask the assistant "How do I make stew?"
 
     Then the request sent back to the AI model should contain these messages:
-      | Role      | Content                              | Tool call      |
-      | user      | How do I make stew?                  |                |
-      | assistant |                                      | search_recipes |
-      | tool      | Turnip stew: Turnip x3, Boar meat x1 |                |
+      | Role      | Content                                                              | Tool call      |
+      | user      | How do I make stew?                                                  |                |
+      | assistant |                                                                      | search_recipes |
+      | tool      | Name,Station,Ingredients\nTurnip stew,cauldron,Turnip x3; Boar meat x1 |                |
 
-    And the assistant replies "Turnip stew: Turnip x3, Boar meat x1"
+    And the assistant replies "Name,Station,Ingredients\nTurnip stew,cauldron,Turnip x3; Boar meat x1"
 
   Scenario: The assistant can use two different tools in one conversation
     Given the AI model will request the tool "search_recipes" with query "stew"
@@ -40,8 +40,8 @@ Feature: Ask an AI model for recipes
       | Role      | Content                                                        | Tool call      |
       | user      | What can I cook from a turnip, and what food is best?          |                |
       | assistant |                                                                | search_recipes |
-      | tool      | Turnip stew: Turnip x3, Boar meat x1                           |                |
+      | tool      | Name,Station,Ingredients\nTurnip stew,cauldron,Turnip x3; Boar meat x1 |                |
       | assistant |                                                                | search_food    |
-      | tool      | Name,Health,Stamina,Eitr,BurnTime,Regen\nCooked meat,40,30,0,1200,1 |                |
+      | tool      | Name,Health,Stamina,Eitr,Duration,Healing\nCooked meat,40,30,0,20,1 |                |
 
     And the assistant replies "Turnip stew needs Turnip x3 and Boar meat x1; Cooked meat gives 40 health."

@@ -1,15 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using OdinsAi.Command;
 
 namespace OdinsAi.Tool
 {
     /// <summary>
-    /// Tool: search nearby containers (within 100 metres) for items. Matching stacks
-    /// are summed per item name across all containers. Parses/validates the model's
-    /// arguments and shapes the result, then delegates to
-    /// <see cref="SearchStorageCommand"/>.
+    /// Tool: search nearby containers (within 100 metres) for items. Returns totals
+    /// per item as CSV.
     /// </summary>
     public sealed class SearchStorageTool : ITool
     {
@@ -22,7 +21,7 @@ namespace OdinsAi.Tool
 
         public ToolDefinition Definition { get; } = new ToolDefinition(
             "search_storage",
-            "Search containers near the player (within 100 metres) and return the total amount of each matching item. Use for questions like 'where are my turnips?'.",
+            "Search containers near the player (within 100 metres). Returns CSV with columns Name, Amount.",
             new[] { new ToolParameter("query", "Text to match against item names, e.g. 'turnip'.") });
 
         public ToolResult Execute(ToolArguments arguments)
@@ -53,7 +52,9 @@ namespace OdinsAi.Tool
                 return $"No items matching '{query}' in nearby containers.";
             }
 
-            return string.Join(", ", items.Select(item => $"{item.Name} x{item.Amount}"));
+            return Csv.Build(
+                new[] { "Name", "Amount" },
+                items.Select(item => new[] { item.Name, item.Amount.ToString(CultureInfo.InvariantCulture) }));
         }
     }
 }

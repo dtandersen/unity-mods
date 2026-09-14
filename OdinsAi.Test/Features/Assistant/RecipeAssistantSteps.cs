@@ -89,7 +89,7 @@ namespace OdinsAi.Test.Features.Assistant
         [Then("the assistant replies {string}")]
         public void ThenTheAssistantReplies(string expected)
         {
-            World.Reply.ShouldBe(expected);
+            World.Reply.ShouldBe(expected.Replace("\\n", "\n"));
         }
 
         private FakeAiClient Model()
