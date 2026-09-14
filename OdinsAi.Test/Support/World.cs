@@ -48,15 +48,17 @@ namespace OdinsAi.Test.Support
 
         public bool ShowThinking { get; set; }
 
+        public bool ShowToolCalls { get; set; }
+
+        public bool ShowToolResults { get; set; }
+
+        public ChatPresenter Presenter { get; set; }
+
         public Task AskTask { get; set; }
 
         public Conversation Conversation { get; set; } = new Conversation();
 
-        public List<string> Thinking { get; set; } = new List<string>();
-
-        public List<string> ToolCalls { get; set; } = new List<string>();
-
-        public List<string> ToolOutput { get; set; } = new List<string>();
+        public RecordingActivity Activity { get; set; } = new RecordingActivity();
 
         public ToolResult ToolResult { get; set; }
 

@@ -13,11 +13,9 @@ namespace OdinsAi.Ai
     /// </summary>
     /// <remarks>
     /// The optional callbacks keep the core free of any logging/UI framework:
-    /// <paramref name="log"/> receives the full trace (plugin logs it),
-    /// <paramref name="thinking"/> receives the model's reasoning and narration,
-    /// <paramref name="toolCall"/> receives each requested tool call, and
-    /// <paramref name="toolOutput"/> receives each tool's result. The plugin decides
-    /// independently which of these to post to chat.
+    /// <paramref name="log"/> receives the full trace (plugin logs it) and
+    /// <paramref name="activity"/> receives reasoning, tool calls and tool output.
+    /// The implementor of <see cref="IAssistantActivity"/> decides what to show.
     /// </remarks>
     public sealed class AiAssistant
     {
@@ -26,9 +24,7 @@ namespace OdinsAi.Ai
         private readonly string _systemPrompt;
         private readonly int _maxIterations;
         private readonly Action<string> _log;
-        private readonly Action<string> _thinking;
-        private readonly Action<string> _toolCall;
-        private readonly Action<string> _toolOutput;
+        private readonly IAssistantActivity _activity;
 
         public AiAssistant(
             IAiClient client,
@@ -36,18 +32,14 @@ namespace OdinsAi.Ai
             string systemPrompt = null,
             int maxIterations = 5,
             Action<string> log = null,
-            Action<string> thinking = null,
-            Action<string> toolCall = null,
-            Action<string> toolOutput = null)
+            IAssistantActivity activity = null)
         {
             _client = client;
             _tools = tools;
             _systemPrompt = systemPrompt;
             _maxIterations = maxIterations;
             _log = log;
-            _thinking = thinking;
-            _toolCall = toolCall;
-            _toolOutput = toolOutput;
+            _activity = activity;
         }
 
         /// <summary>
@@ -86,7 +78,7 @@ namespace OdinsAi.Ai
                 if (!string.IsNullOrEmpty(completion?.Reasoning))
                 {
                     Log($"reasoning: {completion.Reasoning}");
-                    Thinking(completion.Reasoning);
+                    _activity?.OnReasoning(completion.Reasoning);
                 }
 
                 if (completion == null || !completion.HasToolCalls)
@@ -100,7 +92,7 @@ namespace OdinsAi.Ai
 
                 if (!string.IsNullOrEmpty(completion.Content))
                 {
-                    Thinking(completion.Content);
+                    _activity?.OnReasoning(completion.Content);
                 }
 
                 messages.Add(new ChatMessage(ChatRole.Assistant, completion.Content, completion.ToolCalls));
@@ -109,11 +101,11 @@ namespace OdinsAi.Ai
                 {
                     var described = $"{call.Name}({Describe(call.Arguments)})";
                     Log($"tool call: {described}");
-                    ToolCall(described);
+                    _activity?.OnToolCall(described);
 
                     var result = _tools.Handle(call);
                     Log($"tool result: {result.Content}");
-                    ToolOutput(result.Content);
+                    _activity?.OnToolOutput(result.Content);
                     messages.Add(new ChatMessage(ChatRole.Tool, result.Content, ToolCallId: call.Id));
                 }
             }
@@ -157,21 +149,6 @@ namespace OdinsAi.Ai
         private void Log(string message)
         {
             _log?.Invoke(message);
-        }
-
-        private void Thinking(string message)
-        {
-            _thinking?.Invoke(message);
-        }
-
-        private void ToolCall(string message)
-        {
-            _toolCall?.Invoke(message);
-        }
-
-        private void ToolOutput(string message)
-        {
-            _toolOutput?.Invoke(message);
         }
 
         private static string Describe(ToolArguments arguments)

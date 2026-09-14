@@ -68,7 +68,14 @@ namespace OdinsAi.Test.Features.Assistant
         public void WhenIStartAskingTheAssistantInChat(string prompt)
         {
             World.Ai ??= new FakeAiClient();
-            World.AskTask = TestComposition.Presenter(World).AskAsync(prompt);
+            World.Presenter = TestComposition.Presenter(World);
+            World.AskTask = World.Presenter.AskAsync(prompt);
+        }
+
+        [When("the assistant reports a tool call {string}")]
+        public void WhenTheAssistantReportsAToolCall(string text)
+        {
+            World.Presenter.OnToolCall(text);
         }
 
         [When("I advance the clock by {int} seconds")]

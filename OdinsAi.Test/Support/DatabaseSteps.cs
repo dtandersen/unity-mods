@@ -24,6 +24,12 @@ namespace OdinsAi.Test.Support
             Hooks.GetWorld(_context).Recipes.Add(NewRecipe(name));
         }
 
+        [Given("the recipe database contains a locked recipe {string}")]
+        public void GivenTheRecipeDatabaseContainsALockedRecipe(string name)
+        {
+            Hooks.GetWorld(_context).Recipes.Add(NewRecipe(name, unlocked: false));
+        }
+
         [Given("the recipe database contains a {string} recipe with ingredients:")]
         public void GivenTheRecipeDatabaseContainsARecipe(string name, Table table)
         {
@@ -32,6 +38,21 @@ namespace OdinsAi.Test.Support
                 .ToArray();
 
             Hooks.GetWorld(_context).Recipes.Add(NewRecipe(name, ingredients));
+        }
+
+        [Given("the recipe database contains a {string} recipe with upgrades:")]
+        public void GivenTheRecipeDatabaseContainsARecipeWithUpgrades(string name, Table table)
+        {
+            var upgrades = table.Rows
+                .Select(row => new UpgradeLevel(
+                    int.Parse(row["Quality"]),
+                    row["Station"],
+                    int.Parse(row["StationLevel"]),
+                    ParseIngredients(row["Ingredients"]),
+                    row["Unlocked"].Equals("Yes", StringComparison.OrdinalIgnoreCase)))
+                .ToArray();
+
+            Hooks.GetWorld(_context).Recipes.Add(NewRecipe(name, upgrades: upgrades));
         }
 
         [Given("the item database contains food:")]
@@ -167,7 +188,7 @@ namespace OdinsAi.Test.Support
             return float.Parse(value, CultureInfo.InvariantCulture);
         }
 
-        private static Recipe NewRecipe(string name, IReadOnlyList<Ingredient> ingredients = null)
+        private static Recipe NewRecipe(string name, IReadOnlyList<Ingredient> ingredients = null, IReadOnlyList<UpgradeLevel> upgrades = null, bool unlocked = true)
         {
             return new Recipe(
                 Id: name,
@@ -175,7 +196,30 @@ namespace OdinsAi.Test.Support
                 Name: name,
                 Amount: 1,
                 CraftingStation: "cauldron",
-                Ingredients: ingredients ?? Array.Empty<Ingredient>());
+                Ingredients: ingredients ?? Array.Empty<Ingredient>(),
+                Upgrades: upgrades,
+                Unlocked: unlocked);
+        }
+
+        /// <summary>Parses an ingredient cell like <c>Wood x4; Bronze x2</c>.</summary>
+        private static IReadOnlyList<Ingredient> ParseIngredients(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return Array.Empty<Ingredient>();
+            }
+
+            return value.Split(';')
+                .Select(part => part.Trim())
+                .Where(part => part.Length > 0)
+                .Select(part =>
+                {
+                    var pieces = part.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    var item = string.Join(" ", pieces.Take(pieces.Length - 1));
+                    var amount = int.Parse(pieces[pieces.Length - 1].TrimStart('x'));
+                    return new Ingredient(item, amount);
+                })
+                .ToArray();
         }
     }
 }

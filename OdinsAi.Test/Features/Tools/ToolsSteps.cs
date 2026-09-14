@@ -131,6 +131,25 @@ namespace OdinsAi.Test.Features.Tools
             }
         }
 
+        [Then("the upgrade result is:")]
+        public void ThenTheUpgradeResultIs(Table table)
+        {
+            var upgrades = World.ToolResult.ShouldBeOfType<ToolSuccess<SearchUpgradesResult>>().Value.Upgrades;
+            upgrades.Count.ShouldBe(table.Rows.Count);
+
+            for (var i = 0; i < table.Rows.Count; i++)
+            {
+                var row = table.Rows[i];
+                upgrades[i].Item.ShouldBe(row["Item"]);
+                upgrades[i].Quality.ShouldBe(int.Parse(row["Quality"]));
+                upgrades[i].Station.ShouldBe(row["Station"]);
+                upgrades[i].StationLevel.ShouldBe(int.Parse(row["StationLevel"]));
+                upgrades[i].Unlocked.ShouldBe(row["Unlocked"].Equals("Yes", StringComparison.OrdinalIgnoreCase));
+                string.Join("; ", upgrades[i].Ingredients.Select(ingredient => $"{ingredient.ItemId} x{ingredient.Amount}"))
+                    .ShouldBe(row["Ingredients"]);
+            }
+        }
+
         [Then("the item result is:")]
         public void ThenTheItemResultIs(Table table)
         {
@@ -196,6 +215,18 @@ namespace OdinsAi.Test.Features.Tools
         {
             RecipeResults().Any(recipe => recipe.Name == name).ShouldBeTrue(
                 $"expected '{name}' in: {string.Join(", ", RecipeResults().Select(r => r.Name))}");
+        }
+
+        [Then("the recipe {string} is unlocked")]
+        public void ThenTheRecipeIsUnlocked(string name)
+        {
+            RecipeResults().Single(recipe => recipe.Name == name).Unlocked.ShouldBeTrue();
+        }
+
+        [Then("the recipe {string} is locked")]
+        public void ThenTheRecipeIsLocked(string name)
+        {
+            RecipeResults().Single(recipe => recipe.Name == name).Unlocked.ShouldBeFalse();
         }
 
         [Then("the tool result does not contain a recipe {string}")]

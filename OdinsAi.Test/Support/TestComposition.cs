@@ -20,6 +20,7 @@ namespace OdinsAi.Test.Support
             return new ToolHandler(new ITool[]
             {
                 new SearchRecipesTool(new SearchRecipesCommand(new RecipeIndex(world.Recipes))),
+                new SearchUpgradesTool(new SearchUpgradesCommand(new RecipeIndex(world.Recipes))),
                 new SearchFoodTool(new SearchFoodCommand(itemIndex)),
                 new SearchItemsTool(new SearchItemsCommand(itemIndex)),
                 new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(world.Inventory))),
@@ -39,19 +40,21 @@ namespace OdinsAi.Test.Support
             return new AiAssistant(world.Ai, Tools(world));
         }
 
-        public static AiAssistant Assistant(World world, Action<string> thinking, Action<string> toolCall, Action<string> toolOutput)
+        public static AiAssistant Assistant(World world, IAssistantActivity activity)
         {
-            return new AiAssistant(world.Ai, Tools(world), null, 5, null, thinking, toolCall, toolOutput);
+            return new AiAssistant(world.Ai, Tools(world), null, 5, null, activity);
         }
 
         public static ChatPresenter Presenter(World world)
         {
             return new ChatPresenter(
                 world.Chat,
-                say => world.GameDataLoaded ? Assistant(world, say, say, say) : null,
+                activity => world.GameDataLoaded ? Assistant(world, activity) : null,
                 () => world.PlayerName,
                 world.AssistantName,
                 showThinking: world.ShowThinking,
+                showToolCalls: world.ShowToolCalls,
+                showToolResults: world.ShowToolResults,
                 clock: world.Clock);
         }
     }

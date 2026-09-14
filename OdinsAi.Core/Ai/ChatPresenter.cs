@@ -7,47 +7,55 @@ using OdinsAi.Time;
 namespace OdinsAi.Ai
 {
     /// <summary>
-    /// Presents an assistant turn to chat: echoes the player's question, then the
-    /// answer. Chat writes go through <see cref="IChatSink"/>, so this flow is
-    /// testable without Unity or a Terminal.
+    /// Presents an assistant turn to chat: echoes the player's question, decides
+    /// which of the assistant's activity to show, and posts the answer. Chat writes
+    /// go through <see cref="IChatSink"/>, so this flow is testable without Unity.
     /// </summary>
     /// <remarks>
-    /// When the assistant's activity is not shown (<c>showThinking</c> is false) the
-    /// chat would otherwise be silent while a slow model works. After
-    /// <see cref="ThinkingDelay"/> with no chat activity the presenter posts a
-    /// <c>Thinking...</c> status, repeating for each further quiet interval.
+    /// The presenter implements <see cref="IAssistantActivity"/>: reasoning, tool
+    /// calls and tool output are shown only when their option is enabled. While the
+    /// assistant works, if a piece of activity is not shown and no chat output has
+    /// appeared for <see cref="ThinkingDelay"/>, a <c>Thinking...</c> status is
+    /// posted instead, repeating for each further quiet interval.
     /// </remarks>
-    public sealed class ChatPresenter
+    public sealed class ChatPresenter : IAssistantActivity
     {
         /// <summary>Quiet period before a <c>Thinking...</c> status is posted.</summary>
         public static readonly TimeSpan ThinkingDelay = TimeSpan.FromSeconds(10);
 
         private readonly IChatSink _chat;
-        private readonly Func<Action<string>, AiAssistant> _assistantFactory;
+        private readonly Func<IAssistantActivity, AiAssistant> _assistantFactory;
         private readonly Func<string> _playerName;
         private readonly string _assistantName;
         private readonly Action<string> _log;
         private readonly bool _showThinking;
+        private readonly bool _showToolCalls;
+        private readonly bool _showToolResults;
         private readonly IClock _clock;
-        private DateTimeOffset _lastWrite;
+        private DateTimeOffset _lastEvent;
+        private bool _hasActivity;
 
         /// <param name="chat">Destination for chat lines.</param>
         /// <param name="assistantFactory">
         /// Builds the assistant, or returns null when game data is not loaded. It
-        /// receives the action to use for the assistant's activity callbacks.
+        /// receives the activity sink to report reasoning and tool use to.
         /// </param>
         /// <param name="playerName">Supplies the local player's name for the echo.</param>
         /// <param name="assistantName">Name the assistant posts under.</param>
         /// <param name="log">Receives exception details.</param>
-        /// <param name="showThinking">Whether assistant activity is already shown in chat.</param>
+        /// <param name="showThinking">Post the model's reasoning and narration.</param>
+        /// <param name="showToolCalls">Post each requested tool call.</param>
+        /// <param name="showToolResults">Post each tool's raw output.</param>
         /// <param name="clock">Time source; defaults to the system clock.</param>
         public ChatPresenter(
             IChatSink chat,
-            Func<Action<string>, AiAssistant> assistantFactory,
+            Func<IAssistantActivity, AiAssistant> assistantFactory,
             Func<string> playerName = null,
             string assistantName = null,
             Action<string> log = null,
             bool showThinking = false,
+            bool showToolCalls = false,
+            bool showToolResults = false,
             IClock clock = null)
         {
             _chat = chat;
@@ -56,8 +64,10 @@ namespace OdinsAi.Ai
             _assistantName = assistantName;
             _log = log;
             _showThinking = showThinking;
+            _showToolCalls = showToolCalls;
+            _showToolResults = showToolResults;
             _clock = clock ?? SystemClock.Instance;
-            _lastWrite = _clock.UtcNow;
+            _lastEvent = _clock.UtcNow;
         }
 
         /// <summary>Answers a question, echoing it first so it stays in the log.</summary>
@@ -70,7 +80,7 @@ namespace OdinsAi.Ai
             {
                 Echo(prompt);
 
-                var assistant = _assistantFactory?.Invoke(Say);
+                var assistant = _assistantFactory?.Invoke(this);
                 if (assistant == null)
                 {
                     Say("game data is not loaded yet.");
@@ -104,7 +114,7 @@ namespace OdinsAi.Ai
         {
             try
             {
-                var assistant = _assistantFactory?.Invoke(Say);
+                var assistant = _assistantFactory?.Invoke(this);
                 if (assistant == null)
                 {
                     Say("game data is not loaded yet.");
@@ -136,6 +146,39 @@ namespace OdinsAi.Ai
             Write(ChatNaming.Apply(_assistantName, text));
         }
 
+        /// <inheritdoc/>
+        public void OnReasoning(string text)
+        {
+            if (_showThinking)
+            {
+                Say(text);
+            }
+
+            NoteActivity();
+        }
+
+        /// <inheritdoc/>
+        public void OnToolCall(string text)
+        {
+            if (_showToolCalls)
+            {
+                Say(text);
+            }
+
+            NoteActivity();
+        }
+
+        /// <inheritdoc/>
+        public void OnToolOutput(string text)
+        {
+            if (_showToolResults)
+            {
+                Say(text);
+            }
+
+            NoteActivity();
+        }
+
         private async Task<string> AnswerAsync(
             AiAssistant assistant,
             string prompt,
@@ -144,12 +187,8 @@ namespace OdinsAi.Ai
         {
             var task = assistant.AskAsync(prompt, conversation, cancellationToken);
 
-            // When activity is shown, its own lines are the progress indicator.
-            if (_showThinking)
-            {
-                return await task;
-            }
-
+            // While the assistant works, a quiet chat gets a placeholder, but only
+            // once there has been something to wait for (reasoning or a tool call).
             while (!task.IsCompleted)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -160,7 +199,7 @@ namespace OdinsAi.Ai
                     break;
                 }
 
-                if (_clock.UtcNow - _lastWrite >= ThinkingDelay)
+                if (_hasActivity && _clock.UtcNow - _lastEvent >= ThinkingDelay)
                 {
                     Say("Thinking...");
                 }
@@ -180,10 +219,16 @@ namespace OdinsAi.Ai
             Write($"{name}: {prompt}");
         }
 
+        private void NoteActivity()
+        {
+            _hasActivity = true;
+            _lastEvent = _clock.UtcNow;
+        }
+
         private void Write(string line)
         {
             _chat.Write(line);
-            _lastWrite = _clock.UtcNow;
+            _lastEvent = _clock.UtcNow;
         }
     }
 }

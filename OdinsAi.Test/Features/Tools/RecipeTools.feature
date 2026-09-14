@@ -28,3 +28,9 @@ Feature: Recipe tools
   Scenario: The tool requires its query argument
     When I call the "search_recipes" tool without arguments
     Then the tool fails with "Missing required argument 'query'."
+
+  Scenario: Locked recipes are flagged
+    Given the recipe database contains a locked recipe "Secret stew"
+    When I call the "search_recipes" tool with query "secret"
+    Then the tool succeeds
+    And the recipe "Secret stew" is locked

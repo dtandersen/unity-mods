@@ -109,11 +109,13 @@ namespace OdinsAi.Mod
         {
             return new ChatPresenter(
                 new TerminalChatSink(terminal),
-                say => BuildAssistant(say),
+                activity => BuildAssistant(activity),
                 LocalPlayerName,
                 AssistantName,
                 Dbgl,
-                showThinking: showThinking.Value);
+                showThinking: showThinking.Value,
+                showToolCalls: showToolCalls.Value,
+                showToolResults: showToolResults.Value);
         }
 
         /// <summary>
@@ -139,7 +141,7 @@ namespace OdinsAi.Mod
             return CreatePresenter(terminal).CompactAsync(Conversation);
         }
 
-        private static AiAssistant BuildAssistant(Action<string> say)
+        private static AiAssistant BuildAssistant(IAssistantActivity activity)
         {
             var database = ObjectDB.instance;
             if (database == null)
@@ -152,11 +154,13 @@ namespace OdinsAi.Mod
             IInventoryRepository inventory = new ValheimInventoryRepository();
 
             var itemIndex = new ItemIndex(items);
+            var recipeIndex = new RecipeIndex(recipes);
             var compendium = new CompendiumIndex(new ValheimCompendiumRepository(enableCheats.Value));
 
             var toolList = new List<ITool>
             {
-                new SearchRecipesTool(new SearchRecipesCommand(new RecipeIndex(recipes))),
+                new SearchRecipesTool(new SearchRecipesCommand(recipeIndex)),
+                new SearchUpgradesTool(new SearchUpgradesCommand(recipeIndex)),
                 new SearchFoodTool(new SearchFoodCommand(itemIndex)),
                 new SearchItemsTool(new SearchItemsCommand(itemIndex)),
                 new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(inventory))),
@@ -182,11 +186,7 @@ namespace OdinsAi.Mod
                 new UnityWebRequestTransport(timeoutSeconds.Value),
                 new OpenAiOptions(endpoint.Value, apiKey.Value, model.Value, reasoningEffort.Value));
 
-            Action<string> thinking = showThinking.Value ? say : null;
-            Action<string> toolCall = showToolCalls.Value ? say : null;
-            Action<string> toolOutput = showToolResults.Value ? say : null;
-
-            return new AiAssistant(client, tools, systemPrompt.Value, maxIterations.Value, Dbgl, thinking, toolCall, toolOutput);
+            return new AiAssistant(client, tools, systemPrompt.Value, maxIterations.Value, Dbgl, activity);
         }
     }
 }

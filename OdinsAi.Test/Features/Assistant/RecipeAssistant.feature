@@ -25,9 +25,9 @@ Feature: Ask an AI model for recipes
       | Role      | Content                                                              | Tool call      |
       | user      | How do I make stew?                                                  |                |
       | assistant |                                                                      | search_recipes |
-      | tool      | Name,Station,Ingredients\nTurnip stew,cauldron,Turnip x3; Boar meat x1 |                |
+      | tool      | Name,Station,Ingredients,Unlocked\nTurnip stew,cauldron,Turnip x3; Boar meat x1,Yes |                |
 
-    And the assistant replies "Name,Station,Ingredients\nTurnip stew,cauldron,Turnip x3; Boar meat x1"
+    And the assistant replies "Name,Station,Ingredients,Unlocked\nTurnip stew,cauldron,Turnip x3; Boar meat x1,Yes"
 
   Scenario: The assistant can use two different tools in one conversation
     Given the AI model will request the tool "search_recipes" with query "stew"
@@ -40,7 +40,7 @@ Feature: Ask an AI model for recipes
       | Role      | Content                                                        | Tool call      |
       | user      | What can I cook from a turnip, and what food is best?          |                |
       | assistant |                                                                | search_recipes |
-      | tool      | Name,Station,Ingredients\nTurnip stew,cauldron,Turnip x3; Boar meat x1 |                |
+      | tool      | Name,Station,Ingredients,Unlocked\nTurnip stew,cauldron,Turnip x3; Boar meat x1,Yes |                |
       | assistant |                                                                | search_food    |
       | tool      | Name,Health,Stamina,Eitr,Duration (minutes),Healing (hp/tick)\nCooked meat,40,30,0,20,1 |                |
 
