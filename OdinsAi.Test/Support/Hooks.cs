@@ -20,6 +20,12 @@ namespace OdinsAi.Test.Support
             _context.Set(new World(), WorldKey);
         }
 
+        [AfterScenario]
+        public void DisposeWorld()
+        {
+            _context.Get<World>(WorldKey).Dispose();
+        }
+
         public static World GetWorld(ScenarioContext context)
         {
             return context.Get<World>(WorldKey);

@@ -1,3 +1,5 @@
+using System;
+using OdinsAi.Ai;
 using OdinsAi.Repository;
 using OdinsAi.Test.Fakes;
 using OdinsAi.Tool;
@@ -8,7 +10,7 @@ namespace OdinsAi.Test.Support
     /// Shared state for a scenario. Built once per scenario by <see cref="Hooks"/>
     /// and shared by all step bindings.
     /// </summary>
-    public sealed class World
+    public sealed class World : IDisposable
     {
         public InMemoryRecipeRepository Recipes { get; } = new InMemoryRecipeRepository();
 
@@ -19,5 +21,16 @@ namespace OdinsAi.Test.Support
         public ToolResult ToolResult { get; set; }
 
         public string Reply { get; set; }
+
+        public FakeOpenAiServer Server { get; set; }
+
+        public AiCompletion Completion { get; set; }
+
+        public AiClientException CompletionError { get; set; }
+
+        public void Dispose()
+        {
+            Server?.Dispose();
+        }
     }
 }

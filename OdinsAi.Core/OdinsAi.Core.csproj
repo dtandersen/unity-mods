@@ -16,4 +16,12 @@
     testable from OdinsAi.Test without the game running.
   -->
 
+  <!--
+    Newtonsoft ships with Valheim, so we compile against it but do not ship our own
+    copy; at runtime the game's assembly is used.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" ExcludeAssets="runtime" />
+  </ItemGroup>
+
 </Project>

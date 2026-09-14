@@ -17,6 +17,8 @@
     <PackageReference Include="Shouldly" Version="4.3.0" />
     <PackageReference Include="TngTech.ArchUnitNET" Version="0.13.4" />
     <PackageReference Include="TngTech.ArchUnitNET.TUnit" Version="0.13.4" />
+    <!-- Compiled against by OdinsAi.Core with runtime assets excluded; tests need it at runtime. -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
   <ItemGroup>
