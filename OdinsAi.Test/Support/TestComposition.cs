@@ -45,6 +45,14 @@ namespace OdinsAi.Test.Support
             return new AiAssistant(world.Ai, Tools(world), null, 5, null, activity);
         }
 
+        public static MentionResponder Responder(World world)
+        {
+            return new MentionResponder(
+                world.Chat,
+                () => Assistant(world),
+                world.AssistantName);
+        }
+
         public static ChatPresenter Presenter(World world)
         {
             return new ChatPresenter(

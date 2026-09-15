@@ -54,6 +54,10 @@ namespace OdinsAi.Test.Support
 
         public ChatPresenter Presenter { get; set; }
 
+        public MentionResponder MentionResponder { get; set; }
+
+        public string MentionTrigger { get; set; } = "!odin";
+
         public Task AskTask { get; set; }
 
         public Conversation Conversation { get; set; } = new Conversation();

@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BepInEx;
 using BepInEx.Configuration;
+using HarmonyLib;
 using Jotunn.Managers;
 using OdinsAi.Ai;
 using OdinsAi.Ai.OpenAi;
@@ -37,6 +39,8 @@ namespace OdinsAi.Mod
         public static ConfigEntry<bool> showToolCalls;
         public static ConfigEntry<bool> showToolResults;
         public static ConfigEntry<bool> enableCheats;
+        public static ConfigEntry<bool> respondToMentions;
+        public static ConfigEntry<string> mentionTrigger;
         public static ConfigEntry<string> aiName;
         public static ConfigEntry<string> endpoint;
         public static ConfigEntry<string> apiKey;
@@ -48,6 +52,9 @@ namespace OdinsAi.Mod
         public static ConfigEntry<int> contextMessages;
 
         private static Conversation conversation;
+
+        private static readonly ConcurrentQueue<Action> MainThreadActions = new ConcurrentQueue<Action>();
+        private static MentionResponder mentionResponder;
 
         private static Conversation Conversation => conversation ??= new Conversation(contextMessages.Value);
 
@@ -64,6 +71,10 @@ namespace OdinsAi.Mod
                 "Post each tool's raw output (CSV) to chat.");
             enableCheats = Config.Bind("General", "EnableCheats", false,
                 "Allow Odin's Eye to scan the world (dungeons, creatures, resources). Off by default.");
+            respondToMentions = Config.Bind("General", "RespondToMentions", false,
+                "Answer chat mentions in shared chat. Enable on the machine that should act as Odin.");
+            mentionTrigger = Config.Bind("General", "MentionTrigger", "!odin",
+                "Chat prefix that asks the assistant a question.");
             aiName = Config.Bind("General", "Name", "Odin",
                 "Name the assistant uses in chat. Default: Odin.");
 
@@ -80,6 +91,9 @@ namespace OdinsAi.Mod
             timeoutSeconds = Config.Bind("AI", "TimeoutSeconds", 120, "HTTP timeout for model requests, in seconds. Raise it if the model is slow with a large conversation.");
             contextMessages = Config.Bind("AI", "ContextMessages", 20, "How many previous messages to send with each question. 0 disables conversation history.");
 
+            // Watches incoming chat for a mention. Cheap, and gated in OnPlayerChat.
+            Harmony.CreateAndPatchAll(typeof(ChatMentionPatch), ModGuid);
+
             if (!modEnabled.Value)
             {
                 return;
@@ -93,6 +107,55 @@ namespace OdinsAi.Mod
         public static void Dbgl(string message)
         {
             Debug.Log($"{typeof(BepInExPlugin).Namespace} {message}");
+        }
+
+        private void Update()
+        {
+            while (MainThreadActions.TryDequeue(out var action))
+            {
+                try
+                {
+                    action();
+                }
+                catch (Exception ex)
+                {
+                    Dbgl(ex.ToString());
+                }
+            }
+        }
+
+        /// <summary>Queues work to run on the Unity main thread.</summary>
+        public static void RunOnMainThread(Action action)
+        {
+            MainThreadActions.Enqueue(action);
+        }
+
+        /// <summary>
+        /// Called for every chat message. If it is a mention and mention handling is
+        /// enabled, asks Odin in shared chat.
+        /// </summary>
+        public static void OnPlayerChat(string text)
+        {
+            if (!modEnabled.Value || !respondToMentions.Value)
+            {
+                return;
+            }
+
+            if (!Mention.TryParse(mentionTrigger.Value, text, out var prompt))
+            {
+                return;
+            }
+
+            _ = MentionResponderInstance().HandleAsync(prompt);
+        }
+
+        private static MentionResponder MentionResponderInstance()
+        {
+            return mentionResponder ??= new MentionResponder(
+                new BroadcastChatSink(RunOnMainThread),
+                () => BuildAssistant(null),
+                AssistantName,
+                Dbgl);
         }
 
         /// <summary>
