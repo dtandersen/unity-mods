@@ -106,10 +106,10 @@ namespace OdinsAi.Mod
             timeoutSeconds = Config.Bind("AI", "TimeoutSeconds", 120, "HTTP timeout for model requests, in seconds. Raise it if the model is slow with a large conversation.");
             contextMessages = Config.Bind("AI", "ContextMessages", 20, "How many previous messages to send with each question. 0 disables conversation history.");
 
-            // Watches incoming chat for a mention. Cheap, and gated in OnPlayerChat.
-            Harmony.CreateAndPatchAll(typeof(ChatMentionPatch), ModGuid);
-            // Watches relayed RPCs for chat. Only acts on a server.
-            Harmony.CreateAndPatchAll(typeof(ServerChatRelayPatch), ModGuid);
+            // Chat patches: client mention detection and the server relay watcher.
+            var harmony = new Harmony(ModGuid);
+            harmony.PatchAll(typeof(ChatMentionPatch));
+            harmony.PatchAll(typeof(ServerChatRelayPatch));
 
             if (!modEnabled.Value)
             {
