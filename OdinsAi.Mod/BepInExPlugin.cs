@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using BepInEx;
 using BepInEx.Configuration;
@@ -60,6 +61,15 @@ namespace OdinsAi.Mod
         private static IRecipeRepository catalogueRecipes;
         private static IBossRepository catalogueBosses;
 
+        // Server-mode chat relay parsing.
+        private static readonly int SayMethodHash = "Say".GetStableHashCode();
+        private static readonly int ChatMessageMethodHash = "ChatMessage".GetStableHashCode();
+        private static readonly ParameterInfo[] SayParameters =
+            typeof(Talker).GetMethod("RPC_Say", BindingFlags.Instance | BindingFlags.NonPublic)?.GetParameters();
+        private static readonly ParameterInfo[] ChatMessageParameters =
+            typeof(Chat).GetMethod("RPC_ChatMessage", BindingFlags.Instance | BindingFlags.NonPublic)?.GetParameters();
+        private static bool serverBusy;
+
         private static Conversation Conversation => conversation ??= new Conversation(contextMessages.Value);
 
         public void Awake()
@@ -97,6 +107,8 @@ namespace OdinsAi.Mod
 
             // Watches incoming chat for a mention. Cheap, and gated in OnPlayerChat.
             Harmony.CreateAndPatchAll(typeof(ChatMentionPatch), ModGuid);
+            // Watches relayed RPCs for chat. Only acts on a server.
+            Harmony.CreateAndPatchAll(typeof(ServerChatRelayPatch), ModGuid);
 
             if (!modEnabled.Value)
             {
@@ -160,6 +172,100 @@ namespace OdinsAi.Mod
                 () => BuildAssistant(Player.m_localPlayer, null),
                 AssistantName,
                 Dbgl);
+        }
+
+        /// <summary>
+        /// Called for every RPC the local peer routes. On a dedicated server this
+        /// includes player chat, which the server only relays between clients.
+        /// </summary>
+        public static void OnServerRoutedRpc(ZRoutedRpc.RoutedRPCData data)
+        {
+            if (data == null || !modEnabled.Value || !respondToMentions.Value)
+            {
+                return;
+            }
+
+            if (ZNet.instance == null || !ZNet.instance.IsServer() || SayParameters == null || ChatMessageParameters == null)
+            {
+                return;
+            }
+
+            try
+            {
+                if (data.m_methodHash == SayMethodHash)
+                {
+                    OnServerSay(data);
+                }
+                else if (data.m_methodHash == ChatMessageMethodHash)
+                {
+                    OnServerChatMessage(data);
+                }
+            }
+            catch (Exception ex)
+            {
+                Dbgl($"chat relay parse failed: {ex}");
+            }
+        }
+
+        private static void OnServerSay(ZRoutedRpc.RoutedRPCData data)
+        {
+            // Args for "Say": [sender, int type, UserInfo user, string text]
+            var args = ZNetView.Deserialize(data.m_senderPeerID, SayParameters, data.m_parameters);
+            if (args.Length < 4 || !(args[2] is UserInfo user))
+            {
+                return;
+            }
+
+            var player = PlayerForZdo(data.m_targetZDO) ?? PlayerForPeer(data.m_senderPeerID);
+            DispatchServerMention(player, user, args[3] as string, player != null ? player.GetHeadPoint() : Vector3.zero);
+        }
+
+        private static void OnServerChatMessage(ZRoutedRpc.RoutedRPCData data)
+        {
+            // Args for "ChatMessage": [sender, Vector3 position, int type, UserInfo, string text]
+            var args = ZNetView.Deserialize(data.m_senderPeerID, ChatMessageParameters, data.m_parameters);
+            if (args.Length < 5 || !(args[3] is UserInfo user))
+            {
+                return;
+            }
+
+            DispatchServerMention(PlayerForPeer(data.m_senderPeerID), user, args[4] as string, (Vector3)args[1]);
+        }
+
+        private static void DispatchServerMention(Player player, UserInfo user, string text, Vector3 position)
+        {
+            if (player == null || serverBusy || !Mention.TryParse(mentionTrigger.Value, text, out var prompt))
+            {
+                return;
+            }
+
+            serverBusy = true;
+            Dbgl($"server mention from '{player.GetPlayerName()}': {prompt}");
+            var responder = new MentionResponder(
+                new ServerChatSink(user, position, RunOnMainThread),
+                () => BuildAssistant(player, null),
+                AssistantName,
+                Dbgl);
+
+            _ = responder.HandleAsync(prompt).ContinueWith(_ => serverBusy = false);
+        }
+
+        private static Player PlayerForZdo(ZDOID zdo)
+        {
+            if (zdo.IsNone() || ZDOMan.instance == null || ZNetScene.instance == null)
+            {
+                return null;
+            }
+
+            var data = ZDOMan.instance.GetZDO(zdo);
+            var view = data != null ? ZNetScene.instance.FindInstance(data) : null;
+            return view != null ? view.gameObject.GetComponent<Player>() : null;
+        }
+
+        private static Player PlayerForPeer(long peerId)
+        {
+            var peer = ZNet.instance != null ? ZNet.instance.GetPeer(peerId) : null;
+            return peer != null ? PlayerForZdo(peer.m_characterID) : null;
         }
 
         /// <summary>
