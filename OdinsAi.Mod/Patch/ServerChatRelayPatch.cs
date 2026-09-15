@@ -1,6 +1,6 @@
 using HarmonyLib;
 
-namespace OdinsAi.Mod
+namespace OdinsAi.Mod.Patch
 {
     /// <summary>
     /// On a dedicated server the chat handlers never run: the server only relays

@@ -13,6 +13,7 @@ using OdinsAi.Command;
 using OdinsAi.Core;
 using OdinsAi.Formatting;
 using OdinsAi.Mod.Ai;
+using OdinsAi.Mod.Patch;
 using OdinsAi.Query;
 using OdinsAi.Repository;
 using OdinsAi.Tool;

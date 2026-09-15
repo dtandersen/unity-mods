@@ -1,6 +1,6 @@
 using HarmonyLib;
 
-namespace OdinsAi.Mod
+namespace OdinsAi.Mod.Patch
 {
     /// <summary>
     /// Watches incoming chat for a mention. Every client receives every chat
