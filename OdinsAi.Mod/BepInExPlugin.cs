@@ -55,6 +55,10 @@ namespace OdinsAi.Mod
 
         private static readonly ConcurrentQueue<Action> MainThreadActions = new ConcurrentQueue<Action>();
         private static MentionResponder mentionResponder;
+        private static ObjectDB catalogueDatabase;
+        private static IItemRepository catalogueItems;
+        private static IRecipeRepository catalogueRecipes;
+        private static IBossRepository catalogueBosses;
 
         private static Conversation Conversation => conversation ??= new Conversation(contextMessages.Value);
 
@@ -204,6 +208,24 @@ namespace OdinsAi.Mod
             return CreatePresenter(terminal, Player.m_localPlayer).CompactAsync(Conversation);
         }
 
+        /// <summary>
+        /// World data (items, recipes, bosses) does not depend on the player, so it is
+        /// built once and reused until the ObjectDB instance changes.
+        /// </summary>
+        private static void EnsureCatalogues(ObjectDB database)
+        {
+            if (catalogueItems != null && ReferenceEquals(catalogueDatabase, database))
+            {
+                return;
+            }
+
+            catalogueItems = new ValheimItemRepository(database);
+            catalogueRecipes = new ValheimRecipeRepository(database);
+            catalogueBosses = new ValheimBossRepository();
+            catalogueDatabase = database;
+            Dbgl("rebuilt world catalogues");
+        }
+
         private static AiAssistant BuildAssistant(Player player, IAssistantActivity activity)
         {
             var database = ObjectDB.instance;
@@ -212,12 +234,11 @@ namespace OdinsAi.Mod
                 return null;
             }
 
-            IItemRepository items = new ValheimItemRepository(database);
-            IRecipeRepository recipes = new ValheimRecipeRepository(database);
+            EnsureCatalogues(database);
 
             var playerContext = new ValheimPlayerContext(database, player, enableCheats.Value);
-            var itemIndex = new ItemIndex(items);
-            var recipeIndex = new RecipeIndex(recipes);
+            var itemIndex = new ItemIndex(catalogueItems);
+            var recipeIndex = new RecipeIndex(catalogueRecipes);
             var inventoryIndex = new InventoryIndex(playerContext);
             var storageIndex = new StorageIndex(playerContext);
             var compendium = new CompendiumIndex(playerContext);
@@ -233,7 +254,7 @@ namespace OdinsAi.Mod
                 new SearchCompendiumTool(new SearchCompendiumCommand(compendium)),
                 new ReadCompendiumTool(new ReadCompendiumCommand(compendium)),
                 new GetLocationTool(new GetLocationCommand(playerContext)),
-                new ListBossesTool(new GetBossStatusCommand(new ValheimBossRepository())),
+                new ListBossesTool(new GetBossStatusCommand(catalogueBosses)),
             };
 
             // World scanning is opt-in: without cheats the model can't see through
