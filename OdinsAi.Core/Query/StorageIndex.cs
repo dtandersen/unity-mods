@@ -9,11 +9,11 @@ namespace OdinsAi.Query
     /// <summary>Case-insensitive substring search over items in nearby containers.</summary>
     public sealed class StorageIndex
     {
-        private readonly IStorageRepository _storage;
+        private readonly IPlayerContext _player;
 
-        public StorageIndex(IStorageRepository storage)
+        public StorageIndex(IPlayerContext player)
         {
-            _storage = storage;
+            _player = player;
         }
 
         /// <summary>Containers holding at least one matching item, with only the matches kept.</summary>
@@ -25,7 +25,7 @@ namespace OdinsAi.Query
             }
 
             var matches = new List<StorageContainer>();
-            foreach (var container in _storage.GetNearbyContainers(radius))
+            foreach (var container in _player.GetNearbyStorage(radius))
             {
                 var items = container.Items
                     .Where(item => item.Name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)

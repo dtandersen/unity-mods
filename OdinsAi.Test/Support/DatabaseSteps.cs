@@ -132,14 +132,14 @@ namespace OdinsAi.Test.Support
 
             foreach (var row in table.Rows)
             {
-                world.Compendium.Add(new CompendiumEntry(row["Topic"], row["Text"]));
+                world.Player.AddCompendium(new CompendiumEntry(row["Topic"], row["Text"]));
             }
         }
 
         [Given("my position is {string}, {string}, {string} in the {string} biome")]
         public void GivenMyPositionIs(string x, string y, string z, string biome)
         {
-            Hooks.GetWorld(_context).Location.Current = new Location(Number(x), Number(y), Number(z), biome);
+            Hooks.GetWorld(_context).Player.Location = new Location(Number(x), Number(y), Number(z), biome);
         }
 
         [Given("the bosses are:")]
@@ -162,7 +162,7 @@ namespace OdinsAi.Test.Support
 
             foreach (var row in table.Rows)
             {
-                world.Inventory.Add(new ItemStack(
+                world.Player.AddInventory(new ItemStack(
                     row["Item"], row["Item"], int.Parse(row["Amount"]), 1, row["Type"]));
             }
         }
@@ -179,7 +179,7 @@ namespace OdinsAi.Test.Support
                         row["Item"], row["Item"], int.Parse(row["Amount"]), 1, row["Type"]))
                     .ToArray();
 
-                world.Storage.Add(new StorageContainer(group.Key, items));
+                world.Player.AddStorage(new StorageContainer(group.Key, items));
             }
         }
 

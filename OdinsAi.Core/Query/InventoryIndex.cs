@@ -9,11 +9,11 @@ namespace OdinsAi.Query
     /// <summary>Case-insensitive substring search over the player's carried items.</summary>
     public sealed class InventoryIndex
     {
-        private readonly IInventoryRepository _inventory;
+        private readonly IPlayerContext _player;
 
-        public InventoryIndex(IInventoryRepository inventory)
+        public InventoryIndex(IPlayerContext player)
         {
-            _inventory = inventory;
+            _player = player;
         }
 
         /// <summary>
@@ -30,7 +30,7 @@ namespace OdinsAi.Query
                 return Array.Empty<ItemStack>();
             }
 
-            return _inventory.GetCarriedItems()
+            return _player.Inventory
                 .Where(item =>
                     (!hasQuery || item.Name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0) &&
                     (!hasType || string.Equals(item.Type, type, StringComparison.OrdinalIgnoreCase)))

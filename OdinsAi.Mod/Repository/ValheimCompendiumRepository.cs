@@ -12,7 +12,7 @@ namespace OdinsAi.Repository
     /// <see cref="Tutorial.instance"/>. Text is localized on construction, so the
     /// snapshot must be taken on the Unity main thread; the result is plain C#.
     /// </summary>
-    public sealed class ValheimCompendiumRepository : ICompendiumRepository
+    public sealed class ValheimCompendiumRepository
     {
         private static readonly Regex RichTextTags = new Regex("<[^>]+>", RegexOptions.Compiled);
 

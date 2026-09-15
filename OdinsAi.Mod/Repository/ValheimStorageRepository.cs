@@ -10,7 +10,7 @@ namespace OdinsAi.Repository
     /// Finds containers within a radius of the target player using a physics sphere
     /// query, and materialises their contents.
     /// </summary>
-    public sealed class ValheimStorageRepository : IStorageRepository
+    public sealed class ValheimStorageRepository
     {
         private readonly Player _player;
 

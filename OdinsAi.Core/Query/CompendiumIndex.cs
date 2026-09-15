@@ -12,11 +12,11 @@ namespace OdinsAi.Query
     /// </summary>
     public sealed class CompendiumIndex
     {
-        private readonly ICompendiumRepository _compendium;
+        private readonly IPlayerContext _player;
 
-        public CompendiumIndex(ICompendiumRepository compendium)
+        public CompendiumIndex(IPlayerContext player)
         {
-            _compendium = compendium;
+            _player = player;
         }
 
         /// <summary>Pages whose topic or text matches <paramref name="query"/>, by topic.</summary>
@@ -27,7 +27,7 @@ namespace OdinsAi.Query
                 return Array.Empty<CompendiumEntry>();
             }
 
-            return _compendium.GetEntries()
+            return _player.Compendium
                 .Where(entry => Contains(entry.Topic, query) || Contains(entry.Text, query))
                 .OrderBy(entry => entry.Topic, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
@@ -44,7 +44,7 @@ namespace OdinsAi.Query
                 return null;
             }
 
-            var entries = _compendium.GetEntries();
+            var entries = _player.Compendium;
             return entries.FirstOrDefault(entry => string.Equals(entry.Topic, topic, StringComparison.OrdinalIgnoreCase))
                 ?? entries
                     .Where(entry => Contains(entry.Topic, topic))

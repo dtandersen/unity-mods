@@ -18,19 +18,13 @@ namespace OdinsAi.Test.Support
 
         public InMemoryItemRepository Items { get; } = new InMemoryItemRepository();
 
-        public InMemoryInventoryRepository Inventory { get; } = new InMemoryInventoryRepository();
-
-        public InMemoryStorageRepository Storage { get; } = new InMemoryStorageRepository();
+        public InMemoryPlayerContext Player { get; } = new InMemoryPlayerContext();
 
         public InMemoryDungeonRepository Dungeons { get; } = new InMemoryDungeonRepository();
 
         public InMemoryCreatureRepository Creatures { get; } = new InMemoryCreatureRepository();
 
         public InMemoryResourceRepository Resources { get; } = new InMemoryResourceRepository();
-
-        public InMemoryCompendiumRepository Compendium { get; } = new InMemoryCompendiumRepository();
-
-        public InMemoryLocationRepository Location { get; } = new InMemoryLocationRepository();
 
         public InMemoryBossRepository Bosses { get; } = new InMemoryBossRepository();
 

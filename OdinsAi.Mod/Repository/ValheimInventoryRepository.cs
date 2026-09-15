@@ -6,7 +6,7 @@ using OdinsAi.Entity;
 namespace OdinsAi.Repository
 {
     /// <summary>Reads the target player's carried items from the game.</summary>
-    public sealed class ValheimInventoryRepository : IInventoryRepository
+    public sealed class ValheimInventoryRepository
     {
         private readonly Player _player;
 

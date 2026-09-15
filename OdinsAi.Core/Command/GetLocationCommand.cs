@@ -6,16 +6,16 @@ namespace OdinsAi.Command
     /// <summary>Domain operation: look up the player's current location.</summary>
     public sealed class GetLocationCommand
     {
-        private readonly ILocationRepository _locations;
+        private readonly IPlayerContext _player;
 
-        public GetLocationCommand(ILocationRepository locations)
+        public GetLocationCommand(IPlayerContext player)
         {
-            _locations = locations;
+            _player = player;
         }
 
         public Location Execute()
         {
-            return _locations.GetLocation();
+            return _player.Location;
         }
     }
 }

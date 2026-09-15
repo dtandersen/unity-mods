@@ -3,7 +3,7 @@ using OdinsAi.Entity;
 namespace OdinsAi.Repository
 {
     /// <summary>Reads the target player's position and current biome from the live game.</summary>
-    public sealed class ValheimLocationRepository : ILocationRepository
+    public sealed class ValheimLocationRepository
     {
         private readonly Player _player;
 

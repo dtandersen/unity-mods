@@ -214,11 +214,13 @@ namespace OdinsAi.Mod
 
             IItemRepository items = new ValheimItemRepository(database);
             IRecipeRepository recipes = new ValheimRecipeRepository(database, player);
-            IInventoryRepository inventory = new ValheimInventoryRepository(player);
 
+            var playerContext = new ValheimPlayerContext(player, enableCheats.Value);
             var itemIndex = new ItemIndex(items);
             var recipeIndex = new RecipeIndex(recipes);
-            var compendium = new CompendiumIndex(new ValheimCompendiumRepository(player, enableCheats.Value));
+            var inventoryIndex = new InventoryIndex(playerContext);
+            var storageIndex = new StorageIndex(playerContext);
+            var compendium = new CompendiumIndex(playerContext);
 
             var toolList = new List<ITool>
             {
@@ -226,11 +228,11 @@ namespace OdinsAi.Mod
                 new SearchUpgradesTool(new SearchUpgradesCommand(recipeIndex)),
                 new SearchFoodTool(new SearchFoodCommand(itemIndex)),
                 new SearchItemsTool(new SearchItemsCommand(itemIndex)),
-                new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(inventory))),
-                new SearchStorageTool(new SearchStorageCommand(new StorageIndex(new ValheimStorageRepository(player)))),
+                new SearchInventoryTool(new SearchInventoryCommand(inventoryIndex)),
+                new SearchStorageTool(new SearchStorageCommand(storageIndex)),
                 new SearchCompendiumTool(new SearchCompendiumCommand(compendium)),
                 new ReadCompendiumTool(new ReadCompendiumCommand(compendium)),
-                new GetLocationTool(new GetLocationCommand(new ValheimLocationRepository(player))),
+                new GetLocationTool(new GetLocationCommand(playerContext)),
                 new ListBossesTool(new GetBossStatusCommand(new ValheimBossRepository())),
             };
 
