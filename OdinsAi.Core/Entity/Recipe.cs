@@ -13,7 +13,6 @@ namespace OdinsAi.Entity
     /// Cost of each quality upgrade, or null when none are known. Quality 1 (the
     /// base craft) is not included; see <see cref="Ingredients"/>.
     /// </param>
-    /// <param name="Unlocked">Whether the player has discovered this recipe.</param>
     public sealed record Recipe(
         string Id,
         string ResultItemId,
@@ -21,6 +20,5 @@ namespace OdinsAi.Entity
         int Amount,
         string CraftingStation,
         IReadOnlyList<Ingredient> Ingredients,
-        IReadOnlyList<UpgradeLevel> Upgrades = null,
-        bool Unlocked = false);
+        IReadOnlyList<UpgradeLevel> Upgrades = null);
 }

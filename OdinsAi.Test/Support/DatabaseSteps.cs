@@ -21,13 +21,27 @@ namespace OdinsAi.Test.Support
         [Given("the recipe database contains {string}")]
         public void GivenTheRecipeDatabaseContains(string name)
         {
-            Hooks.GetWorld(_context).Recipes.Add(NewRecipe(name));
+            var world = Hooks.GetWorld(_context);
+            world.Recipes.Add(NewRecipe(name));
+            world.Player.AddKnownRecipe(name);
         }
 
         [Given("the recipe database contains a locked recipe {string}")]
         public void GivenTheRecipeDatabaseContainsALockedRecipe(string name)
         {
-            Hooks.GetWorld(_context).Recipes.Add(NewRecipe(name, unlocked: false));
+            Hooks.GetWorld(_context).Recipes.Add(NewRecipe(name));
+        }
+
+        [Given("the recipe {string} is known")]
+        public void GivenTheRecipeIsKnown(string name)
+        {
+            Hooks.GetWorld(_context).Player.AddKnownRecipe(name);
+        }
+
+        [Given("a {string} station of level {int} is nearby")]
+        public void GivenAStationOfLevelIsNearby(string name, int level)
+        {
+            Hooks.GetWorld(_context).Player.AddStation(new StationInfo(name, level));
         }
 
         [Given("the recipe database contains a {string} recipe with ingredients:")]
@@ -37,7 +51,9 @@ namespace OdinsAi.Test.Support
                 .Select(row => new Ingredient(row["Ingredient"], int.Parse(row["Amount"])))
                 .ToArray();
 
-            Hooks.GetWorld(_context).Recipes.Add(NewRecipe(name, ingredients));
+            var world = Hooks.GetWorld(_context);
+            world.Recipes.Add(NewRecipe(name, ingredients));
+            world.Player.AddKnownRecipe(name);
         }
 
         [Given("the recipe database contains a {string} recipe with upgrades:")]
@@ -48,11 +64,12 @@ namespace OdinsAi.Test.Support
                     int.Parse(row["Quality"]),
                     row["Station"],
                     int.Parse(row["StationLevel"]),
-                    ParseIngredients(row["Ingredients"]),
-                    row["Unlocked"].Equals("Yes", StringComparison.OrdinalIgnoreCase)))
+                    ParseIngredients(row["Ingredients"])))
                 .ToArray();
 
-            Hooks.GetWorld(_context).Recipes.Add(NewRecipe(name, upgrades: upgrades));
+            var world = Hooks.GetWorld(_context);
+            world.Recipes.Add(NewRecipe(name, upgrades: upgrades));
+            world.Player.AddKnownRecipe(name);
         }
 
         [Given("the item database contains food:")]
@@ -188,7 +205,7 @@ namespace OdinsAi.Test.Support
             return float.Parse(value, CultureInfo.InvariantCulture);
         }
 
-        private static Recipe NewRecipe(string name, IReadOnlyList<Ingredient> ingredients = null, IReadOnlyList<UpgradeLevel> upgrades = null, bool unlocked = true)
+        private static Recipe NewRecipe(string name, IReadOnlyList<Ingredient> ingredients = null, IReadOnlyList<UpgradeLevel> upgrades = null)
         {
             return new Recipe(
                 Id: name,
@@ -197,8 +214,7 @@ namespace OdinsAi.Test.Support
                 Amount: 1,
                 CraftingStation: "cauldron",
                 Ingredients: ingredients ?? Array.Empty<Ingredient>(),
-                Upgrades: upgrades,
-                Unlocked: unlocked);
+                Upgrades: upgrades);
         }
 
         /// <summary>Parses an ingredient cell like <c>Wood x4; Bronze x2</c>.</summary>

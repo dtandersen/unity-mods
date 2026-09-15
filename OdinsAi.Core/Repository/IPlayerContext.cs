@@ -24,5 +24,11 @@ namespace OdinsAi.Repository
 
         /// <summary>The compendium pages visible to the player.</summary>
         IReadOnlyList<CompendiumEntry> Compendium { get; }
+
+        /// <summary>Whether the player has discovered the recipe with this item id.</summary>
+        bool IsRecipeKnown(string recipeId);
+
+        /// <summary>Crafting stations the player can currently use.</summary>
+        IReadOnlyList<StationInfo> AvailableStations { get; }
     }
 }

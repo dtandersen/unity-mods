@@ -30,9 +30,9 @@ namespace OdinsAi.Tool
             }
 
             var summaries = _command.Execute(query)
-                .OrderBy(recipe => recipe.Name, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(recipe => recipe.Recipe.Name, StringComparer.OrdinalIgnoreCase)
                 .Take(ToolLimits.MaxResults)
-                .Select(ToSummary)
+                .Select(recipe => ToSummary(recipe.Recipe, recipe.Unlocked))
                 .ToArray();
 
             return new ToolSuccess<SearchRecipesResult>(
@@ -40,13 +40,13 @@ namespace OdinsAi.Tool
                 FormatContent(query, summaries));
         }
 
-        private static RecipeSummary ToSummary(Recipe recipe)
+        private static RecipeSummary ToSummary(Recipe recipe, bool unlocked)
         {
             return new RecipeSummary(
                 recipe.Name,
                 recipe.CraftingStation,
                 recipe.Ingredients.Select(i => new IngredientResult(i.ItemId, i.Amount)).ToArray(),
-                recipe.Unlocked);
+                unlocked);
         }
 
         private static string FormatContent(string query, IReadOnlyList<RecipeSummary> summaries)
@@ -61,15 +61,10 @@ namespace OdinsAi.Tool
                 summary.Name,
                 summary.CraftingStation ?? string.Empty,
                 string.Join("; ", summary.Ingredients.Select(i => $"{i.ItemId} x{i.Amount}")),
-                YesNo(summary.Unlocked),
+                summary.Unlocked ? "Yes" : "No",
             });
 
             return Csv.Build(new[] { "Name", "Station", "Ingredients", "Unlocked" }, rows);
-        }
-
-        private static string YesNo(bool value)
-        {
-            return value ? "Yes" : "No";
         }
     }
 }

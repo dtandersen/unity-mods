@@ -7,9 +7,10 @@ Feature: Upgrade tool
 
   Background:
     Given the recipe database contains a "Bronze Axe" recipe with upgrades:
-      | Quality | Station | StationLevel | Ingredients | Unlocked |
-      | 2       | Forge   | 1            | Wood x4; Bronze x2 | Yes |
-      | 3       | Forge   | 2            | Wood x8; Bronze x4; Leather Scraps x2 | Yes |
+      | Quality | Station | StationLevel | Ingredients |
+      | 2       | Forge   | 1            | Wood x4; Bronze x2 |
+      | 3       | Forge   | 2            | Wood x8; Bronze x4; Leather Scraps x2 |
+    And a "Forge" station of level 2 is nearby
 
   Scenario: Show the upgrade costs by quality
     When I call the "search_upgrades" tool with query "bronze axe"
@@ -21,8 +22,8 @@ Feature: Upgrade tool
 
   Scenario: An upgrade without a nearby station of the required level is locked
     Given the recipe database contains a "Black Metal Axe" recipe with upgrades:
-      | Quality | Station     | StationLevel | Ingredients | Unlocked |
-      | 2       | Black Forge | 3            | Black Metal x20 | No |
+      | Quality | Station     | StationLevel | Ingredients |
+      | 2       | Black Forge | 3            | Black Metal x20 |
     When I call the "search_upgrades" tool with query "black metal axe"
     Then the tool succeeds
     And the upgrade result is:

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using OdinsAi.Command;
-using OdinsAi.Entity;
 
 namespace OdinsAi.Tool
 {
@@ -33,18 +32,16 @@ namespace OdinsAi.Tool
             }
 
             var upgrades = _command.Execute(query)
-                .Where(recipe => recipe.Upgrades != null && recipe.Upgrades.Count > 0)
-                .OrderBy(recipe => recipe.Name, StringComparer.OrdinalIgnoreCase)
-                .SelectMany(recipe => recipe.Upgrades
-                    .OrderBy(upgrade => upgrade.Quality)
-                    .Select(upgrade => new UpgradeSummary(
-                        recipe.Name,
-                        upgrade.Quality,
-                        upgrade.Station,
-                        upgrade.StationLevel,
-                        upgrade.Ingredients.Select(i => new IngredientResult(i.ItemId, i.Amount)).ToArray(),
-                        upgrade.Unlocked)))
+                .OrderBy(upgrade => upgrade.Recipe.Name, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(upgrade => upgrade.Upgrade.Quality)
                 .Take(ToolLimits.MaxResults)
+                .Select(upgrade => new UpgradeSummary(
+                    upgrade.Recipe.Name,
+                    upgrade.Upgrade.Quality,
+                    upgrade.Upgrade.Station,
+                    upgrade.Upgrade.StationLevel,
+                    upgrade.Upgrade.Ingredients.Select(i => new IngredientResult(i.ItemId, i.Amount)).ToArray(),
+                    upgrade.Unlocked))
                 .ToArray();
 
             return new ToolSuccess<SearchUpgradesResult>(

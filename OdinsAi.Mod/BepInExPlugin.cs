@@ -213,9 +213,9 @@ namespace OdinsAi.Mod
             }
 
             IItemRepository items = new ValheimItemRepository(database);
-            IRecipeRepository recipes = new ValheimRecipeRepository(database, player);
+            IRecipeRepository recipes = new ValheimRecipeRepository(database);
 
-            var playerContext = new ValheimPlayerContext(player, enableCheats.Value);
+            var playerContext = new ValheimPlayerContext(database, player, enableCheats.Value);
             var itemIndex = new ItemIndex(items);
             var recipeIndex = new RecipeIndex(recipes);
             var inventoryIndex = new InventoryIndex(playerContext);
@@ -224,8 +224,8 @@ namespace OdinsAi.Mod
 
             var toolList = new List<ITool>
             {
-                new SearchRecipesTool(new SearchRecipesCommand(recipeIndex)),
-                new SearchUpgradesTool(new SearchUpgradesCommand(recipeIndex)),
+                new SearchRecipesTool(new SearchRecipesCommand(recipeIndex, playerContext)),
+                new SearchUpgradesTool(new SearchUpgradesCommand(recipeIndex, playerContext)),
                 new SearchFoodTool(new SearchFoodCommand(itemIndex)),
                 new SearchItemsTool(new SearchItemsCommand(itemIndex)),
                 new SearchInventoryTool(new SearchInventoryCommand(inventoryIndex)),
