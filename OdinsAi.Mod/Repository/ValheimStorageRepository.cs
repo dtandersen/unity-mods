@@ -7,20 +7,27 @@ using UnityEngine;
 namespace OdinsAi.Repository
 {
     /// <summary>
-    /// Finds containers within a radius of the local player using a physics sphere
+    /// Finds containers within a radius of the target player using a physics sphere
     /// query, and materialises their contents.
     /// </summary>
     public sealed class ValheimStorageRepository : IStorageRepository
     {
+        private readonly Player _player;
+
+        /// <param name="player">The player to search around.</param>
+        public ValheimStorageRepository(Player player)
+        {
+            _player = player;
+        }
+
         public IReadOnlyList<StorageContainer> GetNearbyContainers(float radius)
         {
-            var player = Player.m_localPlayer;
-            if (player == null)
+            if (_player == null)
             {
                 return Array.Empty<StorageContainer>();
             }
 
-            var origin = player.transform.position;
+            var origin = _player.transform.position;
             var colliders = Physics.OverlapSphere(origin, radius);
             var seen = new HashSet<Container>();
             var containers = new List<StorageContainer>();

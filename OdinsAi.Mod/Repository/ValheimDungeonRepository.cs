@@ -7,20 +7,27 @@ using UnityEngine;
 namespace OdinsAi.Repository
 {
     /// <summary>
-    /// Finds dungeon entrances near the local player using the same loaded
+    /// Finds dungeon entrances near the target player using the same loaded
     /// <c>DungeonGenerator</c> components the vanilla <c>printseeds</c> command uses.
     /// </summary>
     public sealed class ValheimDungeonRepository : IDungeonRepository
     {
+        private readonly Player _player;
+
+        /// <param name="player">The player to search around.</param>
+        public ValheimDungeonRepository(Player player)
+        {
+            _player = player;
+        }
+
         public IReadOnlyList<Dungeon> GetNearbyDungeons(float radius)
         {
-            var player = Player.m_localPlayer;
-            if (player == null)
+            if (_player == null)
             {
                 return Array.Empty<Dungeon>();
             }
 
-            var origin = player.transform.position;
+            var origin = _player.transform.position;
             var dungeons = new List<Dungeon>();
 
             foreach (var generator in UnityEngine.Object.FindObjectsOfType<DungeonGenerator>())

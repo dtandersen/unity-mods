@@ -14,14 +14,13 @@ namespace OdinsAi.Repository
     {
         private readonly List<RecipeEntity> _recipes = new List<RecipeEntity>();
 
-        public ValheimRecipeRepository(ObjectDB database)
+        public ValheimRecipeRepository(ObjectDB database, Player player)
         {
             if (database == null || database.m_recipes == null)
             {
                 return;
             }
 
-            var player = Player.m_localPlayer;
             var position = player != null ? player.transform.position : Vector3.zero;
 
             foreach (var recipe in database.m_recipes)

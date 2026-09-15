@@ -2,19 +2,26 @@ using OdinsAi.Entity;
 
 namespace OdinsAi.Repository
 {
-    /// <summary>Reads the player's position and current biome from the live game.</summary>
+    /// <summary>Reads the target player's position and current biome from the live game.</summary>
     public sealed class ValheimLocationRepository : ILocationRepository
     {
+        private readonly Player _player;
+
+        /// <param name="player">The player to read.</param>
+        public ValheimLocationRepository(Player player)
+        {
+            _player = player;
+        }
+
         public OdinsAi.Entity.Location GetLocation()
         {
-            var player = Player.m_localPlayer;
-            if (player == null)
+            if (_player == null)
             {
                 return null;
             }
 
-            var position = player.transform.position;
-            return new OdinsAi.Entity.Location(position.x, position.y, position.z, BiomeName(player));
+            var position = _player.transform.position;
+            return new OdinsAi.Entity.Location(position.x, position.y, position.z, BiomeName(_player));
         }
 
         private static string BiomeName(Player player)

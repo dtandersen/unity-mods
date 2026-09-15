@@ -8,15 +8,22 @@ namespace OdinsAi.Repository
     /// <summary>Finds resource nodes (ore deposits, pickables, trees) near the player.</summary>
     public sealed class ValheimResourceRepository : IResourceRepository
     {
+        private readonly Player _player;
+
+        /// <param name="player">The player to search around.</param>
+        public ValheimResourceRepository(Player player)
+        {
+            _player = player;
+        }
+
         public IReadOnlyList<ResourceNode> GetNearbyResources(float radius)
         {
-            var player = Player.m_localPlayer;
-            if (player == null)
+            if (_player == null)
             {
                 return Array.Empty<ResourceNode>();
             }
 
-            var origin = player.transform.position;
+            var origin = _player.transform.position;
             var resources = new List<ResourceNode>();
 
             // Ore deposits use MineRock5 (multi-hit deposits); some props use the

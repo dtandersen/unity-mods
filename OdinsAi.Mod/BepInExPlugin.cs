@@ -153,7 +153,7 @@ namespace OdinsAi.Mod
         {
             return mentionResponder ??= new MentionResponder(
                 new BroadcastChatSink(RunOnMainThread),
-                () => BuildAssistant(null),
+                () => BuildAssistant(Player.m_localPlayer, null),
                 AssistantName,
                 Dbgl);
         }
@@ -165,15 +165,16 @@ namespace OdinsAi.Mod
         /// </summary>
         public Task AskAsync(Terminal terminal, string prompt)
         {
-            return CreatePresenter(terminal).AskAsync(prompt, contextMessages.Value > 0 ? Conversation : null);
+            return CreatePresenter(terminal, Player.m_localPlayer)
+                .AskAsync(prompt, contextMessages.Value > 0 ? Conversation : null);
         }
 
-        private static ChatPresenter CreatePresenter(Terminal terminal)
+        private static ChatPresenter CreatePresenter(Terminal terminal, Player player)
         {
             return new ChatPresenter(
                 new TerminalChatSink(terminal),
-                activity => BuildAssistant(activity),
-                LocalPlayerName,
+                activity => BuildAssistant(player, activity),
+                () => PlayerName(player),
                 AssistantName,
                 Dbgl,
                 showThinking: showThinking.Value,
@@ -187,24 +188,23 @@ namespace OdinsAi.Mod
         /// </summary>
         public static string AssistantName => ChatNaming.Resolve(aiName?.Value);
 
-        private static string LocalPlayerName()
+        private static string PlayerName(Player player)
         {
-            var player = Player.m_localPlayer;
-            return player?.GetPlayerName();
+            return player != null ? player.GetPlayerName() : null;
         }
 
         public Task ClearContextAsync(Terminal terminal)
         {
-            CreatePresenter(terminal).Clear(Conversation);
+            CreatePresenter(terminal, Player.m_localPlayer).Clear(Conversation);
             return Task.CompletedTask;
         }
 
         public Task CompactContextAsync(Terminal terminal)
         {
-            return CreatePresenter(terminal).CompactAsync(Conversation);
+            return CreatePresenter(terminal, Player.m_localPlayer).CompactAsync(Conversation);
         }
 
-        private static AiAssistant BuildAssistant(IAssistantActivity activity)
+        private static AiAssistant BuildAssistant(Player player, IAssistantActivity activity)
         {
             var database = ObjectDB.instance;
             if (database == null)
@@ -213,12 +213,12 @@ namespace OdinsAi.Mod
             }
 
             IItemRepository items = new ValheimItemRepository(database);
-            IRecipeRepository recipes = new ValheimRecipeRepository(database);
-            IInventoryRepository inventory = new ValheimInventoryRepository();
+            IRecipeRepository recipes = new ValheimRecipeRepository(database, player);
+            IInventoryRepository inventory = new ValheimInventoryRepository(player);
 
             var itemIndex = new ItemIndex(items);
             var recipeIndex = new RecipeIndex(recipes);
-            var compendium = new CompendiumIndex(new ValheimCompendiumRepository(enableCheats.Value));
+            var compendium = new CompendiumIndex(new ValheimCompendiumRepository(player, enableCheats.Value));
 
             var toolList = new List<ITool>
             {
@@ -227,10 +227,10 @@ namespace OdinsAi.Mod
                 new SearchFoodTool(new SearchFoodCommand(itemIndex)),
                 new SearchItemsTool(new SearchItemsCommand(itemIndex)),
                 new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(inventory))),
-                new SearchStorageTool(new SearchStorageCommand(new StorageIndex(new ValheimStorageRepository()))),
+                new SearchStorageTool(new SearchStorageCommand(new StorageIndex(new ValheimStorageRepository(player)))),
                 new SearchCompendiumTool(new SearchCompendiumCommand(compendium)),
                 new ReadCompendiumTool(new ReadCompendiumCommand(compendium)),
-                new GetLocationTool(new GetLocationCommand(new ValheimLocationRepository())),
+                new GetLocationTool(new GetLocationCommand(new ValheimLocationRepository(player))),
                 new ListBossesTool(new GetBossStatusCommand(new ValheimBossRepository())),
             };
 
@@ -238,9 +238,9 @@ namespace OdinsAi.Mod
             // walls to dungeons, creatures or resource nodes.
             if (enableCheats.Value)
             {
-                toolList.Add(new SearchDungeonsTool(new SearchDungeonsCommand(new DungeonIndex(new ValheimDungeonRepository()))));
-                toolList.Add(new SearchCreaturesTool(new SearchCreaturesCommand(new CreatureIndex(new ValheimCreatureRepository()))));
-                toolList.Add(new SearchResourcesTool(new SearchResourcesCommand(new ResourceIndex(new ValheimResourceRepository()))));
+                toolList.Add(new SearchDungeonsTool(new SearchDungeonsCommand(new DungeonIndex(new ValheimDungeonRepository(player)))));
+                toolList.Add(new SearchCreaturesTool(new SearchCreaturesCommand(new CreatureIndex(new ValheimCreatureRepository(player)))));
+                toolList.Add(new SearchResourcesTool(new SearchResourcesCommand(new ResourceIndex(new ValheimResourceRepository(player)))));
             }
 
             var tools = new ToolHandler(toolList);

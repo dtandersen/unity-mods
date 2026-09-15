@@ -20,9 +20,8 @@ namespace OdinsAi.Repository
         private readonly HashSet<string> _topics = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _texts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        public ValheimCompendiumRepository(bool includeUnseen)
+        public ValheimCompendiumRepository(Player player, bool includeUnseen)
         {
-            var player = Player.m_localPlayer;
             AddKnownTexts(player);
             if (includeUnseen)
             {
