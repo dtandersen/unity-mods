@@ -25,17 +25,15 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      # Tarball install straight from Valve: no apt repo changes, no i386
+      # arch (which broke node), no interactive license prompt. Only the
+      # 32-bit compat libs are needed, as regular amd64 packages.
       - name: Install steamcmd
-        env:
-          DEBIAN_FRONTEND: noninteractive
         run: |
-          sudo add-apt-repository -y multiverse
-          sudo dpkg --add-architecture i386
           sudo apt-get update -qq
-          # Preseed the interactive Steam license prompt (no TTY in CI).
-          echo steamcmd steam/question select "I AGREE" | sudo debconf-set-selections
-          echo steamcmd steam/license note '' | sudo debconf-set-selections
-          sudo apt-get install -y -qq steamcmd unzip
+          sudo apt-get install -y -qq lib32gcc-s1 lib32stdc++6 ca-certificates curl wget tar unzip
+          sudo mkdir -p /opt/steamcmd
+          curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | sudo tar -xz -C /opt/steamcmd
 
       # Cache the whole GAME_DIR (server + BepInEx). Cache hit restores it,
       # then steamcmd below only fetches the delta. Requires cache storage
@@ -49,7 +47,7 @@ jobs:
       - name: Download Valheim dedicated server via steamcmd
         run: |
           mkdir -p "$GAME_DIR"
-          /usr/games/steamcmd \
+          /opt/steamcmd/steamcmd.sh \
             +force_install_dir "$GAME_DIR" \
             +login anonymous \
             +app_update "$VALHEIM_APP_ID" \
