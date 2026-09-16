@@ -51,8 +51,11 @@
   </Choose>
 
   <PropertyGroup>
-    <BepInExPath Condition="'$(BepInExPath)' == ''">$(GamePath)\BepInEx</BepInExPath>
-    <ManagedDataPath Condition="'$(ManagedDataPath)' == ''">$(GamePath)\valheim_Data\Managed</ManagedDataPath>
+    <BepInExPath Condition="'$(BepInExPath)' == ''">$(GamePath)/BepInEx</BepInExPath>
+    <!-- Dedicated server (steamcmd app 896660) uses valheim_server_Data instead of valheim_Data. -->
+    <ManagedDataPath Condition="'$(ManagedDataPath)' == '' AND Exists('$(GamePath)/valheim_Data/Managed')">$(GamePath)/valheim_Data/Managed</ManagedDataPath>
+    <ManagedDataPath Condition="'$(ManagedDataPath)' == '' AND Exists('$(GamePath)/valheim_server_Data/Managed')">$(GamePath)/valheim_server_Data/Managed</ManagedDataPath>
+    <ManagedDataPath Condition="'$(ManagedDataPath)' == ''">$(GamePath)/valheim_Data/Managed</ManagedDataPath>
     <UnityPath Condition="'$(UnityPath)' == ''">$(ManagedDataPath)</UnityPath>
     <PluginDeployDir Condition="'$(PluginDeployDir)' == ''">$(BepInExPath)\plugins</PluginDeployDir>
     <!-- Folder the plugin is deployed into. Set this to the name r2modman used for a
@@ -193,7 +196,8 @@
   <!-- Optionally package an importable (Thunderstore/r2modman) zip. -->
   <Target Name="Package" AfterTargets="Build" Condition="'$(PackageOnBuild)' == 'true'">
     <PropertyGroup>
-      <_PackageStage>$(IntermediateOutputPath)package\</_PackageStage>
+      <_PackageStage>$(IntermediateOutputPath)package/</_PackageStage>
+      <_ArtifactsDir>$(ProjectDir)artifacts/</_ArtifactsDir>
     </PropertyGroup>
     <ItemGroup>
       <!-- Target DLL plus copy-local dependencies (e.g. OdinsAi.Core.dll). -->
@@ -202,13 +206,13 @@
     <RemoveDir Directories="$(_PackageStage)" />
     <MakeDir Directories="$(_PackageStage)plugins" />
     <Copy SourceFiles="@(_PackageFiles)" DestinationFolder="$(_PackageStage)plugins" />
-    <Copy SourceFiles="$(MSBuildProjectDirectory)\manifest.json" DestinationFolder="$(_PackageStage)" Condition="Exists('$(MSBuildProjectDirectory)\manifest.json')" />
-    <Copy SourceFiles="$(MSBuildProjectDirectory)\..\README.md" DestinationFolder="$(_PackageStage)" Condition="Exists('$(MSBuildProjectDirectory)\..\README.md')" />
-    <MakeDir Directories="$(ProjectDir)artifacts" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/manifest.json" DestinationFolder="$(_PackageStage)" Condition="Exists('$(MSBuildProjectDirectory)/manifest.json')" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/../README.md" DestinationFolder="$(_PackageStage)" Condition="Exists('$(MSBuildProjectDirectory)/../README.md')" />
+    <MakeDir Directories="$(_ArtifactsDir)" />
     <ZipDirectory SourceDirectory="$(_PackageStage)"
-                  DestinationFile="$(ProjectDir)artifacts\$(ProjectName).zip"
+                  DestinationFile="$(_ArtifactsDir)$(ProjectName).zip"
                   Overwrite="true" />
-    <Message Importance="high" Text="Packaged $(ProjectDir)artifacts\$(ProjectName).zip" />
+    <Message Importance="high" Text="Packaged $(_ArtifactsDir)$(ProjectName).zip" />
   </Target>
 
 </Project>

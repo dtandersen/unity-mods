@@ -1,0 +1,85 @@
+name: build
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: 10.0.x
+  # Anonymous-downloadable dedicated server. Contains the same
+  # assembly_valheim / UnityEngine managed DLLs the plugin compiles against.
+  VALHEIM_APP_ID: "896660"
+  GAME_DIR: /tmp/valheim-server
+  BEPINEX_VERSION: 5.4.22
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install steamcmd
+        run: |
+          sudo add-apt-repository -y multiverse
+          sudo dpkg --add-architecture i386
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq steamcmd unzip
+
+      # Cache the whole GAME_DIR (server + BepInEx). Cache hit restores it,
+      # then steamcmd below only fetches the delta. Requires cache storage
+      # enabled on the Forgejo instance; a miss just means a full download.
+      - name: Cache Valheim server + BepInEx
+        uses: actions/cache@v4
+        with:
+          path: /tmp/valheim-server
+          key: valheim-server-${{ env.VALHEIM_APP_ID }}-bepinex-${{ env.BEPINEX_VERSION }}-v1
+
+      - name: Download Valheim dedicated server via steamcmd
+        run: |
+          mkdir -p "$GAME_DIR"
+          /usr/games/steamcmd \
+            +force_install_dir "$GAME_DIR" \
+            +login anonymous \
+            +app_update "$VALHEIM_APP_ID" \
+            +quit
+          echo "=== server layout ==="
+          ls "$GAME_DIR"
+          echo "=== managed ==="
+          ls "$GAME_DIR/valheim_server_Data/Managed" | head -30
+
+      - name: Install BepInEx (compile-time refs only)
+        run: |
+          if [ -f "$GAME_DIR/BepInEx/core/BepInEx.dll" ]; then
+            echo "BepInEx restored from cache, skipping download."
+          else
+            cd /tmp
+            wget -q "https://github.com/BepInEx/BepInEx/releases/download/v${BEPINEX_VERSION}/BepInEx_x64_${BEPINEX_VERSION}.0.zip" -O bepinex.zip
+            unzip -q -o bepinex.zip -d "$GAME_DIR"
+          fi
+          echo "=== bepinex ==="
+          ls "$GAME_DIR/BepInEx/core" | head
+
+      - name: Test
+        run: dotnet test ValheimMods.sln -c Release
+
+      - name: Build mod zip
+        run: |
+          dotnet build OdinsAi.Mod/OdinsAi.Mod.csproj -c Release \
+            -p:DeployOnBuild=false \
+            -p:PackageOnBuild=true \
+            -p:GamePath="$GAME_DIR"
+          echo "=== artifacts ==="
+          ls -la OdinsAi.Mod/artifacts/
+
+      - name: Upload zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: OdinsAi.Mod
+          path: OdinsAi.Mod/artifacts/*.zip
+          if-no-files-found: error
