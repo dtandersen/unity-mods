@@ -47,24 +47,6 @@ jobs:
           fi
           echo "=== bepinex ==="
           ls "$GAME_DIR/BepInEx/core" | head
-
-      # Jotunn is an optional MSBuild reference (valheim.targets picks it up
-      # from plugins/ValheimModding-Jotunn), but the code uses it
-      # unconditionally — so CI must provide it. Version is derived from
-      # manifest.json so the two can't drift apart. Always downloaded: the
-      # zip is tiny and this keeps manifest bumps effective despite caching.
-      - name: Install Jotunn (compile-time ref only)
-        run: |
-          JOTUNN_DEP=$(jq -r '.dependencies[] | select(startswith("ValheimModding-Jotunn-"))' OdinsAi.Mod/manifest.json)
-          JOTUNN_VERSION=${JOTUNN_DEP#ValheimModding-Jotunn-}
-          echo "Jotunn version: $JOTUNN_VERSION"
-          rm -rf /tmp/jotunn && mkdir -p /tmp/jotunn
-          wget -q "https://thunderstore.io/package/download/ValheimModding/Jotunn/${JOTUNN_VERSION}/" -O /tmp/jotunn/jotunn.zip
-          unzip -q -o /tmp/jotunn/jotunn.zip -d /tmp/jotunn
-          JOTUNN_DLL=$(find /tmp/jotunn -name Jotunn.dll | head -1)
-          mkdir -p "$GAME_DIR/BepInEx/plugins/ValheimModding-Jotunn"
-          cp "$JOTUNN_DLL" "$GAME_DIR/BepInEx/plugins/ValheimModding-Jotunn/Jotunn.dll"
-          ls "$GAME_DIR/BepInEx/plugins/ValheimModding-Jotunn"
       - name: Test
         run: dotnet test ValheimMods.sln -c Release
       - name: Build mod zip
@@ -75,8 +57,10 @@ jobs:
             -p:GamePath="$GAME_DIR"
           echo "=== artifacts ==="
           ls -la OdinsAi.Mod/artifacts/
+      # Pinned to v3: v4+ needs the GHES artifact API Forgejo doesn't
+      # implement (GHESNotSupportedError). Same inputs, drop-in.
       - name: Upload zip
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: OdinsAi.Mod
           path: OdinsAi.Mod/artifacts/*.zip
