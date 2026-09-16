@@ -16,6 +16,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -25,10 +26,15 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Install steamcmd
+        env:
+          DEBIAN_FRONTEND: noninteractive
         run: |
           sudo add-apt-repository -y multiverse
           sudo dpkg --add-architecture i386
           sudo apt-get update -qq
+          # Preseed the interactive Steam license prompt (no TTY in CI).
+          echo steamcmd steam/question select "I AGREE" | sudo debconf-set-selections
+          echo steamcmd steam/license note '' | sudo debconf-set-selections
           sudo apt-get install -y -qq steamcmd unzip
 
       # Cache the whole GAME_DIR (server + BepInEx). Cache hit restores it,
