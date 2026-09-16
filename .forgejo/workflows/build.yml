@@ -4,37 +4,18 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
-
 env:
-  DOTNET_VERSION: 10.0.x
   # Anonymous-downloadable dedicated server. Contains the same
   # assembly_valheim / UnityEngine managed DLLs the plugin compiles against.
   VALHEIM_APP_ID: "896660"
   GAME_DIR: /tmp/valheim-server
   BEPINEX_VERSION: 5.4.22
-
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      # Tarball install straight from Valve: no apt repo changes, no i386
-      # arch (which broke node), no interactive license prompt. Only the
-      # 32-bit compat libs are needed, as regular amd64 packages.
-      - name: Install steamcmd
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq lib32gcc-s1 lib32stdc++6 ca-certificates curl wget tar unzip
-          sudo mkdir -p /opt/steamcmd
-          curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | sudo tar -xz -C /opt/steamcmd
-
       # Cache the whole GAME_DIR (server + BepInEx). Cache hit restores it,
       # then steamcmd below only fetches the delta. Requires cache storage
       # enabled on the Forgejo instance; a miss just means a full download.
@@ -43,11 +24,10 @@ jobs:
         with:
           path: /tmp/valheim-server
           key: valheim-server-${{ env.VALHEIM_APP_ID }}-bepinex-${{ env.BEPINEX_VERSION }}-v1
-
       - name: Download Valheim dedicated server via steamcmd
         run: |
           mkdir -p "$GAME_DIR"
-          /opt/steamcmd/steamcmd.sh \
+          steamcmd.sh \
             +force_install_dir "$GAME_DIR" \
             +login anonymous \
             +app_update "$VALHEIM_APP_ID" \
@@ -56,7 +36,6 @@ jobs:
           ls "$GAME_DIR"
           echo "=== managed ==="
           ls "$GAME_DIR/valheim_server_Data/Managed" | head -30
-
       - name: Install BepInEx (compile-time refs only)
         run: |
           if [ -f "$GAME_DIR/BepInEx/core/BepInEx.dll" ]; then
@@ -68,10 +47,8 @@ jobs:
           fi
           echo "=== bepinex ==="
           ls "$GAME_DIR/BepInEx/core" | head
-
       - name: Test
         run: dotnet test ValheimMods.sln -c Release
-
       - name: Build mod zip
         run: |
           dotnet build OdinsAi.Mod/OdinsAi.Mod.csproj -c Release \
@@ -80,7 +57,6 @@ jobs:
             -p:GamePath="$GAME_DIR"
           echo "=== artifacts ==="
           ls -la OdinsAi.Mod/artifacts/
-
       - name: Upload zip
         uses: actions/upload-artifact@v4
         with:
