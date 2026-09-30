@@ -1,0 +1,7 @@
+{
+  "name": "Example_Mod",
+  "author_name": "you",
+  "description": "Example Stationeers BepInEx mod (smoke test).",
+  "version_number": "0.1.0",
+  "dependencies": []
+}

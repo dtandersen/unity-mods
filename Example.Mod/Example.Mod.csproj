@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <Description>Example BepInEx plugin for Stationeers (smoke test for the build scaffolding).</Description>
+  </PropertyGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory)..\stationeers.targets" />
+
+</Project>

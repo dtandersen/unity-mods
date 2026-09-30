@@ -1,0 +1,65 @@
+name: build
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+env:
+  # Stationeers dedicated server (anonymous-downloadable). Contains the same
+  # Assembly-CSharp / UnityEngine managed DLLs the plugin compiles against.
+  STATIONEERS_DS_APP_ID: "600760"
+  GAME_DIR: /tmp/stationeers-server
+  BEPINEX_VERSION: 5.4.22
+jobs:
+  build:
+    runs-on: steamcmd
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      # Cache the whole GAME_DIR (server + BepInEx). Cache hit restores it,
+      # then steamcmd below only fetches the delta. Requires cache storage
+      # enabled on the Forgejo instance; a miss just means a full download.
+      - name: Cache Stationeers server + BepInEx
+        uses: actions/cache@v4
+        with:
+          path: /tmp/stationeers-server
+          key: stationeers-server-${{ env.STATIONEERS_DS_APP_ID }}-bepinex-${{ env.BEPINEX_VERSION }}-v1
+      - name: Download Stationeers dedicated server via steamcmd
+        run: |
+          mkdir -p "$GAME_DIR"
+          steamcmd.sh \
+            +force_install_dir "$GAME_DIR" \
+            +login anonymous \
+            +app_update "$STATIONEERS_DS_APP_ID" \
+            +quit
+          echo "=== server layout ==="
+          ls "$GAME_DIR"
+          echo "=== managed ==="
+          ls "$GAME_DIR/rocketstation_Data/Managed" | head -30
+      - name: Install BepInEx (compile-time refs only)
+        run: |
+          if [ -f "$GAME_DIR/BepInEx/core/BepInEx.dll" ]; then
+            echo "BepInEx restored from cache, skipping download."
+          else
+            cd /tmp
+            wget -q "https://github.com/BepInEx/BepInEx/releases/download/v${BEPINEX_VERSION}/BepInEx_x64_${BEPINEX_VERSION}.0.zip" -O bepinex.zip
+            unzip -q -o bepinex.zip -d "$GAME_DIR"
+          fi
+          echo "=== bepinex ==="
+          ls "$GAME_DIR/BepInEx/core" | head
+      - name: Build mod zip
+        run: |
+          dotnet build Example.Mod/Example.Mod.csproj -c Release \
+            -p:DeployOnBuild=false \
+            -p:PackageOnBuild=true \
+            -p:GamePath="$GAME_DIR"
+          echo "=== artifacts ==="
+          ls -la Example.Mod/artifacts/
+      # Forgejo's own fork: v4 API speaking the protocol Forgejo implements
+      # (upstream v4+ hits GHESNotSupportedError against this instance).
+      - name: Upload zip
+        uses: https://data.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          name: Example.Mod
+          path: Example.Mod/artifacts/*.zip
+          if-no-files-found: error

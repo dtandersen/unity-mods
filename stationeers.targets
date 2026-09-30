@@ -1,0 +1,206 @@
+<Project>
+
+  <!-- Optional machine-specific overrides (git-ignored). -->
+  <Import Project="$(MSBuildThisFileDirectory)local.props" Condition="Exists('$(MSBuildThisFileDirectory)local.props')" />
+
+  <PropertyGroup>
+    <AssemblyName>$(ProjectName)</AssemblyName>
+    <RootNamespace>$(ProjectName)</RootNamespace>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Platforms>AnyCPU</Platforms>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <NoWarn>$(NoWarn);CS0436</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>portable</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Find the game install if the user did not set GamePath (Steam App 544550). -->
+  <Choose>
+    <When Condition="($(OS) == 'Unix' OR $(OS) == 'OSX') AND $(GamePath) == ''">
+      <PropertyGroup>
+        <GamePath Condition="!Exists('$(GamePath)')">$(HOME)/.steam/steam/steamapps/common/Stationeers</GamePath>
+      </PropertyGroup>
+    </When>
+    <When Condition="$(OS) == 'Windows_NT' AND $(GamePath) == ''">
+      <PropertyGroup>
+        <GamePath Condition="!Exists('$(GamePath)')">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 544550', 'InstallLocation', null, RegistryView.Registry64, RegistryView.Registry32))</GamePath>
+        <_SteamLibraryPath>$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Valve\Steam', 'SteamPath', null, RegistryView.Registry32))</_SteamLibraryPath>
+        <GamePath Condition="!Exists('$(GamePath)') AND '$(_SteamLibraryPath)' != ''">$(_SteamLibraryPath)\steamapps\common\Stationeers</GamePath>
+        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files (x86)\Steam\steamapps\common\Stationeers</GamePath>
+      </PropertyGroup>
+    </When>
+  </Choose>
+
+  <PropertyGroup>
+    <BepInExPath Condition="'$(BepInExPath)' == ''">$(GamePath)/BepInEx</BepInExPath>
+    <!-- Stationeers managed assemblies live under rocketstation_Data/Managed. -->
+    <ManagedDataPath Condition="'$(ManagedDataPath)' == '' AND Exists('$(GamePath)/rocketstation_Data/Managed')">$(GamePath)/rocketstation_Data/Managed</ManagedDataPath>
+    <ManagedDataPath Condition="'$(ManagedDataPath)' == ''">$(GamePath)/rocketstation_Data/Managed</ManagedDataPath>
+    <UnityPath Condition="'$(UnityPath)' == ''">$(ManagedDataPath)</UnityPath>
+    <PluginDeployDir Condition="'$(PluginDeployDir)' == ''">$(BepInExPath)\plugins</PluginDeployDir>
+    <!-- Folder the plugin is deployed into. Set this to the name r2modman used for a
+         locally imported mod so builds update the managed copy instead of adding a second one. -->
+    <DeployFolderName Condition="'$(DeployFolderName)' == ''">$(ProjectName)</DeployFolderName>
+    <DeployOnBuild Condition="'$(DeployOnBuild)' == ''">true</DeployOnBuild>
+    <PackageOnBuild Condition="'$(PackageOnBuild)' == ''">false</PackageOnBuild>
+  </PropertyGroup>
+
+  <!-- Makes the project build even on machines without the .NET Framework 4.8 targeting pack. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" />
+  </ItemGroup>
+
+  <!-- BepInEx -->
+  <ItemGroup>
+    <Reference Include="BepInEx">
+      <HintPath>$(BepInExPath)\core\BepInEx.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(BepInExPath)\core\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Stationeers assemblies -->
+  <Target Name="CheckGameRefs" BeforeTargets="BeforeBuild">
+    <Error Condition="!Exists('$(ManagedDataPath)\Assembly-CSharp.dll')"
+           Text="Stationeers game DLL not found at $(ManagedDataPath)\Assembly-CSharp.dll. Set GamePath in local.props (e.g. D:\SteamLibrary\steamapps\common\Stationeers)." />
+    <Warning Condition="!Exists('$(BepInExPath)\core\BepInEx.dll')"
+             Text="BepInEx not found at $(BepInExPath)\core\BepInEx.dll. Install BepInEx 5 (x64, Mono) into the game folder or point BepInExPath at your r2modman profile. See README.md." />
+  </Target>
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(ManagedDataPath)\Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>$(ManagedDataPath)\Assembly-CSharp-firstpass.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Unity assemblies -->
+  <ItemGroup>
+    <Reference Include="UnityEngine">
+      <HintPath>$(UnityPath)\UnityEngine.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(UnityPath)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(UnityPath)\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(UnityPath)\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>$(UnityPath)\UnityEngine.UIModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(UnityPath)\UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>$(UnityPath)\UnityEngine.PhysicsModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>$(UnityPath)\UnityEngine.AudioModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>$(UnityPath)\UnityEngine.AnimationModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule">
+      <HintPath>$(UnityPath)\UnityEngine.ParticleSystemModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(UnityPath)\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>$(UnityPath)\UnityEngine.AssetBundleModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.ImageConversionModule">
+      <HintPath>$(UnityPath)\UnityEngine.ImageConversionModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.JSONSerializeModule">
+      <HintPath>$(UnityPath)\UnityEngine.JSONSerializeModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestModule">
+      <HintPath>$(UnityPath)\UnityEngine.UnityWebRequestModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>$(ManagedDataPath)\Unity.TextMeshPro.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Copy the built plugin into the BepInEx plugins folder. -->
+  <Target Name="Deploy" AfterTargets="Build" Condition="'$(DeployOnBuild)' == 'true'">
+    <PropertyGroup>
+      <_DeployDir>$(PluginDeployDir)\$(DeployFolderName)</_DeployDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <!-- Target DLL/pdb plus any copy-local dependencies. -->
+      <_ModFiles Include="$(TargetDir)*.dll" />
+      <_ModFiles Include="$(TargetDir)*.pdb" />
+    </ItemGroup>
+    <MakeDir Directories="$(_DeployDir)" />
+    <Copy SourceFiles="@(_ModFiles)" DestinationFolder="$(_DeployDir)" />
+    <Message Importance="high" Text="Deployed $(ProjectName) to $(_DeployDir)" />
+  </Target>
+
+  <!-- Optionally package an importable (Thunderstore/r2modman) zip. -->
+  <Target Name="Package" AfterTargets="Build" Condition="'$(PackageOnBuild)' == 'true'">
+    <PropertyGroup>
+      <_PackageStage>$(IntermediateOutputPath)package/</_PackageStage>
+      <_ArtifactsDir>$(ProjectDir)artifacts/</_ArtifactsDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <!-- Target DLL plus copy-local dependencies. -->
+      <_PackageFiles Include="$(TargetDir)*.dll" />
+    </ItemGroup>
+    <RemoveDir Directories="$(_PackageStage)" />
+    <MakeDir Directories="$(_PackageStage)plugins" />
+    <Copy SourceFiles="@(_PackageFiles)" DestinationFolder="$(_PackageStage)plugins" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/manifest.json" DestinationFolder="$(_PackageStage)" Condition="Exists('$(MSBuildProjectDirectory)/manifest.json')" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/../README.md" DestinationFolder="$(_PackageStage)" Condition="Exists('$(MSBuildProjectDirectory)/../README.md')" />
+    <MakeDir Directories="$(_ArtifactsDir)" />
+    <ZipDirectory SourceDirectory="$(_PackageStage)"
+                  DestinationFile="$(_ArtifactsDir)$(ProjectName).zip"
+                  Overwrite="true" />
+    <Message Importance="high" Text="Packaged $(_ArtifactsDir)$(ProjectName).zip" />
+  </Target>
+
+</Project>

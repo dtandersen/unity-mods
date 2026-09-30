@@ -1,0 +1,34 @@
+<!--
+  Copy this file to "local.props" (git-ignored) and adjust the paths for your machine.
+
+  All properties are optional; stationeers.targets tries to auto-detect GamePath via the
+  Steam registry and falls back to common install locations.
+-->
+<Project>
+  <PropertyGroup>
+    <!-- Stationeers install directory (contains rocketstation.exe and rocketstation_Data/). -->
+    <GamePath>D:\SteamLibrary\steamapps\common\Stationeers</GamePath>
+
+    <!-- Where BepInEx.dll / 0Harmony.dll live. Default: $(GamePath)\BepInEx.
+         With r2modman this lives at
+         %APPDATA%\r2modmanPlus-local\Stationeers\profiles\<profile>\BepInEx. -->
+    <!-- <BepInExPath>C:\Users\<you>\AppData\Roaming\r2modmanPlus-local\Stationeers\profiles\Mods\BepInEx</BepInExPath> -->
+
+    <!-- Where built plugins are copied. Default: $(BepInExPath)\plugins -->
+    <!-- <PluginDeployDir>C:\Users\<you>\AppData\Roaming\r2modmanPlus-local\Stationeers\profiles\Mods\BepInEx\plugins</PluginDeployDir> -->
+
+    <!-- Folder under PluginDeployDir that builds deploy into. Default: $(ProjectName).
+         Set to the folder r2modman used for a locally imported mod so builds update
+         that copy rather than creating a second one. -->
+    <!-- <DeployFolderName>Author-ModName</DeployFolderName> -->
+
+    <!-- Stationeers managed assemblies. Default: $(GamePath)\rocketstation_Data\Managed -->
+    <!-- <ManagedDataPath>...</ManagedDataPath> -->
+
+    <!-- Set to false to skip copying the build into the plugin folder. -->
+    <!-- <DeployOnBuild>false</DeployOnBuild> -->
+
+    <!-- Set to true to also produce artifacts\<Mod>.zip on build. -->
+    <!-- <PackageOnBuild>true</PackageOnBuild> -->
+  </PropertyGroup>
+</Project>
