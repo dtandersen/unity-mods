@@ -1,6 +1,7 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -18,7 +19,6 @@ using StationeersAi.Mod.Patch;
 using StationeersAi.Query;
 using StationeersAi.Repository;
 using StationeersAi.Tool;
-using UnityEngine;
 using Util.Commands;
 
 namespace StationeersAi.Mod
@@ -37,6 +37,14 @@ namespace StationeersAi.Mod
 
         public static BepInExPlugin context;
 
+        /// <summary>
+        /// The core <see cref="Core.Logger"/> handed to core objects for their
+        /// trace. Named <c>Log</c> (not <c>Logger</c>) to avoid hiding
+        /// <c>BaseUnityPlugin.Logger</c>. Assigned in <see cref="Awake"/> and
+        /// never null afterwards.
+        /// </summary>
+        public static BepinExLogger Log;
+
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> showThinking;
         public static ConfigEntry<bool> showToolCalls;
@@ -54,8 +62,9 @@ namespace StationeersAi.Mod
         public static ConfigEntry<int> contextMessages;
 
         private static Conversation conversation;
+        private static SynchronizationContext unitySynchronizationContext;
+        private static int unityThreadId;
 
-        private static readonly ConcurrentQueue<Action> MainThreadActions = new ConcurrentQueue<Action>();
         private static MentionResponder mentionResponder;
 
         // World data does not depend on the player, so it is built once and
@@ -71,6 +80,15 @@ namespace StationeersAi.Mod
         public void Awake()
         {
             context = this;
+            if (Logger == null)
+            {
+                throw new InvalidOperationException($"{ModName}: BepInEx log source is unavailable.");
+            }
+
+            Log = new BepinExLogger(Logger);
+            unitySynchronizationContext = SynchronizationContext.Current;
+            unityThreadId = Thread.CurrentThread.ManagedThreadId;
+            Log.Log($"captured Unity thread {unityThreadId}; synchronization context available={unitySynchronizationContext != null}");
 
             modEnabled = Config.Bind("General", "Enabled", true, "Enable Sage.");
             showThinking = Config.Bind("General", "ShowThinking", false,
@@ -106,36 +124,48 @@ namespace StationeersAi.Mod
 
             var harmony = new Harmony(ModGuid);
             harmony.PatchAll(typeof(ChatMessagePatch));
+            Log.Log($"patched {harmony.GetPatchedMethods().Count()} method(s) for chat mentions");
 
             CommandLine.AddCommand("ai", new AiConsoleCommand());
+            Log.Log("registered 'ai' console command");
 
-            Dbgl($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");
+            Log.Log($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");
         }
 
-        public static void Dbgl(string message)
-        {
-            Debug.Log($"{typeof(BepInExPlugin).Namespace} {message}");
-        }
-
-        private void Update()
-        {
-            while (MainThreadActions.TryDequeue(out var action))
-            {
-                try
-                {
-                    action();
-                }
-                catch (Exception ex)
-                {
-                    Dbgl(ex.ToString());
-                }
-            }
-        }
-
-        /// <summary>Queues work to run on the Unity main thread.</summary>
+        /// <summary>Runs work on Unity's main thread, posting from async continuations.</summary>
         public static void RunOnMainThread(Action action)
         {
-            MainThreadActions.Enqueue(action);
+            if (action == null)
+            {
+                return;
+            }
+
+            if (Thread.CurrentThread.ManagedThreadId == unityThreadId)
+            {
+                RunGuarded(action);
+                return;
+            }
+
+            var synchronizationContext = unitySynchronizationContext;
+            if (synchronizationContext == null)
+            {
+                Log.Log("cannot dispatch to Unity main thread: synchronization context was not captured");
+                return;
+            }
+
+            synchronizationContext.Post(_ => RunGuarded(action), null);
+        }
+
+        private static void RunGuarded(Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                Log.Log(ex.ToString());
+            }
         }
 
         /// <summary>
@@ -155,6 +185,8 @@ namespace StationeersAi.Mod
                 return;
             }
 
+            Log.Log($"chat seen from '{message.DisplayName}': {Truncate(message.ChatText, 80)}");
+
             // Skip our own answers echoing back through the server relay.
             if (message.DisplayName != null &&
                 message.DisplayName.Equals(AssistantName, StringComparison.OrdinalIgnoreCase))
@@ -167,7 +199,18 @@ namespace StationeersAi.Mod
                 return;
             }
 
+            Log.Log($"mention matched, asking: {Truncate(prompt, 80)}");
             _ = MentionResponderInstance().HandleAsync(prompt);
+        }
+
+        internal static string Truncate(string value, int max)
+        {
+            if (string.IsNullOrEmpty(value) || value.Length <= max)
+            {
+                return value;
+            }
+
+            return value.Substring(0, max) + "...";
         }
 
         private static MentionResponder MentionResponderInstance()
@@ -176,7 +219,7 @@ namespace StationeersAi.Mod
                 new ChatMessageSink(RunOnMainThread),
                 () => BuildAssistant(null),
                 AssistantName,
-                Dbgl);
+                Log);
         }
 
         /// <summary>
@@ -208,7 +251,7 @@ namespace StationeersAi.Mod
                 activity => BuildAssistant(activity),
                 PlayerName,
                 AssistantName,
-                Dbgl,
+                Log,
                 showThinking: showThinking.Value,
                 showToolCalls: showToolCalls.Value,
                 showToolResults: showToolResults.Value);
@@ -256,7 +299,7 @@ namespace StationeersAi.Mod
             catalogueRecipes = new StationeersRecipeRepository();
             catalogueStationpedia = new StationeersStationpediaRepository(Stationpedia.StationpediaPages);
             cataloguePrefabCount = count;
-            Dbgl($"rebuilt world catalogues ({count} prefabs)");
+            Log.Log($"rebuilt world catalogues ({count} prefabs)");
         }
 
         private static AiAssistant BuildAssistant(IAssistantActivity activity)
@@ -295,7 +338,7 @@ namespace StationeersAi.Mod
                 new UnityWebRequestTransport(timeoutSeconds.Value),
                 new OpenAiOptions(endpoint.Value, apiKey.Value, model.Value, reasoningEffort.Value));
 
-            return new AiAssistant(client, tools, systemPrompt.Value, maxIterations.Value, Dbgl, activity);
+            return new AiAssistant(client, tools, systemPrompt.Value, maxIterations.Value, Log, activity);
         }
     }
 }

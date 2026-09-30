@@ -20,6 +20,7 @@ namespace StationeersAi.Mod.Ai
         public void Write(string line)
         {
             var text = line ?? string.Empty;
+            BepInExPlugin.Log.Log($"console sink queued: {BepInExPlugin.Truncate(text, 80)}");
             _runOnMainThread(() => PrintLines(text));
         }
 

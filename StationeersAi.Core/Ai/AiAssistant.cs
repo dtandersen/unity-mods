@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using StationeersAi.Core;
 using StationeersAi.Tool;
 
 namespace StationeersAi.Ai
@@ -23,7 +24,7 @@ namespace StationeersAi.Ai
         private readonly ToolHandler _tools;
         private readonly string _systemPrompt;
         private readonly int _maxIterations;
-        private readonly Action<string> _log;
+        private readonly Logger _log;
         private readonly IAssistantActivity _activity;
 
         public AiAssistant(
@@ -31,14 +32,14 @@ namespace StationeersAi.Ai
             ToolHandler tools,
             string systemPrompt = null,
             int maxIterations = 5,
-            Action<string> log = null,
+            Logger log = null,
             IAssistantActivity activity = null)
         {
             _client = client;
             _tools = tools;
             _systemPrompt = systemPrompt;
             _maxIterations = maxIterations;
-            _log = log;
+            _log = log ?? throw new ArgumentNullException(nameof(log));
             _activity = activity;
         }
 
@@ -148,7 +149,7 @@ namespace StationeersAi.Ai
 
         private void Log(string message)
         {
-            _log?.Invoke(message);
+            _log.Log(message);
         }
 
         private static string Describe(ToolArguments arguments)

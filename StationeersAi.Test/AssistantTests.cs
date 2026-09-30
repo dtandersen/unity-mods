@@ -44,7 +44,7 @@ namespace StationeersAi.Test
             var ai = new FakeAiClient()
                 .RespondWith(CallTool("1", "search_recipes", "cable"))
                 .RespondWith(Answer("Cable Coil needs 5 copper."));
-            var assistant = new AiAssistant(ai, RecipeTools());
+            var assistant = new AiAssistant(ai, RecipeTools(), log: new RecordingLogger());
 
             var answer = await assistant.AskAsync("how do I make cable coil?");
 
@@ -59,7 +59,7 @@ namespace StationeersAi.Test
         public async Task Ask_appends_turn_to_conversation()
         {
             var ai = new FakeAiClient().RespondWith(Answer("hi"));
-            var assistant = new AiAssistant(ai, RecipeTools());
+            var assistant = new AiAssistant(ai, RecipeTools(), log: new RecordingLogger());
             var conversation = new Conversation();
 
             await assistant.AskAsync("hello", conversation);
@@ -75,7 +75,7 @@ namespace StationeersAi.Test
             var ai = new FakeAiClient { EchoLastToolResult = false }
                 .RespondWith(CallTool("1", "search_recipes", "cable"))
                 .RespondWith(CallTool("2", "search_recipes", "cable"));
-            var assistant = new AiAssistant(ai, RecipeTools(), maxIterations: 2);
+            var assistant = new AiAssistant(ai, RecipeTools(), log: new RecordingLogger(), maxIterations: 2);
 
             var answer = await assistant.AskAsync("cable?");
 
@@ -86,7 +86,7 @@ namespace StationeersAi.Test
         public async Task Compact_replaces_history_with_summary()
         {
             var ai = new FakeAiClient().RespondWith(Answer("user asked about cable"));
-            var assistant = new AiAssistant(ai, RecipeTools());
+            var assistant = new AiAssistant(ai, RecipeTools(), log: new RecordingLogger());
             var conversation = new Conversation();
             conversation.Add(new ChatMessage(ChatRole.User, "cable?"));
             conversation.Add(new ChatMessage(ChatRole.Assistant, "5 copper"));
@@ -104,9 +104,10 @@ namespace StationeersAi.Test
             var ai = new FakeAiClient().RespondWith(Answer("**Cable** Coil needs `5` copper."));
             var presenter = new ChatPresenter(
                 chat,
-                _ => new AiAssistant(ai, RecipeTools()),
+                _ => new AiAssistant(ai, RecipeTools(), log: new RecordingLogger()),
                 () => "Tester",
-                "Sage");
+                "Sage",
+                new RecordingLogger());
 
             await presenter.AskAsync("how do I make cable coil?");
 
@@ -119,7 +120,7 @@ namespace StationeersAi.Test
         public async Task Presenter_reports_game_data_not_loaded()
         {
             var chat = new RecordingChatSink();
-            var presenter = new ChatPresenter(chat, _ => null, () => "Tester", "Sage");
+            var presenter = new ChatPresenter(chat, _ => null, () => "Tester", "Sage", new RecordingLogger());
 
             await presenter.AskAsync("hi");
 
@@ -133,8 +134,9 @@ namespace StationeersAi.Test
             var ai = new FakeAiClient().RespondWith(Answer("hello"));
             var responder = new MentionResponder(
                 chat,
-                () => new AiAssistant(ai, RecipeTools()),
-                "Sage");
+                () => new AiAssistant(ai, RecipeTools(), log: new RecordingLogger()),
+                "Sage",
+                new RecordingLogger());
 
             (await responder.HandleAsync("hi")).ShouldBeTrue();
             responder.IsBusy.ShouldBeFalse();

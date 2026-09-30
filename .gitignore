@@ -17,7 +17,6 @@ TestResults/
 *.suo
 *.userprefs
 *.DotSettings.user
-.vscode/
 
 # NuGet
 *.nupkg

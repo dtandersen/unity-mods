@@ -21,6 +21,7 @@ namespace StationeersAi.Mod.Ai
         public void Write(string line)
         {
             var text = line ?? string.Empty;
+            BepInExPlugin.Log.Log($"chat sink queued: {BepInExPlugin.Truncate(text, 80)}");
             _runOnMainThread(() => ChatSender.Send(BepInExPlugin.AssistantName, text));
         }
     }

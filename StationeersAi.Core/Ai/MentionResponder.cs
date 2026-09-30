@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using StationeersAi.Core;
 using StationeersAi.Formatting;
 
 namespace StationeersAi.Ai
@@ -15,7 +16,7 @@ namespace StationeersAi.Ai
         private readonly IChatSink _chat;
         private readonly Func<AiAssistant> _assistantFactory;
         private readonly string _assistantName;
-        private readonly Action<string> _log;
+        private readonly Logger _log;
         private bool _busy;
 
         /// <param name="chat">Destination for the answer.</param>
@@ -29,7 +30,7 @@ namespace StationeersAi.Ai
             IChatSink chat,
             Func<AiAssistant> assistantFactory,
             string assistantName = null,
-            Action<string> log = null)
+            Logger log = null)
         {
             _chat = chat;
             _assistantFactory = assistantFactory;
@@ -68,7 +69,7 @@ namespace StationeersAi.Ai
             catch (Exception ex)
             {
                 Say($"error: {ex.Message}");
-                _log?.Invoke(ex.ToString());
+                _log.Log(ex.ToString());
                 return true;
             }
             finally

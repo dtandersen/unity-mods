@@ -27,6 +27,8 @@ namespace StationeersAi.Test.Support
 
         public RecordingChatSink Chat { get; } = new RecordingChatSink();
 
+        public RecordingLogger Log { get; } = new RecordingLogger();
+
         public string PlayerName { get; set; } = "Tester";
 
         public bool GameDataLoaded { get; set; } = true;

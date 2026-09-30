@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using StationeersAi.Core;
 using StationeersAi.Formatting;
 using StationeersAi.Time;
 
@@ -27,7 +28,7 @@ namespace StationeersAi.Ai
         private readonly Func<IAssistantActivity, AiAssistant> _assistantFactory;
         private readonly Func<string> _playerName;
         private readonly string _assistantName;
-        private readonly Action<string> _log;
+        private readonly Logger _log;
         private readonly bool _showThinking;
         private readonly bool _showToolCalls;
         private readonly bool _showToolResults;
@@ -52,7 +53,7 @@ namespace StationeersAi.Ai
             Func<IAssistantActivity, AiAssistant> assistantFactory,
             Func<string> playerName = null,
             string assistantName = null,
-            Action<string> log = null,
+            Logger log = null,
             bool showThinking = false,
             bool showToolCalls = false,
             bool showToolResults = false,
@@ -62,7 +63,7 @@ namespace StationeersAi.Ai
             _assistantFactory = assistantFactory;
             _playerName = playerName;
             _assistantName = assistantName;
-            _log = log;
+            _log = log ?? throw new ArgumentNullException(nameof(log));
             _showThinking = showThinking;
             _showToolCalls = showToolCalls;
             _showToolResults = showToolResults;
@@ -93,12 +94,12 @@ namespace StationeersAi.Ai
             catch (AiClientException ex)
             {
                 Say($"error: {ex.Message}");
-                _log?.Invoke(ex.ToString());
+                _log.Log(ex.ToString());
             }
             catch (Exception ex)
             {
                 Say($"error: {ex.Message}");
-                _log?.Invoke(ex.ToString());
+                _log.Log(ex.ToString());
             }
         }
 
@@ -136,7 +137,7 @@ namespace StationeersAi.Ai
             catch (Exception ex)
             {
                 Say($"error: {ex.Message}");
-                _log?.Invoke(ex.ToString());
+                _log.Log(ex.ToString());
             }
         }
 

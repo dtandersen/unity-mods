@@ -28,12 +28,12 @@ namespace StationeersAi.Test.Support
 
         public static AiAssistant Assistant(World world)
         {
-            return new AiAssistant(world.Ai, Tools(world));
+            return new AiAssistant(world.Ai, Tools(world), log: world.Log);
         }
 
         public static AiAssistant Assistant(World world, IAssistantActivity activity)
         {
-            return new AiAssistant(world.Ai, Tools(world), null, 5, null, activity);
+            return new AiAssistant(world.Ai, Tools(world), null, 5, world.Log, activity);
         }
 
         public static MentionResponder Responder(World world)
@@ -41,7 +41,8 @@ namespace StationeersAi.Test.Support
             return new MentionResponder(
                 world.Chat,
                 () => Assistant(world),
-                world.AssistantName);
+                world.AssistantName,
+                world.Log);
         }
 
         public static ChatPresenter Presenter(World world)
@@ -51,6 +52,7 @@ namespace StationeersAi.Test.Support
                 activity => world.GameDataLoaded ? Assistant(world, activity) : null,
                 () => world.PlayerName,
                 world.AssistantName,
+                world.Log,
                 showThinking: world.ShowThinking,
                 showToolCalls: world.ShowToolCalls,
                 showToolResults: world.ShowToolResults,
