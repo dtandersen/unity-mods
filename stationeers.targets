@@ -58,7 +58,7 @@
     <PluginDeployDir Condition="'$(PluginDeployDir)' == ''">$(BepInExPath)\plugins</PluginDeployDir>
     <!-- Folder the plugin is deployed into. Set this to the name r2modman used for a
          locally imported mod so builds update the managed copy instead of adding a second one. -->
-    <DeployFolderName Condition="'$(DeployFolderName)' == ''">$(ProjectName)</DeployFolderName>
+    <DeployFolderName Condition="'$(DeployFolderName)' == ''">$(MSBuildProjectName)</DeployFolderName>
     <DeployOnBuild Condition="'$(DeployOnBuild)' == ''">true</DeployOnBuild>
     <PackageOnBuild Condition="'$(PackageOnBuild)' == ''">false</PackageOnBuild>
   </PropertyGroup>
