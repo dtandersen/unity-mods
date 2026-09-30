@@ -16,7 +16,9 @@ namespace StationeersAi.Ai
     /// The optional callbacks keep the core free of any logging/UI framework:
     /// <paramref name="log"/> receives the full trace (plugin logs it) and
     /// <paramref name="activity"/> receives reasoning, tool calls and tool output.
-    /// The implementor of <see cref="IAssistantActivity"/> decides what to show.
+    /// <paramref name="systemPrompt"/> and <paramref name="activity"/> may be null
+    /// (no system prompt / no activity sink). The implementor of
+    /// <see cref="IAssistantActivity"/> decides what to show.
     /// </remarks>
     public sealed class AiAssistant
     {
@@ -30,13 +32,13 @@ namespace StationeersAi.Ai
         public AiAssistant(
             IAiClient client,
             ToolHandler tools,
-            string systemPrompt = null,
-            int maxIterations = 5,
-            Logger log = null,
-            IAssistantActivity activity = null)
+            string systemPrompt,
+            int maxIterations,
+            Logger log,
+            IAssistantActivity activity)
         {
-            _client = client;
-            _tools = tools;
+            _client = client ?? throw new ArgumentNullException(nameof(client));
+            _tools = tools ?? throw new ArgumentNullException(nameof(tools));
             _systemPrompt = systemPrompt;
             _maxIterations = maxIterations;
             _log = log ?? throw new ArgumentNullException(nameof(log));
@@ -44,12 +46,12 @@ namespace StationeersAi.Ai
         }
 
         /// <summary>
-        /// Answers a question. If <paramref name="conversation"/> is supplied, prior
+        /// Answers a question. If <paramref name="conversation"/> is non-null, prior
         /// turns are sent with the request and this turn is appended to it.
         /// </summary>
         public async Task<string> AskAsync(
             string prompt,
-            Conversation conversation = null,
+            Conversation conversation,
             CancellationToken cancellationToken = default)
         {
             var messages = new List<ChatMessage>();

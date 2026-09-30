@@ -23,7 +23,7 @@ namespace StationeersAi.Test.Features.Assistant
         {
             World.Activity = new RecordingActivity();
             var assistant = TestComposition.Assistant(World, World.Activity);
-            World.Reply = await assistant.AskAsync(prompt);
+            World.Reply = await assistant.AskAsync(prompt, null);
         }
 
         [Then("the thinking reported {string}")]

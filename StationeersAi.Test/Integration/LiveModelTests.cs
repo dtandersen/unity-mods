@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Threading.Tasks;
 using StationeersAi.Ai;
 using StationeersAi.Ai.OpenAi;
@@ -31,8 +32,8 @@ namespace StationeersAi.Test.Integration
             }
 
             var client = new OpenAiChatClient(
-                new HttpChatTransport(),
-                new OpenAiOptions(settings.ChatCompletionsUrl, settings.ApiKey, settings.Model));
+                new HttpChatTransport(new HttpClient()),
+                new OpenAiOptions(settings.ChatCompletionsUrl, settings.ApiKey, settings.Model, null));
 
             var completion = await client.CompleteAsync(
                 new[] { new ChatMessage(ChatRole.User, "Reply with the single word: pong") },

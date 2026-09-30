@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using StationeersAi.Entity;
@@ -9,9 +10,9 @@ namespace StationeersAi.Repository
     {
         private readonly List<Recipe> _recipes;
 
-        public InMemoryRecipeRepository(IEnumerable<Recipe> recipes = null)
+        public InMemoryRecipeRepository(IEnumerable<Recipe> recipes)
         {
-            _recipes = recipes?.ToList() ?? new List<Recipe>();
+            _recipes = (recipes ?? throw new ArgumentNullException(nameof(recipes))).ToList();
         }
 
         public void Add(Recipe recipe)

@@ -46,7 +46,7 @@ namespace StationeersAi.Test.Support
         [Given("the recipe database contains {string}")]
         public void GivenTheRecipeDatabaseContains(string name)
         {
-            Hooks.GetWorld(_context).Recipes.Add(NewRecipe(name));
+            Hooks.GetWorld(_context).Recipes.Add(NewRecipe(name, Array.Empty<Ingredient>(), "Autolathe"));
         }
 
         [Given("the recipe database contains a {string} recipe with ingredients:")]
@@ -56,7 +56,7 @@ namespace StationeersAi.Test.Support
                 .Select(row => new Ingredient(row["Ingredient"], Number(row["Amount"])))
                 .ToArray();
 
-            Hooks.GetWorld(_context).Recipes.Add(NewRecipe(name, ingredients));
+            Hooks.GetWorld(_context).Recipes.Add(NewRecipe(name, ingredients, "Autolathe"));
         }
 
         [Given("the recipe database contains a {string} recipe at {string} with ingredients:")]
@@ -115,7 +115,7 @@ namespace StationeersAi.Test.Support
             return double.Parse(value, CultureInfo.InvariantCulture);
         }
 
-        private static Recipe NewRecipe(string name, Ingredient[] ingredients = null, string station = "Autolathe")
+        private static Recipe NewRecipe(string name, Ingredient[] ingredients, string station)
         {
             return new Recipe(
                 Id: name,
@@ -123,7 +123,7 @@ namespace StationeersAi.Test.Support
                 Name: name,
                 Amount: 1,
                 Station: station,
-                Ingredients: ingredients ?? Array.Empty<Ingredient>());
+                Ingredients: ingredients);
         }
     }
 }

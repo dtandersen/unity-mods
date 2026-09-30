@@ -16,7 +16,7 @@ namespace StationeersAi.Mod.Ai
     {
         private readonly int _timeoutSeconds;
 
-        public UnityWebRequestTransport(int timeoutSeconds = 30)
+        public UnityWebRequestTransport(int timeoutSeconds)
         {
             _timeoutSeconds = timeoutSeconds;
         }

@@ -61,7 +61,7 @@ namespace StationeersAi.Test.Features.Assistant
         public async Task WhenIAskTheAssistantInChat(string prompt)
         {
             World.Ai ??= new FakeAiClient();
-            await TestComposition.Presenter(World).AskAsync(prompt);
+            await TestComposition.Presenter(World).AskAsync(prompt, null);
         }
 
         [When("I start asking the assistant in chat {string}")]
@@ -69,7 +69,7 @@ namespace StationeersAi.Test.Features.Assistant
         {
             World.Ai ??= new FakeAiClient();
             World.Presenter = TestComposition.Presenter(World);
-            World.AskTask = World.Presenter.AskAsync(prompt);
+            World.AskTask = World.Presenter.AskAsync(prompt, null);
         }
 
         [When("the assistant reports a tool call {string}")]

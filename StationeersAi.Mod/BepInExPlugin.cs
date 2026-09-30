@@ -18,6 +18,7 @@ using StationeersAi.Mod.Ai;
 using StationeersAi.Mod.Patch;
 using StationeersAi.Query;
 using StationeersAi.Repository;
+using StationeersAi.Time;
 using StationeersAi.Tool;
 using Util.Commands;
 
@@ -254,7 +255,8 @@ namespace StationeersAi.Mod
                 Log,
                 showThinking: showThinking.Value,
                 showToolCalls: showToolCalls.Value,
-                showToolResults: showToolResults.Value);
+                showToolResults: showToolResults.Value,
+                clock: SystemClock.Instance);
         }
 
         /// <summary>

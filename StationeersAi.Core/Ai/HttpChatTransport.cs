@@ -1,3 +1,4 @@
+using System;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -13,9 +14,9 @@ namespace StationeersAi.Ai
     {
         private readonly HttpClient _client;
 
-        public HttpChatTransport(HttpClient client = null)
+        public HttpChatTransport(HttpClient client)
         {
-            _client = client ?? new HttpClient();
+            _client = client ?? throw new ArgumentNullException(nameof(client));
         }
 
         public async Task<HttpReply> PostAsync(HttpRequest request, CancellationToken cancellationToken = default)

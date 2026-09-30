@@ -28,7 +28,7 @@ namespace StationeersAi.Test.Support
 
         public static AiAssistant Assistant(World world)
         {
-            return new AiAssistant(world.Ai, Tools(world), log: world.Log);
+            return new AiAssistant(world.Ai, Tools(world), systemPrompt: null, maxIterations: 5, log: world.Log, activity: null);
         }
 
         public static AiAssistant Assistant(World world, IAssistantActivity activity)

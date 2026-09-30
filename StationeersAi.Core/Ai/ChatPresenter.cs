@@ -41,40 +41,40 @@ namespace StationeersAi.Ai
         /// Builds the assistant, or returns null when game data is not loaded. It
         /// receives the activity sink to report reasoning and tool use to.
         /// </param>
-        /// <param name="playerName">Supplies the local player's name for the echo.</param>
-        /// <param name="assistantName">Name the assistant posts under.</param>
+        /// <param name="playerName">Supplies the local player's name for the echo. May return null, which echoes as "You".</param>
+        /// <param name="assistantName">Name the assistant posts under. May be null, which posts as "Sage".</param>
         /// <param name="log">Receives exception details.</param>
         /// <param name="showThinking">Post the model's reasoning and narration.</param>
         /// <param name="showToolCalls">Post each requested tool call.</param>
         /// <param name="showToolResults">Post each tool's raw output.</param>
-        /// <param name="clock">Time source; defaults to the system clock.</param>
+        /// <param name="clock">Time source.</param>
         public ChatPresenter(
             IChatSink chat,
             Func<IAssistantActivity, AiAssistant> assistantFactory,
-            Func<string> playerName = null,
-            string assistantName = null,
-            Logger log = null,
-            bool showThinking = false,
-            bool showToolCalls = false,
-            bool showToolResults = false,
-            IClock clock = null)
+            Func<string> playerName,
+            string assistantName,
+            Logger log,
+            bool showThinking,
+            bool showToolCalls,
+            bool showToolResults,
+            IClock clock)
         {
             _chat = chat;
             _assistantFactory = assistantFactory;
             _playerName = playerName;
             _assistantName = assistantName;
-            _log = log ?? throw new ArgumentNullException(nameof(log));
+            _log = log;
             _showThinking = showThinking;
             _showToolCalls = showToolCalls;
             _showToolResults = showToolResults;
-            _clock = clock ?? SystemClock.Instance;
+            _clock = clock;
             _lastEvent = _clock.UtcNow;
         }
 
         /// <summary>Answers a question, echoing it first so it stays in the log.</summary>
         public async Task AskAsync(
             string prompt,
-            Conversation conversation = null,
+            Conversation conversation,
             CancellationToken cancellationToken = default)
         {
             try

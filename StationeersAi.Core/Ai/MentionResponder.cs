@@ -29,13 +29,13 @@ namespace StationeersAi.Ai
         public MentionResponder(
             IChatSink chat,
             Func<AiAssistant> assistantFactory,
-            string assistantName = null,
-            Logger log = null)
+            string assistantName,
+            Logger log)
         {
-            _chat = chat;
-            _assistantFactory = assistantFactory;
+            _chat = chat ?? throw new ArgumentNullException(nameof(chat));
+            _assistantFactory = assistantFactory ?? throw new ArgumentNullException(nameof(assistantFactory));
             _assistantName = assistantName;
-            _log = log;
+            _log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
         /// <summary>Whether a question is currently being answered.</summary>

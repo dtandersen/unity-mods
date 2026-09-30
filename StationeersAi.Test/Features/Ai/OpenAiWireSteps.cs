@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Reqnroll;
 using Shouldly;
@@ -40,7 +41,7 @@ namespace StationeersAi.Test.Features.Ai
         [When("I complete a chat with {string} using model {string}")]
         public Task WhenICompleteAChatWith(string user, string model)
         {
-            return CompleteAsync(user, model, Array.Empty<ToolDefinition>());
+            return CompleteAsync(user, model, Array.Empty<ToolDefinition>(), null);
         }
 
         [When("I complete a chat with {string} with the {string} tool")]
@@ -50,7 +51,7 @@ namespace StationeersAi.Test.Features.Ai
                 .Where(definition => definition.Name == tool)
                 .ToArray();
 
-            return CompleteAsync(user, "test-model", definitions);
+            return CompleteAsync(user, "test-model", definitions, null);
         }
 
         [When("I complete a chat with {string} using reasoning effort {string}")]
@@ -106,10 +107,10 @@ namespace StationeersAi.Test.Features.Ai
             World.CompletionError.Message.ShouldContain(text);
         }
 
-        private async Task CompleteAsync(string user, string model, IReadOnlyList<ToolDefinition> tools, string reasoningEffort = null)
+        private async Task CompleteAsync(string user, string model, IReadOnlyList<ToolDefinition> tools, string reasoningEffort)
         {
             var client = new OpenAiChatClient(
-                new HttpChatTransport(),
+                new HttpChatTransport(new HttpClient()),
                 new OpenAiOptions(World.Server.ChatCompletionsUrl, "test-key", model, reasoningEffort));
 
             try

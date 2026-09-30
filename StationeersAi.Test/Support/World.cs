@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using StationeersAi.Ai;
+using StationeersAi.Entity;
 using StationeersAi.Repository;
 using StationeersAi.Test.Fakes;
 using StationeersAi.Tool;
@@ -13,13 +14,13 @@ namespace StationeersAi.Test.Support
     /// </summary>
     public sealed class World : IDisposable
     {
-        public InMemoryItemRepository Items { get; } = new InMemoryItemRepository();
+        public InMemoryItemRepository Items { get; } = new InMemoryItemRepository(Array.Empty<Item>());
 
-        public InMemoryStructureRepository Structures { get; } = new InMemoryStructureRepository();
+        public InMemoryStructureRepository Structures { get; } = new InMemoryStructureRepository(Array.Empty<Structure>());
 
-        public InMemoryRecipeRepository Recipes { get; } = new InMemoryRecipeRepository();
+        public InMemoryRecipeRepository Recipes { get; } = new InMemoryRecipeRepository(Array.Empty<Recipe>());
 
-        public InMemoryStationpediaRepository Stationpedia { get; } = new InMemoryStationpediaRepository();
+        public InMemoryStationpediaRepository Stationpedia { get; } = new InMemoryStationpediaRepository(Array.Empty<StationpediaEntry>());
 
         public InMemoryPlayerContext Player { get; } = new InMemoryPlayerContext();
 

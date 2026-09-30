@@ -10,10 +10,13 @@ namespace StationeersAi.Test
     /// <summary>Tool argument handling, failure paths, and model-facing text.</summary>
     public class ToolTests
     {
-        private static ToolHandler Tools(InMemoryPlayerContext player = null)
+        private static ToolHandler Tools()
         {
-            player ??= new InMemoryPlayerContext();
+            return Tools(new InMemoryPlayerContext());
+        }
 
+        private static ToolHandler Tools(InMemoryPlayerContext player)
+        {
             var items = new InMemoryItemRepository(new[]
             {
                 new Item("ItemSteel", "Steel", "Ingot"),

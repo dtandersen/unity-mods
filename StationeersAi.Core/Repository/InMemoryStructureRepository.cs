@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using StationeersAi.Entity;
@@ -9,9 +10,9 @@ namespace StationeersAi.Repository
     {
         private readonly List<Structure> _structures;
 
-        public InMemoryStructureRepository(IEnumerable<Structure> structures = null)
+        public InMemoryStructureRepository(IEnumerable<Structure> structures)
         {
-            _structures = structures?.ToList() ?? new List<Structure>();
+            _structures = (structures ?? throw new ArgumentNullException(nameof(structures))).ToList();
         }
 
         public void Add(Structure structure)

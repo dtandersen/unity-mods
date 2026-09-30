@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using StationeersAi.Entity;
@@ -9,9 +10,9 @@ namespace StationeersAi.Repository
     {
         private readonly List<StationpediaEntry> _entries;
 
-        public InMemoryStationpediaRepository(IEnumerable<StationpediaEntry> entries = null)
+        public InMemoryStationpediaRepository(IEnumerable<StationpediaEntry> entries)
         {
-            _entries = entries?.ToList() ?? new List<StationpediaEntry>();
+            _entries = (entries ?? throw new ArgumentNullException(nameof(entries))).ToList();
         }
 
         public void Add(StationpediaEntry entry)
