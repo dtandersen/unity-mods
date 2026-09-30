@@ -22,3 +22,11 @@ Feature: Chat mentions
   Scenario: A mention must start the message
     When the mention trigger is "!sage" and the message is "hey !sage"
     Then the message is not a mention
+
+  Scenario: The at-sign chat trigger is recognised
+    When the mention trigger is "@sage" and the message is "@sage how do I smelt?"
+    Then the mention is recognised as "how do I smelt?"
+
+  Scenario: The at-sign trigger needs a boundary too
+    When the mention trigger is "@sage" and the message is "@sageson hello"
+    Then the message is not a mention

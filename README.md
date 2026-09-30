@@ -111,11 +111,23 @@ Credentials are never committed.
 
 ## Use
 
-Open the console in-game and type (Stationeers console key, e.g. F1):
+Press Enter to open chat and mention Sage, or use the console (`ai`):
+
+```
+@sage how do I make cable coil?
+@sage what does the autolathe need for steel sheets?
+```
+
+The answer is posted to chat as Sage — on a server, every player sees it.
+Chat answers are plain text (no Markdown). Mention handling is controlled by
+`General/RespondToMentions` (default on) and `General/MentionTrigger`
+(default `@sage`).
+
+From the console (Stationeers console key, e.g. F1) for longer sessions with
+history:
 
 ```
 ai how do I make cable coil?
-ai what does the autolathe need for steel sheets?
 ai clear     # drop conversation history
 ai compact   # summarise history into one message
 ```

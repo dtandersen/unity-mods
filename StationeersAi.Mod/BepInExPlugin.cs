@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using BepInEx;
 using BepInEx.Configuration;
+using HarmonyLib;
 using Assets.Scripts.Objects;
 using Assets.Scripts.Objects.Entities;
 using Assets.Scripts.Objects.Items;
@@ -13,6 +14,7 @@ using StationeersAi.Command;
 using StationeersAi.Core;
 using StationeersAi.Formatting;
 using StationeersAi.Mod.Ai;
+using StationeersAi.Mod.Patch;
 using StationeersAi.Query;
 using StationeersAi.Repository;
 using StationeersAi.Tool;
@@ -39,6 +41,8 @@ namespace StationeersAi.Mod
         public static ConfigEntry<bool> showThinking;
         public static ConfigEntry<bool> showToolCalls;
         public static ConfigEntry<bool> showToolResults;
+        public static ConfigEntry<bool> respondToMentions;
+        public static ConfigEntry<string> mentionTrigger;
         public static ConfigEntry<string> aiName;
         public static ConfigEntry<string> endpoint;
         public static ConfigEntry<string> apiKey;
@@ -52,6 +56,7 @@ namespace StationeersAi.Mod
         private static Conversation conversation;
 
         private static readonly ConcurrentQueue<Action> MainThreadActions = new ConcurrentQueue<Action>();
+        private static MentionResponder mentionResponder;
 
         // World data does not depend on the player, so it is built once and
         // reused until the prefab catalogue changes size.
@@ -74,6 +79,10 @@ namespace StationeersAi.Mod
                 "Print each tool call (name and arguments) to the console.");
             showToolResults = Config.Bind("General", "ShowToolResults", false,
                 "Print each tool's raw output (CSV) to the console.");
+            respondToMentions = Config.Bind("General", "RespondToMentions", true,
+                "Answer chat messages that start with the mention trigger (e.g. @sage). The answer is posted to chat as the assistant.");
+            mentionTrigger = Config.Bind("General", "MentionTrigger", "@sage",
+                "Chat prefix that asks the assistant a question.");
             aiName = Config.Bind("General", "Name", "Sage",
                 "Name the assistant uses. Default: Sage.");
 
@@ -94,6 +103,9 @@ namespace StationeersAi.Mod
             {
                 return;
             }
+
+            var harmony = new Harmony(ModGuid);
+            harmony.PatchAll(typeof(ChatMessagePatch));
 
             CommandLine.AddCommand("ai", new AiConsoleCommand());
 
@@ -124,6 +136,47 @@ namespace StationeersAi.Mod
         public static void RunOnMainThread(Action action)
         {
             MainThreadActions.Enqueue(action);
+        }
+
+        /// <summary>
+        /// Called for every chat message displayed on this machine. If it is a
+        /// mention and mention handling is enabled, asks Sage in chat. Runs on
+        /// the Unity main thread, so the game-data snapshot is safe to build.
+        /// </summary>
+        public static void OnChatMessage(Assets.Scripts.Networking.ChatMessage message)
+        {
+            if (!modEnabled.Value || !respondToMentions.Value || message == null)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(message.ChatText))
+            {
+                return;
+            }
+
+            // Skip our own answers echoing back through the server relay.
+            if (message.DisplayName != null &&
+                message.DisplayName.Equals(AssistantName, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            if (!Mention.TryParse(mentionTrigger.Value, message.ChatText, out var prompt))
+            {
+                return;
+            }
+
+            _ = MentionResponderInstance().HandleAsync(prompt);
+        }
+
+        private static MentionResponder MentionResponderInstance()
+        {
+            return mentionResponder ??= new MentionResponder(
+                new ChatMessageSink(RunOnMainThread),
+                () => BuildAssistant(null),
+                AssistantName,
+                Dbgl);
         }
 
         /// <summary>
