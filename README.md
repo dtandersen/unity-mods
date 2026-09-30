@@ -82,14 +82,32 @@ dotnet build StationeersAi.Mod/StationeersAi.Mod.csproj -c Release -p:PackageOnB
 dotnet test
 ```
 
-Specs are plain TUnit tests over in-memory repositories and a scripted fake
-model, so they run without the game.
+Requirements are written as Gherkin `.feature` files under
+`StationeersAi.Test/Features/` and bound to step definitions. The LLM and game
+data are replaced with fakes so the specs run without the game. TUnit-only
+specs (`SearchTests`, `ToolTests`, `AssistantTests`, `FormattingTests`) cover
+the same ground at a finer grain.
 
 `ArchitectureTests.cs` enforces the core's defining constraint two ways:
 
 - a raw assembly-reference check (catches unused references), and
 - an ArchUnitNET rule that `StationeersAi.Core` types do not depend on
   `BepInEx`/`HarmonyLib`/`UnityEngine`/`Unity`/`Assets.Scripts` namespaces.
+
+### Integration tests
+
+Tests that talk to a real OpenAI-compatible endpoint are marked with
+`[Category("Integration")]` and `[Explicit]`, so a normal `dotnet test` never hits the
+network. Provide credentials either through environment variables
+(`SAGEAI_ENDPOINT`, `SAGEAI_API_KEY`, `SAGEAI_MODEL`) or a git-ignored
+`StationeersAi.Test/integration.settings.json` (copy `integration.settings.example.json`),
+then run them explicitly:
+
+```bash
+dotnet run --project StationeersAi.Test -- --treenode-filter "/*/*/*/*[Category=Integration]"
+```
+
+Credentials are never committed.
 
 ## Use
 

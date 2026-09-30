@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="TUnit" Version="1.67.0" />
+    <PackageReference Include="Reqnroll.TUnit" Version="3.3.4" />
     <PackageReference Include="Shouldly" Version="4.3.0" />
     <PackageReference Include="TngTech.ArchUnitNET" Version="0.13.4" />
     <PackageReference Include="TngTech.ArchUnitNET.TUnit" Version="0.13.4" />
@@ -22,6 +23,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\StationeersAi.Core\StationeersAi.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="reqnroll.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Local integration credentials; absent on a fresh clone. -->
+    <None Update="integration.settings.json" CopyToOutputDirectory="PreserveNewest"
+          Condition="Exists('$(MSBuildProjectDirectory)/integration.settings.json')" />
   </ItemGroup>
 
 </Project>
