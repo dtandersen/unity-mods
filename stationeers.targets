@@ -69,7 +69,7 @@
   </ItemGroup>
 
   <!-- BepInEx -->
-  <ItemGroup>
+  <ItemGroup Condition="Exists('$(BepInExPath)\core\BepInEx.dll')">
     <Reference Include="BepInEx">
       <HintPath>$(BepInExPath)\core\BepInEx.dll</HintPath>
       <Private>False</Private>
@@ -80,11 +80,24 @@
     </Reference>
   </ItemGroup>
 
+  <!-- Vendored fallback (e.g. CI): used only when BepInEx is not installed
+       alongside the game. The game-local copy above takes precedence. -->
+  <ItemGroup Condition="!Exists('$(BepInExPath)\core\BepInEx.dll') AND Exists('$(MSBuildThisFileDirectory)lib\BepInEx\BepInEx.dll')">
+    <Reference Include="BepInEx">
+      <HintPath>$(MSBuildThisFileDirectory)lib\BepInEx\BepInEx.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(MSBuildThisFileDirectory)lib\BepInEx\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
   <!-- Stationeers assemblies -->
   <Target Name="CheckGameRefs" BeforeTargets="BeforeBuild">
     <Error Condition="!Exists('$(ManagedDataPath)\Assembly-CSharp.dll')"
            Text="Stationeers game DLL not found at $(ManagedDataPath)\Assembly-CSharp.dll. Set GamePath in local.props (e.g. D:\SteamLibrary\steamapps\common\Stationeers)." />
-    <Warning Condition="!Exists('$(BepInExPath)\core\BepInEx.dll')"
+    <Warning Condition="!Exists('$(BepInExPath)\core\BepInEx.dll') AND !Exists('$(MSBuildThisFileDirectory)lib\BepInEx\BepInEx.dll')"
              Text="BepInEx not found at $(BepInExPath)\core\BepInEx.dll. Install BepInEx 5 (x64, Mono) into the game folder or point BepInExPath at your r2modman profile. See README.md." />
   </Target>
   <ItemGroup>

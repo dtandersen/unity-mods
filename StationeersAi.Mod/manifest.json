@@ -1,0 +1,7 @@
+{
+  "name": "Sage",
+  "author_name": "you",
+  "description": "Sage - an LLM assistant for Stationeers. Ask questions from the console with 'ai <question>'.",
+  "version_number": "0.1.0",
+  "dependencies": []
+}

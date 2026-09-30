@@ -1,46 +1,64 @@
-# Stationeers Mods
+# Sage (StationeersAi)
 
-BepInEx 5 mod scaffolding for Stationeers, mirroring `D:\Projects\valheim-mods`.
-Stationeers lives at `D:\SteamLibrary\steamapps\common\Stationeers`
-(`rocketstation.exe` + `rocketstation_Data/Managed/Assembly-CSharp.dll`).
+An LLM assistant for Stationeers, delivered as a BepInEx 5 plugin. Ask questions
+from the in-game console (`ai <question>`) and the assistant looks up live game
+data — items, structures, manufacturing recipes, Stationpedia pages, your
+inventory, and your position — before answering.
+
+Named Sage, after the Stationeers engineer who reads the manual. 🧠
+
+## Projects
+
+```
+StationeersAi.Core/   netstandard2.0   Unity-free logic (models, tools, LLM loop, parsing)
+StationeersAi.Test/   net8.0           TUnit + Shouldly + ArchUnitNET specs
+StationeersAi.Mod/    net48            BepInEx plugin: Unity/HTTP/game-data adapter
+```
+
+The split is deliberate: **`StationeersAi.Core` must not touch Unity or
+Stationeers types** so it can be specified and tested from
+`StationeersAi.Test`. The plugin is a thin adapter that snapshots
+`Prefab.AllPrefabs`, the `ElectronicReader` recipe tables, `Stationpedia`
+pages and `Human.LocalHuman`, calls the LLM over `UnityWebRequest`, and
+prints results. (`Thing`, `Human` and friends are `MonoBehaviour`s and cannot
+be constructed outside the game.)
+
+Mirrors `D:\Projects\valheim-mods` (Odin's Eye for Valheim): same
+model/tool-loop core, same tool/command/index layering, same MSBuild
+`stationeers.targets` + `local.props` + deploy/package flow.
 
 ## Layout
 
 ```
 global.json            # opts dotnet test into Microsoft.Testing.Platform (MTP) mode
-stationeers.targets    # shared MSBuild config for plugins: refs + deploy/packaging
-local.props            # machine-specific paths (git-ignored, pre-filled for this PC)
+stationeers.targets    # shared MSBuild config for the plugin: refs + deploy/packaging
+local.props            # machine-specific paths (git-ignored)
 local.props.example    # template for local.props
 StationeersMods.sln
-Example.Mod/           # smoke-test plugin (replace with your real mod)
+lib/BepInEx/           # vendored BepInEx 5.4.22 compile refs (fallback when the
+                       #   game has no BepInEx installed; never shipped)
+StationeersAi.Core/
+StationeersAi.Test/
+StationeersAi.Mod/
   BepInExPlugin.cs
-  manifest.json        # Thunderstore/r2modman metadata for packaging
+  AiConsoleCommand.cs  # the `ai` console command
 ```
-
-`stationeers.targets` is the Stationeers equivalent of `valheim.targets`:
-same `net48` + deploy-to-`BepInEx/plugins` + zip-package flow, but referencing
-`Assembly-CSharp` / `rocketstation_Data/Managed` and auto-detecting the game via
-the Steam registry (`Steam App 544550`). There is no Jotunn equivalent, so that
-section was dropped.
 
 ## Prerequisites
 
-- **Stationeers** installed (this machine: `D:\SteamLibrary\steamapps\common\Stationeers`).
-- **BepInEx 5 (x64, Mono)** installed/launched at least once — **not yet installed
-  for Stationeers on this machine**. Either:
-  - install via **r2modman** (create a Stationeers profile — none exists yet), or
-  - manually unzip BepInEx 5 x64 into the game folder so
-    `Stationeers/BepInEx/core/BepInEx.dll` exists.
-- **.NET SDK 10**.
+- **Stationeers** installed (`D:\SteamLibrary\steamapps\common\Stationeers`).
+- **BepInEx 5 (x64, Mono)** installed/launched at least once — either in the
+  game folder or via r2modman. For *compiling* only, the vendored
+  `lib/BepInEx` fallback is used automatically when BepInEx is absent.
+- **.NET SDK 10**. `StationeersAi.Core` targets `netstandard2.0`, the specs
+  target `net8.0`, and the plugin targets .NET Framework 4.8 (reference
+  assemblies are supplied by a NuGet package, so Visual Studio is not required).
 
 ## Configure paths
 
-`local.props` is already set to `D:\SteamLibrary\steamapps\common\Stationeers`
-with `BepInExPath` defaulting to `$(GamePath)/BepInEx`. If you use r2modman,
-point `BepInExPath`/`PluginDeployDir` at
-`%APPDATA%\r2modmanPlus-local\Stationeers\profiles\<profile>\BepInEx[...\plugins]`
-(see `local.props.example`). `stationeers.targets` auto-detects `GamePath` from
-the Steam registry if `local.props` is absent.
+Copy `local.props.example` to `local.props` (already done on this machine) and
+set `GamePath`, `BepInExPath`, and `PluginDeployDir`. `stationeers.targets`
+auto-detects `GamePath` from the Steam registry if `local.props` is absent.
 
 ## Build
 
@@ -48,21 +66,66 @@ the Steam registry if `local.props` is absent.
 dotnet build StationeersMods.sln -c Debug
 ```
 
-A successful plugin build copies the DLL (and pdb) into
-`<PluginDeployDir>\Example.Mod\`. **This currently fails until BepInEx is
-installed** (missing `BepInEx.dll`/`0Harmony.dll`) — install it first, then
-rebuild.
+A successful plugin build copies `StationeersAi.Mod.dll` **and**
+`StationeersAi.Core.dll` into `<PluginDeployDir>\StationeersAi.Mod\`.
 
 To create a distributable zip:
 
 ```bash
-dotnet build Example.Mod/Example.Mod.csproj -c Release -p:PackageOnBuild=true
-# -> Example.Mod/artifacts/Example.Mod.zip
+dotnet build StationeersAi.Mod/StationeersAi.Mod.csproj -c Release -p:PackageOnBuild=true
+# -> StationeersAi.Mod/artifacts/StationeersAi.Mod.zip
 ```
 
-## Next steps
+## Test
 
-- Install BepInEx 5 for Stationeers (above), then `dotnet build` to verify.
-- Copy/rename `Example.Mod` to your real mod name, or add `MyMod.Core` /
-  `MyMod.Test` projects mirroring the `OdinsAi.Core` (netstandard2.0, Unity-free)
-  + `OdinsAi.Test` (net8.0) split if you want testable game-free logic.
+```bash
+dotnet test
+```
+
+Specs are plain TUnit tests over in-memory repositories and a scripted fake
+model, so they run without the game.
+
+`ArchitectureTests.cs` enforces the core's defining constraint two ways:
+
+- a raw assembly-reference check (catches unused references), and
+- an ArchUnitNET rule that `StationeersAi.Core` types do not depend on
+  `BepInEx`/`HarmonyLib`/`UnityEngine`/`Unity`/`Assets.Scripts` namespaces.
+
+## Use
+
+Open the console in-game and type (Stationeers console key, e.g. F1):
+
+```
+ai how do I make cable coil?
+ai what does the autolathe need for steel sheets?
+ai clear     # drop conversation history
+ai compact   # summarise history into one message
+```
+
+Set `AI/ApiKey` (and optionally `Endpoint`/`Model`) in the BepInEx config
+(`BepInEx/config/davidandersen.stationeersai.cfg`) first — any
+OpenAI-compatible endpoint works.
+
+The assistant can call these tools:
+
+| Tool | Data |
+|---|---|
+| `search_items` | Items by name (from the prefab catalogue) |
+| `search_structures` | Buildable structures by name |
+| `search_recipes` | Manufacturing recipes with station + ingredients |
+| `search_stationpedia` / `read_stationpedia` | In-game encyclopedia pages |
+| `search_inventory` | What you are carrying and where it is worn |
+| `get_status` | Your position and world |
+
+## Toolchain
+
+| Package | Version | Purpose |
+|---|---|---|
+| TUnit | 1.67.0 | Test runner (Microsoft.Testing.Platform) |
+| Shouldly | 4.3.0 | Assertions |
+| TngTech.ArchUnitNET | 0.13.4 | Architecture (namespace dependency) rules |
+| TngTech.ArchUnitNET.TUnit | 0.13.4 | TUnit integration for ArchUnitNET |
+
+## License
+
+Public domain.

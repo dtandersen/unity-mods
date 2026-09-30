@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <Description>Sage - an LLM assistant for Stationeers.</Description>
+  </PropertyGroup>
+
+  <!-- The plugin consumes the Unity-free core library. -->
+  <ItemGroup>
+    <ProjectReference Include="..\StationeersAi.Core\StationeersAi.Core.csproj" />
+  </ItemGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory)..\stationeers.targets" />
+
+</Project>
