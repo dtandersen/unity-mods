@@ -26,7 +26,7 @@ namespace StationeersAi.Tool
                 return new ToolFailure("Player status is unavailable.");
             }
 
-            var content = $"Position: ({status.X:0.0}, {status.Y:0.0}, {status.Z:0.0})\nWorld: {status.World ?? "unknown"}";
+            var content = $"Position: ({status.X:0.0}, {status.Y:0.0}, {status.Z:0.0})\nWorld: {status.World ?? "unknown"}\nRoom: {(status.RoomId.HasValue ? status.RoomId.Value.ToString() : "outside")}";
             if (!string.IsNullOrWhiteSpace(status.Details))
             {
                 content += $"\n{status.Details}";

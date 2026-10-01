@@ -10,8 +10,8 @@ namespace StationeersAi.Repository
         /// Things matching <paramref name="query"/> (blank matches all), on data
         /// network <paramref name="network"/> (null searches every network), speaking
         /// logic when <paramref name="logic"/> is true, dumb ones when false, all
-        /// when null.
+        /// when null, and in room <paramref name="room"/> (null searches everywhere).
         /// </summary>
-        IReadOnlyList<DeviceInfo> Search(string query, long? network, bool? logic);
+        IReadOnlyList<DeviceInfo> Search(string query, long? network, bool? logic, long? room);
     }
 }

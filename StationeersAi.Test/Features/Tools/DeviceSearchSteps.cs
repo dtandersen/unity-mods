@@ -22,9 +22,9 @@ namespace StationeersAi.Test.Features.Tools
         [Given("the world has devices")]
         public void GivenTheWorldHasDevices()
         {
-            World.Devices.Devices.Add(new DeviceInfo("Air Vent", "StructureAirVent", 101, 7, true));
-            World.Devices.Devices.Add(new DeviceInfo("Gas Sensor", "StructureGasSensor", 102, 0, true));
-            World.Devices.Devices.Add(new DeviceInfo("Iron Pipe", "StructurePipe", 103, 0, false));
+            World.Devices.Devices.Add(new DeviceInfo("Air Vent", "StructureAirVent", 101, 7, true, 5));
+            World.Devices.Devices.Add(new DeviceInfo("Gas Sensor", "StructureGasSensor", 102, 0, true, 5));
+            World.Devices.Devices.Add(new DeviceInfo("Iron Pipe", "StructurePipe", 103, 0, false, 0));
         }
 
         [Given("the world has 12 devices")]
@@ -33,7 +33,7 @@ namespace StationeersAi.Test.Features.Tools
             World.Devices.Devices.Clear();
             for (var i = 1; i <= 12; i++)
             {
-                World.Devices.Devices.Add(new DeviceInfo($"Device {i:00}", "StructurePipe", 100 + i, 0, false));
+                World.Devices.Devices.Add(new DeviceInfo($"Device {i:00}", "StructurePipe", 100 + i, 0, false, 0));
             }
         }
 
@@ -43,10 +43,10 @@ namespace StationeersAi.Test.Features.Tools
             World.Devices.Devices.Clear();
             for (var i = 1; i <= 11; i++)
             {
-                World.Devices.Devices.Add(new DeviceInfo($"Cable {i:00}", "StructureCable", 200 + i, 0, false));
+                World.Devices.Devices.Add(new DeviceInfo($"Cable {i:00}", "StructureCable", 200 + i, 0, false, 0));
             }
 
-            World.Devices.Devices.Add(new DeviceInfo("Wall Heater", "StructureWallHeater", 1208, 1194, true));
+            World.Devices.Devices.Add(new DeviceInfo("Wall Heater", "StructureWallHeater", 1208, 1194, true, 5));
         }
 
         [Given("the world has 12 logic devices")]
@@ -55,7 +55,7 @@ namespace StationeersAi.Test.Features.Tools
             World.Devices.Devices.Clear();
             for (var i = 1; i <= 12; i++)
             {
-                World.Devices.Devices.Add(new DeviceInfo($"Sensor {i:00}", "StructureGasSensor", 1400 + i, 1194, true));
+                World.Devices.Devices.Add(new DeviceInfo($"Sensor {i:00}", "StructureGasSensor", 1400 + i, 1194, true, 5));
             }
         }
 
@@ -116,6 +116,20 @@ namespace StationeersAi.Test.Features.Tools
         public void ThenTheToolFoundDevices(int count)
         {
             World.ToolResult.ShouldBeOfType<ToolSuccess<SearchDevicesResult>>().Value.Devices.Count.ShouldBe(count);
+        }
+        [When("I search devices in room {string}")]
+        public void WhenISearchDevicesInRoom(string room)
+        {
+            World.ToolResult = TestComposition.Tools(World).Handle(new ToolCall(
+                "call_1",
+                "search_devices",
+                new ToolArguments(new Dictionary<string, string> { ["room"] = room })));
+        }
+
+        [Then("the search used room {string}")]
+        public void ThenTheSearchUsedRoom(string expected)
+        {
+            World.Devices.LastRoom.ShouldBe(long.Parse(expected));
         }
     }
 }

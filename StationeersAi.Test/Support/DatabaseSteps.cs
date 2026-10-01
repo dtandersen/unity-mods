@@ -92,6 +92,7 @@ namespace StationeersAi.Test.Support
                 float.Parse(y, CultureInfo.InvariantCulture),
                 float.Parse(z, CultureInfo.InvariantCulture),
                 world,
+                null,
                 null);
         }
 

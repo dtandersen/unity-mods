@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Assets.Scripts;
 using Assets.Scripts.Objects;
 using Assets.Scripts.Objects.Entities;
 using Assets.Scripts.Objects.Items;
@@ -134,7 +135,26 @@ namespace StationeersAi.Repository
         private static PlayerStatus PlayerStatus(Human human)
         {
             var position = SafePosition(human);
-            return new Entity.PlayerStatus(position.x, position.y, position.z, WorldName(), null);
+            return new Entity.PlayerStatus(position.x, position.y, position.z, WorldName(), null, RoomOf(human));
+        }
+
+        private static long? RoomOf(Human human)
+        {
+            try
+            {
+                var controller = RoomController.World;
+                if (controller == null || human == null)
+                {
+                    return null;
+                }
+
+                var room = controller.GetRoom(human.ThingTransformPosition);
+                return room != null ? (long?)room.RoomId : null;
+            }
+            catch (System.Exception)
+            {
+                return null;
+            }
         }
 
         private static UnityEngine.Vector3 SafePosition(Human human)

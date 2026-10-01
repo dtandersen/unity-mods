@@ -26,7 +26,7 @@ namespace StationeersAi.Command
         /// <summary>Brief matches for a device no single entry fits, most recently added last.</summary>
         public IReadOnlyList<DeviceInfo> Candidates(string device)
         {
-            return _catalog.Search(device, null, null).Take(ToolLimits.MaxResults).ToArray();
+            return _catalog.Search(device, null, null, null).Take(ToolLimits.MaxResults).ToArray();
         }
     }
 }

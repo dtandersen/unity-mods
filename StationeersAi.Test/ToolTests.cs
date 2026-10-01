@@ -163,13 +163,14 @@ namespace StationeersAi.Test
         {
             var player = new InMemoryPlayerContext
             {
-                Status = new PlayerStatus(1.5f, 2.25f, -3f, "Europa", null),
+                Status = new PlayerStatus(1.5f, 2.25f, -3f, "Europa", null, 5),
             };
 
             var result = Call(Tools(player, new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference()), "get_status");
             result.IsSuccess.ShouldBeTrue();
             result.Content.ShouldContain("Position: (1.5, 2.3, -3.0)");
             result.Content.ShouldContain("World: Europa");
+            result.Content.ShouldContain("Room: 5");
         }
 
         [Test]
@@ -319,8 +320,8 @@ namespace StationeersAi.Test
         public void Search_devices_lists_name_type_and_network()
         {
             var devices = new InMemoryDeviceCatalog();
-            devices.Devices.Add(new DeviceInfo("Air Vent", "StructureAirVent", 101, 7, true));
-            devices.Devices.Add(new DeviceInfo("Gas Sensor", "StructureGasSensor", 102, 0, true));
+            devices.Devices.Add(new DeviceInfo("Air Vent", "StructureAirVent", 101, 7, true, 5));
+            devices.Devices.Add(new DeviceInfo("Gas Sensor", "StructureGasSensor", 102, 0, true, 5));
 
             var result = Call(
                 Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference(), devices),
@@ -328,7 +329,7 @@ namespace StationeersAi.Test
                 ("query", "vent"));
 
             result.IsSuccess.ShouldBeTrue();
-            result.Content.ShouldContain("| Air Vent | StructureAirVent |   101 |       7 | yes   |");
+            result.Content.ShouldContain("| Air Vent | StructureAirVent |   101 |       7 | yes   |    5 |");
             result.Content.ShouldNotContain("Gas Sensor");
         }
 
@@ -350,8 +351,8 @@ namespace StationeersAi.Test
         public void Search_devices_filters_by_network()
         {
             var devices = new InMemoryDeviceCatalog();
-            devices.Devices.Add(new DeviceInfo("Air Vent", "StructureAirVent", 101, 7, true));
-            devices.Devices.Add(new DeviceInfo("Gas Sensor", "StructureGasSensor", 102, 0, true));
+            devices.Devices.Add(new DeviceInfo("Air Vent", "StructureAirVent", 101, 7, true, 5));
+            devices.Devices.Add(new DeviceInfo("Gas Sensor", "StructureGasSensor", 102, 0, true, 5));
 
             var result = Call(
                 Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference(), devices),
@@ -367,8 +368,8 @@ namespace StationeersAi.Test
         public void Search_devices_filters_by_logic()
         {
             var devices = new InMemoryDeviceCatalog();
-            devices.Devices.Add(new DeviceInfo("Air Vent", "StructureAirVent", 101, 7, true));
-            devices.Devices.Add(new DeviceInfo("Iron Pipe", "StructurePipe", 103, 0, false));
+            devices.Devices.Add(new DeviceInfo("Air Vent", "StructureAirVent", 101, 7, true, 5));
+            devices.Devices.Add(new DeviceInfo("Iron Pipe", "StructurePipe", 103, 0, false, 0));
 
             var smart = Call(
                 Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference(), devices),
@@ -394,6 +395,32 @@ namespace StationeersAi.Test
             var result = Call(Tools(), "search_devices", ("logic", "maybe"));
             result.IsSuccess.ShouldBeFalse();
             result.Content.ShouldContain("'maybe'");
+        }
+
+        [Test]
+        public void Search_devices_filters_by_room()
+        {
+            var devices = new InMemoryDeviceCatalog();
+            devices.Devices.Add(new DeviceInfo("Air Vent", "StructureAirVent", 101, 7, true, 5));
+            devices.Devices.Add(new DeviceInfo("Iron Pipe", "StructurePipe", 103, 0, false, 0));
+
+            var result = Call(
+                Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference(), devices),
+                "search_devices",
+                ("room", "5"));
+
+            result.IsSuccess.ShouldBeTrue();
+            result.Content.ShouldContain("Air Vent");
+            result.Content.ShouldNotContain("Iron Pipe");
+            devices.LastRoom.ShouldBe(5);
+        }
+
+        [Test]
+        public void Search_devices_rejects_a_bad_room()
+        {
+            var result = Call(Tools(), "search_devices", ("room", "abc"));
+            result.IsSuccess.ShouldBeFalse();
+            result.Content.ShouldContain("'abc'");
         }
 
         [Test]

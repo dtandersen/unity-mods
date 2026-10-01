@@ -14,14 +14,18 @@ namespace StationeersAi.Repository
 
         public bool? LastLogic { get; private set; }
 
-        public IReadOnlyList<DeviceInfo> Search(string query, long? network, bool? logic)
+        public long? LastRoom { get; private set; }
+
+        public IReadOnlyList<DeviceInfo> Search(string query, long? network, bool? logic, long? room)
         {
             LastNetwork = network;
             LastLogic = logic;
+            LastRoom = room;
             return Devices
                 .Where(device =>
                     (!network.HasValue || device.NetworkId == network.Value) &&
                     (!logic.HasValue || device.Logic == logic.Value) &&
+                    (!room.HasValue || device.RoomId == room.Value) &&
                     (string.IsNullOrWhiteSpace(query) ||
                     (device.Name != null && device.Name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0) ||
                     (device.Type != null && device.Type.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)))

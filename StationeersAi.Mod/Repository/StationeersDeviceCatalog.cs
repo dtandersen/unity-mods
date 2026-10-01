@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Assets.Scripts;
 using Assets.Scripts.Objects;
 using Assets.Scripts.Objects.Pipes;
 using StationeersAi.Entity;
@@ -16,11 +17,11 @@ namespace StationeersAi.Repository
     /// </summary>
     public sealed class StationeersDeviceCatalog : IDeviceCatalog
     {
-        public IReadOnlyList<DeviceInfo> Search(string query, long? network, bool? logic)
+        public IReadOnlyList<DeviceInfo> Search(string query, long? network, bool? logic, long? room)
         {
             try
             {
-                return BepInExPlugin.RunOnMainThreadSync(() => SearchInner(query, network, logic));
+                return BepInExPlugin.RunOnMainThreadSync(() => SearchInner(query, network, logic, room));
             }
             catch (Exception ex)
             {
@@ -29,7 +30,7 @@ namespace StationeersAi.Repository
             }
         }
 
-        private static IReadOnlyList<DeviceInfo> SearchInner(string query, long? network, bool? logic)
+        private static IReadOnlyList<DeviceInfo> SearchInner(string query, long? network, bool? logic, long? room)
         {
             var devices = new List<DeviceInfo>();
             foreach (var structure in UnityEngine.Object.FindObjectsOfType<Assets.Scripts.Objects.Structure>())
@@ -38,7 +39,8 @@ namespace StationeersAi.Repository
                 if (info != null &&
                     Matches(info, query) &&
                     (!network.HasValue || info.NetworkId == network.Value) &&
-                    (!logic.HasValue || info.Logic == logic.Value))
+                    (!logic.HasValue || info.Logic == logic.Value) &&
+                    (!room.HasValue || info.RoomId == room.Value))
                 {
                     devices.Add(info);
                 }
@@ -67,7 +69,7 @@ namespace StationeersAi.Repository
                 {
                 }
 
-                return DescribeThing(structure, network, structure is ILogicable);
+                return DescribeThing(structure, network, structure is ILogicable, RoomOf(structure));
             }
             catch (Exception)
             {
@@ -75,11 +77,30 @@ namespace StationeersAi.Repository
             }
         }
 
-        private static DeviceInfo DescribeThing(Thing thing, long network, bool logic)
+        private static long RoomOf(Thing thing)
         {
             try
             {
-                return new DeviceInfo(thing.DisplayName, thing.PrefabName, thing.ReferenceId, network, logic);
+                var controller = RoomController.World;
+                if (controller == null || thing == null)
+                {
+                    return 0;
+                }
+
+                var room = controller.GetRoom(thing.ThingTransformPosition);
+                return room != null ? room.RoomId : 0;
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
+        }
+
+        private static DeviceInfo DescribeThing(Thing thing, long network, bool logic, long room)
+        {
+            try
+            {
+                return new DeviceInfo(thing.DisplayName, thing.PrefabName, thing.ReferenceId, network, logic, room);
             }
             catch (Exception)
             {

@@ -103,8 +103,8 @@ namespace StationeersAi.Test.Features.Tools
         public void GivenTwoDevicesShareTheName(string name)
         {
             World.Devices.Devices.Clear();
-            World.Devices.Devices.Add(new DeviceInfo(name, "StructureGasSensor", 1482, 1194, true));
-            World.Devices.Devices.Add(new DeviceInfo(name, "StructureGasSensor", 1123, 1119, true));
+            World.Devices.Devices.Add(new DeviceInfo(name, "StructureGasSensor", 1482, 1194, true, 5));
+            World.Devices.Devices.Add(new DeviceInfo(name, "StructureGasSensor", 1123, 1119, true, 5));
             World.Inspector.Details = null;
         }
 

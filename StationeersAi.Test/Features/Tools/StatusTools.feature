@@ -1,6 +1,6 @@
 Feature: Status tool
 
-  The get_status tool reports the player's current position and world.
+  The get_status tool reports the player's current position, world, and room.
 
   Background:
     Given my position is "1.5", "2.25", "-3" on "Europa"
@@ -19,4 +19,5 @@ Feature: Status tool
       """
       Position: (1.5, 2.3, -3.0)
       World: Europa
+      Room: outside
       """
