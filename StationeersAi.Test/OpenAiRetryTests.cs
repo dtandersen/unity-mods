@@ -6,116 +6,115 @@ using Shouldly;
 using StationeersAi.Ai;
 using StationeersAi.Ai.OpenAi;
 
-namespace StationeersAi.Test
+namespace StationeersAi.Test;
+
+/// <summary>Retry after retryable HTTP failures: 408/429/5xx, transport included.</summary>
+public class OpenAiRetryTests
 {
-    /// <summary>Retry after retryable HTTP failures: 408/429/5xx, transport included.</summary>
-    public class OpenAiRetryTests
+    private const string OkBody = "{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"ok\"}}]}";
+
+    private sealed class ScriptedTransport : IChatTransport
     {
-        private const string OkBody = "{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"ok\"}}]}";
+        private readonly Queue<object> _steps = new Queue<object>();
 
-        private sealed class ScriptedTransport : IChatTransport
+        public int Calls { get; private set; }
+
+        public ScriptedTransport(params object[] steps)
         {
-            private readonly Queue<object> _steps = new Queue<object>();
-
-            public int Calls { get; private set; }
-
-            public ScriptedTransport(params object[] steps)
+            foreach (var step in steps)
             {
-                foreach (var step in steps)
-                {
-                    _steps.Enqueue(step);
-                }
-            }
-
-            public Task<HttpReply> PostAsync(HttpRequest request, CancellationToken cancellationToken = default)
-            {
-                Calls++;
-                var step = _steps.Dequeue();
-                if (step is Exception ex)
-                {
-                    return Task.FromException<HttpReply>(ex);
-                }
-
-                return Task.FromResult((HttpReply)step);
+                _steps.Enqueue(step);
             }
         }
 
-        private static OpenAiChatClient Client(ScriptedTransport transport)
+        public Task<HttpReply> PostAsync(HttpRequest request, CancellationToken cancellationToken = default)
         {
-            return new OpenAiChatClient(transport, new OpenAiOptions("http://localhost/v1/chat/completions", "key", "model", null));
+            Calls++;
+            var step = _steps.Dequeue();
+            if (step is Exception ex)
+            {
+                return Task.FromException<HttpReply>(ex);
+            }
+
+            return Task.FromResult((HttpReply)step);
         }
+    }
 
-        private static IReadOnlyList<ChatMessage> Messages()
-        {
-            return new[] { new ChatMessage(ChatRole.User, "Hi") };
-        }
+    private static OpenAiChatClient Client(ScriptedTransport transport)
+    {
+        return new OpenAiChatClient(transport, new OpenAiOptions("http://localhost/v1/chat/completions", "key", "model", null));
+    }
 
-        [Test]
-        public async Task Retries_503_then_succeeds()
-        {
-            var transport = new ScriptedTransport(
-                new HttpReply(503, "busy"),
-                new HttpReply(503, "busy"),
-                new HttpReply(200, OkBody));
+    private static IReadOnlyList<ChatMessage> Messages()
+    {
+        return new[] { new ChatMessage(ChatRole.User, "Hi") };
+    }
 
-            var completion = await Client(transport).CompleteAsync(Messages(), Array.Empty<Tool.ToolDefinition>());
+    [Test]
+    public async Task Retries_503_then_succeeds()
+    {
+        var transport = new ScriptedTransport(
+            new HttpReply(503, "busy"),
+            new HttpReply(503, "busy"),
+            new HttpReply(200, OkBody));
 
-            completion.Content.ShouldBe("ok");
-            transport.Calls.ShouldBe(3);
-        }
+        var completion = await Client(transport).CompleteAsync(Messages(), Array.Empty<Tool.ToolDefinition>());
 
-        [Test]
-        public async Task Gives_up_after_three_retries()
-        {
-            var transport = new ScriptedTransport(
-                new HttpReply(503, "busy"),
-                new HttpReply(503, "busy"),
-                new HttpReply(503, "busy"),
-                new HttpReply(503, "busy"),
-                new HttpReply(200, OkBody));
+        completion.Content.ShouldBe("ok");
+        transport.Calls.ShouldBe(3);
+    }
 
-            var ex = await Should.ThrowAsync<AiClientException>(() =>
-                Client(transport).CompleteAsync(Messages(), Array.Empty<Tool.ToolDefinition>()));
+    [Test]
+    public async Task Gives_up_after_three_retries()
+    {
+        var transport = new ScriptedTransport(
+            new HttpReply(503, "busy"),
+            new HttpReply(503, "busy"),
+            new HttpReply(503, "busy"),
+            new HttpReply(503, "busy"),
+            new HttpReply(200, OkBody));
 
-            ex.Message.ShouldContain("503");
-            ex.Message.ShouldContain("after 4 attempts");
-            transport.Calls.ShouldBe(4);
-        }
+        var ex = await Should.ThrowAsync<AiClientException>(() =>
+            Client(transport).CompleteAsync(Messages(), Array.Empty<Tool.ToolDefinition>()));
 
-        [Test]
-        public async Task Retries_transport_failures_carrying_a_status()
-        {
-            var transport = new ScriptedTransport(
-                new AiClientException("Request failed: HTTP 503", 503, null),
-                new HttpReply(200, OkBody));
+        ex.Message.ShouldContain("503");
+        ex.Message.ShouldContain("after 4 attempts");
+        transport.Calls.ShouldBe(4);
+    }
 
-            var completion = await Client(transport).CompleteAsync(Messages(), Array.Empty<Tool.ToolDefinition>());
+    [Test]
+    public async Task Retries_transport_failures_carrying_a_status()
+    {
+        var transport = new ScriptedTransport(
+            new AiClientException("Request failed: HTTP 503", 503, null),
+            new HttpReply(200, OkBody));
 
-            completion.Content.ShouldBe("ok");
-            transport.Calls.ShouldBe(2);
-        }
+        var completion = await Client(transport).CompleteAsync(Messages(), Array.Empty<Tool.ToolDefinition>());
 
-        [Test]
-        public async Task Does_not_retry_401()
-        {
-            var transport = new ScriptedTransport(new HttpReply(401, "nope"));
+        completion.Content.ShouldBe("ok");
+        transport.Calls.ShouldBe(2);
+    }
 
-            await Should.ThrowAsync<AiClientException>(() =>
-                Client(transport).CompleteAsync(Messages(), Array.Empty<Tool.ToolDefinition>()));
+    [Test]
+    public async Task Does_not_retry_401()
+    {
+        var transport = new ScriptedTransport(new HttpReply(401, "nope"));
 
-            transport.Calls.ShouldBe(1);
-        }
+        await Should.ThrowAsync<AiClientException>(() =>
+            Client(transport).CompleteAsync(Messages(), Array.Empty<Tool.ToolDefinition>()));
 
-        [Test]
-        public async Task Does_not_retry_when_the_service_is_unreachable()
-        {
-            var transport = new ScriptedTransport(
-                new AiClientException("Request failed: connection refused", null, new InvalidOperationException("down")));
+        transport.Calls.ShouldBe(1);
+    }
 
-            await Should.ThrowAsync<AiClientException>(() =>
-                Client(transport).CompleteAsync(Messages(), Array.Empty<Tool.ToolDefinition>()));
+    [Test]
+    public async Task Does_not_retry_when_the_service_is_unreachable()
+    {
+        var transport = new ScriptedTransport(
+            new AiClientException("Request failed: connection refused", null, new InvalidOperationException("down")));
 
-            transport.Calls.ShouldBe(1);
-        }
+        await Should.ThrowAsync<AiClientException>(() =>
+            Client(transport).CompleteAsync(Messages(), Array.Empty<Tool.ToolDefinition>()));
+
+        transport.Calls.ShouldBe(1);
     }
 }

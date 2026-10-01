@@ -1,11 +1,10 @@
-namespace StationeersAi.Ai
+namespace StationeersAi.Ai;
+
+/// <summary>Who authored a message in the model conversation.</summary>
+public enum ChatRole
 {
-    /// <summary>Who authored a message in the model conversation.</summary>
-    public enum ChatRole
-    {
-        System,
-        User,
-        Assistant,
-        Tool,
-    }
+    System,
+    User,
+    Assistant,
+    Tool,
 }

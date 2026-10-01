@@ -6,323 +6,322 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using StationeersAi.Tool;
 
-namespace StationeersAi.Ai.OpenAi
+namespace StationeersAi.Ai.OpenAi;
+
+/// <summary>
+/// Talks to an OpenAI-compatible <c>/v1/chat/completions</c> endpoint: builds the
+/// request payload, posts it through <see cref="IChatTransport"/>, and maps the
+/// response back to an <see cref="AiCompletion"/>.
+/// </summary>
+/// <remarks>
+/// Deliberately avoids <c>JObject</c>/<c>JArray</c> building and the
+/// <c>JToken.ToString(Formatting)</c> overload: Unity's linker strips unused
+/// Newtonsoft members from the game's copy, and that overload is missing at
+/// runtime. Plain dictionaries + typed DTOs only use the core
+/// <see cref="JsonConvert"/> surface the game itself relies on.
+/// </remarks>
+public sealed class OpenAiChatClient : IAiClient
 {
-    /// <summary>
-    /// Talks to an OpenAI-compatible <c>/v1/chat/completions</c> endpoint: builds the
-    /// request payload, posts it through <see cref="IChatTransport"/>, and maps the
-    /// response back to an <see cref="AiCompletion"/>.
-    /// </summary>
-    /// <remarks>
-    /// Deliberately avoids <c>JObject</c>/<c>JArray</c> building and the
-    /// <c>JToken.ToString(Formatting)</c> overload: Unity's linker strips unused
-    /// Newtonsoft members from the game's copy, and that overload is missing at
-    /// runtime. Plain dictionaries + typed DTOs only use the core
-    /// <see cref="JsonConvert"/> surface the game itself relies on.
-    /// </remarks>
-    public sealed class OpenAiChatClient : IAiClient
+    /// <summary>Retries after a retryable failure, on top of the first attempt.</summary>
+    private const int MaxRetries = 3;
+
+    private readonly IChatTransport _transport;
+    private readonly OpenAiOptions _options;
+
+    public OpenAiChatClient(IChatTransport transport, OpenAiOptions options)
     {
-        /// <summary>Retries after a retryable failure, on top of the first attempt.</summary>
-        private const int MaxRetries = 3;
+        _transport = transport;
+        _options = options;
+    }
 
-        private readonly IChatTransport _transport;
-        private readonly OpenAiOptions _options;
+    public async Task<AiCompletion> CompleteAsync(
+        IReadOnlyList<ChatMessage> messages,
+        IReadOnlyList<ToolDefinition> tools,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new HttpRequest(
+            _options.Endpoint,
+            new Dictionary<string, string> { ["Authorization"] = $"Bearer {_options.ApiKey}" },
+            BuildBody(messages, tools));
 
-        public OpenAiChatClient(IChatTransport transport, OpenAiOptions options)
+        HttpReply reply;
+        var attempts = 0;
+        while (true)
         {
-            _transport = transport;
-            _options = options;
-        }
-
-        public async Task<AiCompletion> CompleteAsync(
-            IReadOnlyList<ChatMessage> messages,
-            IReadOnlyList<ToolDefinition> tools,
-            CancellationToken cancellationToken = default)
-        {
-            var request = new HttpRequest(
-                _options.Endpoint,
-                new Dictionary<string, string> { ["Authorization"] = $"Bearer {_options.ApiKey}" },
-                BuildBody(messages, tools));
-
-            HttpReply reply;
-            var attempts = 0;
-            while (true)
+            attempts++;
+            try
             {
-                attempts++;
-                try
-                {
-                    reply = await _transport.PostAsync(request, cancellationToken).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
-                {
-                    throw;
-                }
-                catch (AiClientException ex) when (IsRetryable(ex.StatusCode) && attempts <= MaxRetries)
+                reply = await _transport.PostAsync(request, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (AiClientException ex) when (IsRetryable(ex.StatusCode) && attempts <= MaxRetries)
+            {
+                await WaitBeforeRetry(cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+            catch (Exception ex) when (!(ex is AiClientException))
+            {
+                throw new AiClientException("Could not reach the AI service.", null, ex);
+            }
+
+            if (reply.StatusCode < 200 || reply.StatusCode >= 300)
+            {
+                if (IsRetryable(reply.StatusCode) && attempts <= MaxRetries)
                 {
                     await WaitBeforeRetry(cancellationToken).ConfigureAwait(false);
                     continue;
                 }
-                catch (Exception ex) when (!(ex is AiClientException))
-                {
-                    throw new AiClientException("Could not reach the AI service.", null, ex);
-                }
 
-                if (reply.StatusCode < 200 || reply.StatusCode >= 300)
-                {
-                    if (IsRetryable(reply.StatusCode) && attempts <= MaxRetries)
-                    {
-                        await WaitBeforeRetry(cancellationToken).ConfigureAwait(false);
-                        continue;
-                    }
-
-                    throw new AiClientException(
-                        $"The AI service returned HTTP {reply.StatusCode}: {Truncate(reply.Body, 300)} (after {attempts} {(attempts == 1 ? "attempt" : "attempts")})",
-                        reply.StatusCode,
-                        null);
-                }
-
-                return Parse(reply.Body);
+                throw new AiClientException(
+                    $"The AI service returned HTTP {reply.StatusCode}: {Truncate(reply.Body, 300)} (after {attempts} {(attempts == 1 ? "attempt" : "attempts")})",
+                    reply.StatusCode,
+                    null);
             }
+
+            return Parse(reply.Body);
+        }
+    }
+
+    private static bool IsRetryable(int? statusCode)
+    {
+        return statusCode == 408 ||
+            statusCode == 429 ||
+            statusCode == 500 ||
+            statusCode == 502 ||
+            statusCode == 503 ||
+            statusCode == 504;
+    }
+
+    private static Task WaitBeforeRetry(CancellationToken cancellationToken)
+    {
+        return Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+    }
+
+    private static string Truncate(string value, int max)
+    {
+        if (string.IsNullOrEmpty(value) || value.Length <= max)
+        {
+            return value;
         }
 
-        private static bool IsRetryable(int? statusCode)
+        return value.Substring(0, max) + "...(truncated)";
+    }
+
+    private string BuildBody(IReadOnlyList<ChatMessage> messages, IReadOnlyList<ToolDefinition> tools)
+    {
+        var payload = new Dictionary<string, object>
         {
-            return statusCode == 408 ||
-                statusCode == 429 ||
-                statusCode == 500 ||
-                statusCode == 502 ||
-                statusCode == 503 ||
-                statusCode == 504;
+            ["model"] = _options.Model,
+            ["messages"] = messages.Select(ToWireMessage).ToList(),
+        };
+
+        if (tools != null && tools.Count > 0)
+        {
+            payload["tools"] = tools.Select(ToWireTool).ToList();
+            payload["tool_choice"] = "auto";
         }
 
-        private static Task WaitBeforeRetry(CancellationToken cancellationToken)
+        // Sent only when configured: not every provider/model understands it.
+        if (!string.IsNullOrWhiteSpace(_options.ReasoningEffort))
         {
-            return Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+            payload["reasoning_effort"] = _options.ReasoningEffort;
         }
 
-        private static string Truncate(string value, int max)
-        {
-            if (string.IsNullOrEmpty(value) || value.Length <= max)
-            {
-                return value;
-            }
+        return JsonConvert.SerializeObject(payload);
+    }
 
-            return value.Substring(0, max) + "...(truncated)";
+    private static Dictionary<string, object> ToWireMessage(ChatMessage message)
+    {
+        var wire = new Dictionary<string, object>
+        {
+            ["role"] = message.Role.ToString().ToLowerInvariant(),
+        };
+
+        if (message.Content != null)
+        {
+            wire["content"] = message.Content;
         }
 
-        private string BuildBody(IReadOnlyList<ChatMessage> messages, IReadOnlyList<ToolDefinition> tools)
+        if (message.ToolCallId != null)
         {
-            var payload = new Dictionary<string, object>
-            {
-                ["model"] = _options.Model,
-                ["messages"] = messages.Select(ToWireMessage).ToList(),
-            };
-
-            if (tools != null && tools.Count > 0)
-            {
-                payload["tools"] = tools.Select(ToWireTool).ToList();
-                payload["tool_choice"] = "auto";
-            }
-
-            // Sent only when configured: not every provider/model understands it.
-            if (!string.IsNullOrWhiteSpace(_options.ReasoningEffort))
-            {
-                payload["reasoning_effort"] = _options.ReasoningEffort;
-            }
-
-            return JsonConvert.SerializeObject(payload);
+            wire["tool_call_id"] = message.ToolCallId;
         }
 
-        private static Dictionary<string, object> ToWireMessage(ChatMessage message)
+        if (message.ToolCalls != null && message.ToolCalls.Count > 0)
         {
-            var wire = new Dictionary<string, object>
+            wire["tool_calls"] = message.ToolCalls.Select(call => new Dictionary<string, object>
             {
-                ["role"] = message.Role.ToString().ToLowerInvariant(),
-            };
-
-            if (message.Content != null)
-            {
-                wire["content"] = message.Content;
-            }
-
-            if (message.ToolCallId != null)
-            {
-                wire["tool_call_id"] = message.ToolCallId;
-            }
-
-            if (message.ToolCalls != null && message.ToolCalls.Count > 0)
-            {
-                wire["tool_calls"] = message.ToolCalls.Select(call => new Dictionary<string, object>
-                {
-                    ["id"] = call.Id,
-                    ["type"] = "function",
-                    ["function"] = new Dictionary<string, object>
-                    {
-                        ["name"] = call.Name,
-                        ["arguments"] = JsonConvert.SerializeObject(call.Arguments.Values),
-                    },
-                }).ToList();
-            }
-
-            return wire;
-        }
-
-        private static Dictionary<string, object> ToWireTool(ToolDefinition tool)
-        {
-            var properties = new Dictionary<string, object>();
-            var required = new List<string>();
-
-            foreach (var parameter in tool.Parameters)
-            {
-                properties[parameter.Name] = new Dictionary<string, object>
-                {
-                    ["type"] = "string",
-                    ["description"] = parameter.Description,
-                };
-
-                if (parameter.Required)
-                {
-                    required.Add(parameter.Name);
-                }
-            }
-
-            return new Dictionary<string, object>
-            {
+                ["id"] = call.Id,
                 ["type"] = "function",
                 ["function"] = new Dictionary<string, object>
                 {
-                    ["name"] = tool.Name,
-                    ["description"] = tool.Description,
-                    ["parameters"] = new Dictionary<string, object>
-                    {
-                        ["type"] = "object",
-                        ["properties"] = properties,
-                        ["required"] = required,
-                    },
+                    ["name"] = call.Name,
+                    ["arguments"] = JsonConvert.SerializeObject(call.Arguments.Values),
                 },
+            }).ToList();
+        }
+
+        return wire;
+    }
+
+    private static Dictionary<string, object> ToWireTool(ToolDefinition tool)
+    {
+        var properties = new Dictionary<string, object>();
+        var required = new List<string>();
+
+        foreach (var parameter in tool.Parameters)
+        {
+            properties[parameter.Name] = new Dictionary<string, object>
+            {
+                ["type"] = "string",
+                ["description"] = parameter.Description,
             };
+
+            if (parameter.Required)
+            {
+                required.Add(parameter.Name);
+            }
         }
 
-        private static AiCompletion Parse(string json)
+        return new Dictionary<string, object>
         {
-            ChatResponse response;
-            try
+            ["type"] = "function",
+            ["function"] = new Dictionary<string, object>
             {
-                response = JsonConvert.DeserializeObject<ChatResponse>(json);
-            }
-            catch (Exception ex)
-            {
-                throw new AiClientException("The AI service returned a malformed response.", null, ex);
-            }
-
-            var message = response?.Choices != null && response.Choices.Count > 0
-                ? response.Choices[0]?.Message
-                : null;
-
-            if (message == null)
-            {
-                throw new AiClientException($"The AI service response contained no message: {Truncate(json, 300)}");
-            }
-
-            return new AiCompletion(message.Content, ParseToolCalls(message.ToolCalls), Reasoning(message));
-        }
-
-        private static string Reasoning(ResponseMessage message)
-        {
-            // Providers vary: DeepSeek/OpenRouter use reasoning_content, some use reasoning.
-            return !string.IsNullOrWhiteSpace(message.ReasoningContent)
-                ? message.ReasoningContent
-                : message.Reasoning;
-        }
-
-        private static IReadOnlyList<ToolCall> ParseToolCalls(List<ResponseToolCall> calls)
-        {
-            if (calls == null || calls.Count == 0)
-            {
-                return Array.Empty<ToolCall>();
-            }
-
-            var result = new List<ToolCall>();
-            for (var i = 0; i < calls.Count; i++)
-            {
-                var call = calls[i];
-                var id = string.IsNullOrEmpty(call.Id) ? $"call_{i + 1}" : call.Id;
-                result.Add(new ToolCall(id, call.Function?.Name, ParseArguments(call.Function?.Arguments)));
-            }
-
-            return result;
-        }
-
-        private static ToolArguments ParseArguments(string json)
-        {
-            var values = new Dictionary<string, string>();
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                return new ToolArguments(values);
-            }
-
-            try
-            {
-                var parsed = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
-                if (parsed != null)
+                ["name"] = tool.Name,
+                ["description"] = tool.Description,
+                ["parameters"] = new Dictionary<string, object>
                 {
-                    foreach (var pair in parsed)
-                    {
-                        values[pair.Key] = pair.Value?.ToString();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new AiClientException($"The AI service returned malformed tool arguments: {json}", null, ex);
-            }
+                    ["type"] = "object",
+                    ["properties"] = properties,
+                    ["required"] = required,
+                },
+            },
+        };
+    }
 
+    private static AiCompletion Parse(string json)
+    {
+        ChatResponse response;
+        try
+        {
+            response = JsonConvert.DeserializeObject<ChatResponse>(json);
+        }
+        catch (Exception ex)
+        {
+            throw new AiClientException("The AI service returned a malformed response.", null, ex);
+        }
+
+        var message = response?.Choices != null && response.Choices.Count > 0
+            ? response.Choices[0]?.Message
+            : null;
+
+        if (message == null)
+        {
+            throw new AiClientException($"The AI service response contained no message: {Truncate(json, 300)}");
+        }
+
+        return new AiCompletion(message.Content, ParseToolCalls(message.ToolCalls), Reasoning(message));
+    }
+
+    private static string Reasoning(ResponseMessage message)
+    {
+        // Providers vary: DeepSeek/OpenRouter use reasoning_content, some use reasoning.
+        return !string.IsNullOrWhiteSpace(message.ReasoningContent)
+            ? message.ReasoningContent
+            : message.Reasoning;
+    }
+
+    private static IReadOnlyList<ToolCall> ParseToolCalls(List<ResponseToolCall> calls)
+    {
+        if (calls == null || calls.Count == 0)
+        {
+            return Array.Empty<ToolCall>();
+        }
+
+        var result = new List<ToolCall>();
+        for (var i = 0; i < calls.Count; i++)
+        {
+            var call = calls[i];
+            var id = string.IsNullOrEmpty(call.Id) ? $"call_{i + 1}" : call.Id;
+            result.Add(new ToolCall(id, call.Function?.Name, ParseArguments(call.Function?.Arguments)));
+        }
+
+        return result;
+    }
+
+    private static ToolArguments ParseArguments(string json)
+    {
+        var values = new Dictionary<string, string>();
+        if (string.IsNullOrWhiteSpace(json))
+        {
             return new ToolArguments(values);
         }
 
-        private sealed class ChatResponse
+        try
         {
-            [JsonProperty("choices")]
-            public List<ChatChoice> Choices { get; set; }
+            var parsed = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+            if (parsed != null)
+            {
+                foreach (var pair in parsed)
+                {
+                    values[pair.Key] = pair.Value?.ToString();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new AiClientException($"The AI service returned malformed tool arguments: {json}", null, ex);
         }
 
-        private sealed class ChatChoice
-        {
-            [JsonProperty("message")]
-            public ResponseMessage Message { get; set; }
-        }
+        return new ToolArguments(values);
+    }
 
-        private sealed class ResponseMessage
-        {
-            [JsonProperty("content")]
-            public string Content { get; set; }
+    private sealed class ChatResponse
+    {
+        [JsonProperty("choices")]
+        public List<ChatChoice> Choices { get; set; }
+    }
 
-            [JsonProperty("reasoning_content")]
-            public string ReasoningContent { get; set; }
+    private sealed class ChatChoice
+    {
+        [JsonProperty("message")]
+        public ResponseMessage Message { get; set; }
+    }
 
-            [JsonProperty("reasoning")]
-            public string Reasoning { get; set; }
+    private sealed class ResponseMessage
+    {
+        [JsonProperty("content")]
+        public string Content { get; set; }
 
-            [JsonProperty("tool_calls")]
-            public List<ResponseToolCall> ToolCalls { get; set; }
-        }
+        [JsonProperty("reasoning_content")]
+        public string ReasoningContent { get; set; }
 
-        private sealed class ResponseToolCall
-        {
-            [JsonProperty("id")]
-            public string Id { get; set; }
+        [JsonProperty("reasoning")]
+        public string Reasoning { get; set; }
 
-            [JsonProperty("function")]
-            public ResponseFunction Function { get; set; }
-        }
+        [JsonProperty("tool_calls")]
+        public List<ResponseToolCall> ToolCalls { get; set; }
+    }
 
-        private sealed class ResponseFunction
-        {
-            [JsonProperty("name")]
-            public string Name { get; set; }
+    private sealed class ResponseToolCall
+    {
+        [JsonProperty("id")]
+        public string Id { get; set; }
 
-            [JsonProperty("arguments")]
-            public string Arguments { get; set; }
-        }
+        [JsonProperty("function")]
+        public ResponseFunction Function { get; set; }
+    }
+
+    private sealed class ResponseFunction
+    {
+        [JsonProperty("name")]
+        public string Name { get; set; }
+
+        [JsonProperty("arguments")]
+        public string Arguments { get; set; }
     }
 }

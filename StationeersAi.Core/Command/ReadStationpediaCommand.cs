@@ -1,26 +1,25 @@
 using StationeersAi.Entity;
 using StationeersAi.Repository;
 
-namespace StationeersAi.Command
+namespace StationeersAi.Command;
+
+/// <summary>Domain operation: read one Stationpedia page by key.</summary>
+public sealed class ReadStationpediaCommand
 {
-    /// <summary>Domain operation: read one Stationpedia page by key.</summary>
-    public sealed class ReadStationpediaCommand
+    private readonly IStationpediaRepository _pages;
+
+    public ReadStationpediaCommand(IStationpediaRepository pages)
     {
-        private readonly IStationpediaRepository _pages;
+        _pages = pages;
+    }
 
-        public ReadStationpediaCommand(IStationpediaRepository pages)
+    public StationpediaEntry Execute(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
         {
-            _pages = pages;
+            return null;
         }
 
-        public StationpediaEntry Execute(string key)
-        {
-            if (string.IsNullOrWhiteSpace(key))
-            {
-                return null;
-            }
-
-            return _pages.GetByKey(key);
-        }
+        return _pages.GetByKey(key);
     }
 }

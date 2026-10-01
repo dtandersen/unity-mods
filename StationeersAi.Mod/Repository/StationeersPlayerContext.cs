@@ -5,180 +5,179 @@ using Assets.Scripts.Objects.Entities;
 using Assets.Scripts.Objects.Items;
 using StationeersAi.Entity;
 
-namespace StationeersAi.Repository
+namespace StationeersAi.Repository;
+
+/// <summary>
+/// Reads the local player's state: name, position, world, and the contents of
+/// their worn/carried slots (hands, suit, helmet, backpack, uniform,
+/// toolbelt...). Tolerates a missing player (dedicated server, main menu):
+/// everything is then empty/unknown. Snapshotted on the calling (main) thread.
+/// </summary>
+public sealed class StationeersPlayerContext : IPlayerContext
 {
-    /// <summary>
-    /// Reads the local player's state: name, position, world, and the contents of
-    /// their worn/carried slots (hands, suit, helmet, backpack, uniform,
-    /// toolbelt...). Tolerates a missing player (dedicated server, main menu):
-    /// everything is then empty/unknown. Snapshotted on the calling (main) thread.
-    /// </summary>
-    public sealed class StationeersPlayerContext : IPlayerContext
+    private readonly List<ItemStack> _inventory = new List<ItemStack>();
+
+    public StationeersPlayerContext(Human human)
     {
-        private readonly List<ItemStack> _inventory = new List<ItemStack>();
-
-        public StationeersPlayerContext(Human human)
+        if (human == null)
         {
-            if (human == null)
-            {
-                return;
-            }
-
-            Name = PlayerName(human);
-            Status = PlayerStatus(human);
-
-            AddSlot("Left hand", human.LeftHandSlot);
-            AddSlot("Right hand", human.RightHandSlot);
-            AddSlot("Uniform", human.UniformSlot);
-            AddSlot("Suit", human.SuitSlot);
-            AddSlot("Helmet", human.HelmetSlot);
-            AddSlot("Glasses", human.GlassesSlot);
-            AddSlot("Backpack", human.BackpackSlot);
-            AddSlot("Toolbelt", human.ToolbeltSlot);
-            AddSlot("Stomach", human.StomachSlot);
+            return;
         }
 
-        public string Name { get; }
+        Name = PlayerName(human);
+        Status = PlayerStatus(human);
 
-        public PlayerStatus Status { get; }
+        AddSlot("Left hand", human.LeftHandSlot);
+        AddSlot("Right hand", human.RightHandSlot);
+        AddSlot("Uniform", human.UniformSlot);
+        AddSlot("Suit", human.SuitSlot);
+        AddSlot("Helmet", human.HelmetSlot);
+        AddSlot("Glasses", human.GlassesSlot);
+        AddSlot("Backpack", human.BackpackSlot);
+        AddSlot("Toolbelt", human.ToolbeltSlot);
+        AddSlot("Stomach", human.StomachSlot);
+    }
 
-        public IReadOnlyList<ItemStack> Inventory => _inventory;
+    public string Name { get; }
 
-        private void AddSlot(string fallbackName, Slot slot)
+    public PlayerStatus Status { get; }
+
+    public IReadOnlyList<ItemStack> Inventory => _inventory;
+
+    private void AddSlot(string fallbackName, Slot slot)
+    {
+        if (slot == null)
         {
-            if (slot == null)
-            {
-                return;
-            }
-
-            var occupant = SafeOccupant(slot);
-            if (occupant == null)
-            {
-                return;
-            }
-
-            var name = StationeersItemRepository.SafeDisplayName(occupant);
-            _inventory.Add(new ItemStack(
-                Id: occupant.PrefabName,
-                Name: name,
-                Quantity: QuantityText(occupant),
-                Slot: SlotName(slot, fallbackName)));
+            return;
         }
 
-        private static DynamicThing SafeOccupant(Slot slot)
+        var occupant = SafeOccupant(slot);
+        if (occupant == null)
         {
-            try
-            {
-                return slot.Get();
-            }
-            catch (System.Exception)
-            {
-                return null;
-            }
+            return;
         }
 
-        private static string SlotName(Slot slot, string fallback)
-        {
-            try
-            {
-                var name = slot.DisplayName;
-                if (!string.IsNullOrWhiteSpace(name))
-                {
-                    return name;
-                }
-            }
-            catch (System.Exception)
-            {
-            }
+        var name = StationeersItemRepository.SafeDisplayName(occupant);
+        _inventory.Add(new ItemStack(
+            Id: occupant.PrefabName,
+            Name: name,
+            Quantity: QuantityText(occupant),
+            Slot: SlotName(slot, fallbackName)));
+    }
 
-            return fallback;
+    private static DynamicThing SafeOccupant(Slot slot)
+    {
+        try
+        {
+            return slot.Get();
         }
-
-        private static string QuantityText(DynamicThing thing)
+        catch (System.Exception)
         {
-            if (thing is IQuantity quantity)
-            {
-                try
-                {
-                    return quantity.GetQuantityText();
-                }
-                catch (System.Exception)
-                {
-                }
-            }
-
             return null;
         }
+    }
 
-        private static string PlayerName(Human human)
+    private static string SlotName(Slot slot, string fallback)
+    {
+        try
+        {
+            var name = slot.DisplayName;
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                return name;
+            }
+        }
+        catch (System.Exception)
+        {
+        }
+
+        return fallback;
+    }
+
+    private static string QuantityText(DynamicThing thing)
+    {
+        if (thing is IQuantity quantity)
         {
             try
             {
-                if (!string.IsNullOrWhiteSpace(human.CustomName))
-                {
-                    return human.CustomName;
-                }
-
-                var display = human.DisplayName;
-                if (!string.IsNullOrWhiteSpace(display))
-                {
-                    return display;
-                }
+                return quantity.GetQuantityText();
             }
             catch (System.Exception)
             {
             }
-
-            return "Engineer";
         }
 
-        private static PlayerStatus PlayerStatus(Human human)
-        {
-            var position = SafePosition(human);
-            return new Entity.PlayerStatus(position.x, position.y, position.z, WorldName(), null, RoomOf(human));
-        }
+        return null;
+    }
 
-        private static long? RoomOf(Human human)
+    private static string PlayerName(Human human)
+    {
+        try
         {
-            try
+            if (!string.IsNullOrWhiteSpace(human.CustomName))
             {
-                var controller = RoomController.World;
-                if (controller == null || human == null)
-                {
-                    return null;
-                }
-
-                var room = controller.GetRoom(human.Position);
-                return room != null ? (long?)room.RoomId : null;
+                return human.CustomName;
             }
-            catch (System.Exception)
+
+            var display = human.DisplayName;
+            if (!string.IsNullOrWhiteSpace(display))
+            {
+                return display;
+            }
+        }
+        catch (System.Exception)
+        {
+        }
+
+        return "Engineer";
+    }
+
+    private static PlayerStatus PlayerStatus(Human human)
+    {
+        var position = SafePosition(human);
+        return new Entity.PlayerStatus(position.x, position.y, position.z, WorldName(), null, RoomOf(human));
+    }
+
+    private static long? RoomOf(Human human)
+    {
+        try
+        {
+            var controller = RoomController.World;
+            if (controller == null || human == null)
             {
                 return null;
             }
-        }
 
-        private static UnityEngine.Vector3 SafePosition(Human human)
-        {
-            try
-            {
-                return human.ThingTransformPosition;
-            }
-            catch (System.Exception)
-            {
-                return UnityEngine.Vector3.zero;
-            }
+            var room = controller.GetRoom(human.Position);
+            return room != null ? (long?)room.RoomId : null;
         }
-
-        private static string WorldName()
+        catch (System.Exception)
         {
-            try
-            {
-                return WorldManager.CurrentWorldName;
-            }
-            catch (System.Exception)
-            {
-                return null;
-            }
+            return null;
+        }
+    }
+
+    private static UnityEngine.Vector3 SafePosition(Human human)
+    {
+        try
+        {
+            return human.ThingTransformPosition;
+        }
+        catch (System.Exception)
+        {
+            return UnityEngine.Vector3.zero;
+        }
+    }
+
+    private static string WorldName()
+    {
+        try
+        {
+            return WorldManager.CurrentWorldName;
+        }
+        catch (System.Exception)
+        {
+            return null;
         }
     }
 }

@@ -1,34 +1,33 @@
 using Reqnroll;
 
-namespace StationeersAi.Test.Support
+namespace StationeersAi.Test.Support;
+
+[Binding]
+public sealed class Hooks
 {
-    [Binding]
-    public sealed class Hooks
+    private const string WorldKey = "world";
+
+    private readonly ScenarioContext _context;
+
+    public Hooks(ScenarioContext context)
     {
-        private const string WorldKey = "world";
+        _context = context;
+    }
 
-        private readonly ScenarioContext _context;
+    [BeforeScenario]
+    public void CreateWorld()
+    {
+        _context.Set(new World(), WorldKey);
+    }
 
-        public Hooks(ScenarioContext context)
-        {
-            _context = context;
-        }
+    [AfterScenario]
+    public void DisposeWorld()
+    {
+        _context.Get<World>(WorldKey).Dispose();
+    }
 
-        [BeforeScenario]
-        public void CreateWorld()
-        {
-            _context.Set(new World(), WorldKey);
-        }
-
-        [AfterScenario]
-        public void DisposeWorld()
-        {
-            _context.Get<World>(WorldKey).Dispose();
-        }
-
-        public static World GetWorld(ScenarioContext context)
-        {
-            return context.Get<World>(WorldKey);
-        }
+    public static World GetWorld(ScenarioContext context)
+    {
+        return context.Get<World>(WorldKey);
     }
 }

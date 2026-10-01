@@ -6,147 +6,146 @@ using StationeersAi.Mod;
 using StationeersAi.Repository;
 using UnityEngine;
 
-namespace StationeersAi.Repository
+namespace StationeersAi.Repository;
+
+/// <summary>
+/// Burns a computer's editor text onto a housing chip, then verifies the
+/// burn by comparing code hashes. Runs on Unity's main thread: the burn
+/// compiles on the chip and touches Unity state.
+/// </summary>
+public sealed class StationeersIcExport : IIcExport
 {
-    /// <summary>
-    /// Burns a computer's editor text onto a housing chip, then verifies the
-    /// burn by comparing code hashes. Runs on Unity's main thread: the burn
-    /// compiles on the chip and touches Unity state.
-    /// </summary>
-    public sealed class StationeersIcExport : IIcExport
+    public IcWriteResult Export(string computer, string device)
     {
-        public IcWriteResult Export(string computer, string device)
+        try
         {
-            try
-            {
-                return BepInExPlugin.RunOnMainThreadSync(() => ExportInner(computer, device));
-            }
-            catch (Exception ex)
-            {
-                BepInExPlugin.Log.Log(ex.ToString());
-                return new IcWriteResult(false, null, 0, "Export failed.");
-            }
+            return BepInExPlugin.RunOnMainThreadSync(() => ExportInner(computer, device));
+        }
+        catch (Exception ex)
+        {
+            BepInExPlugin.Log.Log(ex.ToString());
+            return new IcWriteResult(false, null, 0, "Export failed.");
+        }
+    }
+
+    private static IcWriteResult ExportInner(string computer, string device)
+    {
+        var boards = ComputerBoards.Match(computer);
+        if (boards.Count == 0)
+        {
+            return new IcWriteResult(false, null, 0, $"Computer '{computer}' not found. Available: {ComputerBoards.Available()}");
         }
 
-        private static IcWriteResult ExportInner(string computer, string device)
+        if (boards.Count > 1)
         {
-            var boards = ComputerBoards.Match(computer);
-            if (boards.Count == 0)
-            {
-                return new IcWriteResult(false, null, 0, $"Computer '{computer}' not found. Available: {ComputerBoards.Available()}");
-            }
-
-            if (boards.Count > 1)
-            {
-                return new IcWriteResult(false, null, 0, $"Several computers match '{computer}': {ComputerBoards.Names(boards)}");
-            }
-
-            string text;
-            try
-            {
-                var source = boards[0].Motherboard.GetSourceCode();
-                text = source != null ? source.ToString() : string.Empty;
-            }
-            catch (Exception ex)
-            {
-                BepInExPlugin.Log.Log(ex.ToString());
-                return new IcWriteResult(false, null, 0, "Editor read failed.");
-            }
-
-            if (string.IsNullOrEmpty(text))
-            {
-                return new IcWriteResult(false, null, 0, "Editor is empty; nothing to export.");
-            }
-
-            var housings = ThingMatching.Match(
-                UnityEngine.Object.FindObjectsOfType<CircuitHousing>(),
-                housing => SafeName(housing),
-                housing => SafeId(housing),
-                device);
-            if (housings.Count == 0)
-            {
-                return new IcWriteResult(false, null, 0, $"Housing '{device}' not found.");
-            }
-
-            if (housings.Count > 1)
-            {
-                return new IcWriteResult(false, null, 0, $"Several housings match '{device}'.");
-            }
-
-            var housing = housings[0];
-            try
-            {
-                housing.SetSourceCode(text);
-            }
-            catch (Exception ex)
-            {
-                BepInExPlugin.Log.Log(ex.ToString());
-                return new IcWriteResult(false, null, 0, "Export failed.");
-            }
-
-            var chip = HousingChip(housing);
-            if (chip != null && chip.CompilationError)
-            {
-                var type = ChipErrorReading.CompileErrorType(chip) ?? "compile error";
-                var line = ChipErrorReading.CompileErrorLine(chip);
-                return new IcWriteResult(false, null, 0, $"Chip reports {type}" + (line == null ? "." : $" at line {line}."));
-            }
-
-            string burned = null;
-            try
-            {
-                if (chip != null)
-                {
-                    burned = chip.GetSourceCode().ToString();
-                }
-            }
-            catch (Exception ex)
-            {
-                BepInExPlugin.Log.Log(ex.ToString());
-            }
-
-            if (burned == null || CodeHash.Hash(burned) != CodeHash.Hash(text))
-            {
-                return new IcWriteResult(false, null, 0, "Chip hash does not match the editor.");
-            }
-
-            return new IcWriteResult(true, SafeName(housing) ?? "housing", text.Split('\n').Length, null);
+            return new IcWriteResult(false, null, 0, $"Several computers match '{computer}': {ComputerBoards.Names(boards)}");
         }
 
-        private static ProgrammableChip HousingChip(CircuitHousing housing)
+        string text;
+        try
         {
-            try
-            {
-                return housing?._ProgrammableChipSlot?.Get<ProgrammableChip>();
-            }
-            catch (Exception)
-            {
-                return null;
-            }
+            var source = boards[0].Motherboard.GetSourceCode();
+            text = source != null ? source.ToString() : string.Empty;
+        }
+        catch (Exception ex)
+        {
+            BepInExPlugin.Log.Log(ex.ToString());
+            return new IcWriteResult(false, null, 0, "Editor read failed.");
         }
 
-        private static string SafeName(CircuitHousing housing)
+        if (string.IsNullOrEmpty(text))
         {
-            try
-            {
-                return housing.DisplayName;
-            }
-            catch (Exception)
-            {
-                return null;
-            }
+            return new IcWriteResult(false, null, 0, "Editor is empty; nothing to export.");
         }
 
-        private static long SafeId(CircuitHousing housing)
+        var housings = ThingMatching.Match(
+            UnityEngine.Object.FindObjectsOfType<CircuitHousing>(),
+            housing => SafeName(housing),
+            housing => SafeId(housing),
+            device);
+        if (housings.Count == 0)
         {
-            try
+            return new IcWriteResult(false, null, 0, $"Housing '{device}' not found.");
+        }
+
+        if (housings.Count > 1)
+        {
+            return new IcWriteResult(false, null, 0, $"Several housings match '{device}'.");
+        }
+
+        var housing = housings[0];
+        try
+        {
+            housing.SetSourceCode(text);
+        }
+        catch (Exception ex)
+        {
+            BepInExPlugin.Log.Log(ex.ToString());
+            return new IcWriteResult(false, null, 0, "Export failed.");
+        }
+
+        var chip = HousingChip(housing);
+        if (chip != null && chip.CompilationError)
+        {
+            var type = ChipErrorReading.CompileErrorType(chip) ?? "compile error";
+            var line = ChipErrorReading.CompileErrorLine(chip);
+            return new IcWriteResult(false, null, 0, $"Chip reports {type}" + (line == null ? "." : $" at line {line}."));
+        }
+
+        string burned = null;
+        try
+        {
+            if (chip != null)
             {
-                return housing.ReferenceId;
+                burned = chip.GetSourceCode().ToString();
             }
-            catch (Exception)
-            {
-                return 0;
-            }
+        }
+        catch (Exception ex)
+        {
+            BepInExPlugin.Log.Log(ex.ToString());
+        }
+
+        if (burned == null || CodeHash.Hash(burned) != CodeHash.Hash(text))
+        {
+            return new IcWriteResult(false, null, 0, "Chip hash does not match the editor.");
+        }
+
+        return new IcWriteResult(true, SafeName(housing) ?? "housing", text.Split('\n').Length, null);
+    }
+
+    private static ProgrammableChip HousingChip(CircuitHousing housing)
+    {
+        try
+        {
+            return housing?._ProgrammableChipSlot?.Get<ProgrammableChip>();
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    private static string SafeName(CircuitHousing housing)
+    {
+        try
+        {
+            return housing.DisplayName;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    private static long SafeId(CircuitHousing housing)
+    {
+        try
+        {
+            return housing.ReferenceId;
+        }
+        catch (Exception)
+        {
+            return 0;
         }
     }
 }

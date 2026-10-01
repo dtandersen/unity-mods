@@ -3,44 +3,43 @@ using Reqnroll;
 using StationeersAi.Test.Support;
 using StationeersAi.Tool;
 
-namespace StationeersAi.Test.Features.Tools
+namespace StationeersAi.Test.Features.Tools;
+
+[Binding]
+public sealed class WriteIcSteps
 {
-    [Binding]
-    public sealed class WriteIcSteps
+    private readonly ScenarioContext _context;
+
+    public WriteIcSteps(ScenarioContext context)
     {
-        private readonly ScenarioContext _context;
+        _context = context;
+    }
 
-        public WriteIcSteps(ScenarioContext context)
+    private World World => Hooks.GetWorld(_context);
+
+    [Given("a computer {string}")]
+    public void GivenAComputer(string name)
+    {
+        World.Ic.ResolveAs = name;
+    }
+
+    [Given("no computer is found")]
+    public void GivenNoComputerIsFound()
+    {
+        World.Ic.ResolveAs = null;
+    }
+
+    [When("I write to computer {string}:")]
+    public void WhenIWriteToComputer(string computer, string code)
+    {
+        var values = new Dictionary<string, string>
         {
-            _context = context;
-        }
-
-        private World World => Hooks.GetWorld(_context);
-
-        [Given("a computer {string}")]
-        public void GivenAComputer(string name)
-        {
-            World.Ic.ResolveAs = name;
-        }
-
-        [Given("no computer is found")]
-        public void GivenNoComputerIsFound()
-        {
-            World.Ic.ResolveAs = null;
-        }
-
-        [When("I write to computer {string}:")]
-        public void WhenIWriteToComputer(string computer, string code)
-        {
-            var values = new Dictionary<string, string>
-            {
-                ["computer"] = computer,
-                ["code"] = code.Replace("\r\n", "\n").Trim(),
-            };
-            World.ToolResult = TestComposition.Tools(World).Handle(new ToolCall(
-                "call_1",
-                "write_ic",
-                new ToolArguments(values)));
-        }
+            ["computer"] = computer,
+            ["code"] = code.Replace("\r\n", "\n").Trim(),
+        };
+        World.ToolResult = TestComposition.Tools(World).Handle(new ToolCall(
+            "call_1",
+            "write_ic",
+            new ToolArguments(values)));
     }
 }

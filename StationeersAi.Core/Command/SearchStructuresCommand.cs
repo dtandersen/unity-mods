@@ -2,21 +2,20 @@ using System.Collections.Generic;
 using StationeersAi.Entity;
 using StationeersAi.Query;
 
-namespace StationeersAi.Command
+namespace StationeersAi.Command;
+
+/// <summary>Domain operation: find structures by name.</summary>
+public sealed class SearchStructuresCommand
 {
-    /// <summary>Domain operation: find structures by name.</summary>
-    public sealed class SearchStructuresCommand
+    private readonly StructureIndex _structures;
+
+    public SearchStructuresCommand(StructureIndex structures)
     {
-        private readonly StructureIndex _structures;
+        _structures = structures;
+    }
 
-        public SearchStructuresCommand(StructureIndex structures)
-        {
-            _structures = structures;
-        }
-
-        public IReadOnlyList<Structure> Execute(string query)
-        {
-            return _structures.Search(query);
-        }
+    public IReadOnlyList<Structure> Execute(string query)
+    {
+        return _structures.Search(query);
     }
 }

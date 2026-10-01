@@ -2,31 +2,30 @@ using Reqnroll;
 using Shouldly;
 using StationeersAi.Ai;
 
-namespace StationeersAi.Test.Features.Assistant
+namespace StationeersAi.Test.Features.Assistant;
+
+[Binding]
+public sealed class MentionSteps
 {
-    [Binding]
-    public sealed class MentionSteps
+    private bool _recognised;
+    private string _prompt;
+
+    [When("the mention trigger is {string} and the message is {string}")]
+    public void WhenTheMentionTriggerIsAndTheMessageIs(string trigger, string message)
     {
-        private bool _recognised;
-        private string _prompt;
+        _recognised = Mention.TryParse(trigger, message, out _prompt);
+    }
 
-        [When("the mention trigger is {string} and the message is {string}")]
-        public void WhenTheMentionTriggerIsAndTheMessageIs(string trigger, string message)
-        {
-            _recognised = Mention.TryParse(trigger, message, out _prompt);
-        }
+    [Then("the mention is recognised as {string}")]
+    public void ThenTheMentionIsRecognisedAs(string expected)
+    {
+        _recognised.ShouldBeTrue();
+        _prompt.ShouldBe(expected);
+    }
 
-        [Then("the mention is recognised as {string}")]
-        public void ThenTheMentionIsRecognisedAs(string expected)
-        {
-            _recognised.ShouldBeTrue();
-            _prompt.ShouldBe(expected);
-        }
-
-        [Then("the message is not a mention")]
-        public void ThenTheMessageIsNotAMention()
-        {
-            _recognised.ShouldBeFalse();
-        }
+    [Then("the message is not a mention")]
+    public void ThenTheMessageIsNotAMention()
+    {
+        _recognised.ShouldBeFalse();
     }
 }

@@ -4,32 +4,31 @@ using System.Linq;
 using StationeersAi.Entity;
 using StationeersAi.Repository;
 
-namespace StationeersAi.Query
+namespace StationeersAi.Query;
+
+/// <summary>
+/// Search over recipes. Matching is case-insensitive substring on the recipe
+/// name; order is not significant.
+/// </summary>
+public sealed class RecipeIndex
 {
-    /// <summary>
-    /// Search over recipes. Matching is case-insensitive substring on the recipe
-    /// name; order is not significant.
-    /// </summary>
-    public sealed class RecipeIndex
+    private readonly IRecipeRepository _recipes;
+
+    public RecipeIndex(IRecipeRepository recipes)
     {
-        private readonly IRecipeRepository _recipes;
+        _recipes = recipes;
+    }
 
-        public RecipeIndex(IRecipeRepository recipes)
+    public IReadOnlyList<Recipe> Search(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
         {
-            _recipes = recipes;
+            return Array.Empty<Recipe>();
         }
 
-        public IReadOnlyList<Recipe> Search(string query)
-        {
-            if (string.IsNullOrWhiteSpace(query))
-            {
-                return Array.Empty<Recipe>();
-            }
-
-            return _recipes.GetAll()
-                .Where(recipe => recipe.Name != null &&
-                    recipe.Name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
-                .ToArray();
-        }
+        return _recipes.GetAll()
+            .Where(recipe => recipe.Name != null &&
+                recipe.Name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
+            .ToArray();
     }
 }

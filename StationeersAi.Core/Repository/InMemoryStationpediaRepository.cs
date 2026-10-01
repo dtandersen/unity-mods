@@ -3,31 +3,30 @@ using System.Collections.Generic;
 using System.Linq;
 using StationeersAi.Entity;
 
-namespace StationeersAi.Repository
+namespace StationeersAi.Repository;
+
+/// <summary>In-memory Stationpedia repository. Used by tests.</summary>
+public sealed class InMemoryStationpediaRepository : IStationpediaRepository
 {
-    /// <summary>In-memory Stationpedia repository. Used by tests.</summary>
-    public sealed class InMemoryStationpediaRepository : IStationpediaRepository
+    private readonly List<StationpediaEntry> _entries;
+
+    public InMemoryStationpediaRepository(IEnumerable<StationpediaEntry> entries)
     {
-        private readonly List<StationpediaEntry> _entries;
+        _entries = (entries ?? throw new ArgumentNullException(nameof(entries))).ToList();
+    }
 
-        public InMemoryStationpediaRepository(IEnumerable<StationpediaEntry> entries)
-        {
-            _entries = (entries ?? throw new ArgumentNullException(nameof(entries))).ToList();
-        }
+    public void Add(StationpediaEntry entry)
+    {
+        _entries.Add(entry);
+    }
 
-        public void Add(StationpediaEntry entry)
-        {
-            _entries.Add(entry);
-        }
+    public IReadOnlyList<StationpediaEntry> GetAll()
+    {
+        return _entries;
+    }
 
-        public IReadOnlyList<StationpediaEntry> GetAll()
-        {
-            return _entries;
-        }
-
-        public StationpediaEntry GetByKey(string key)
-        {
-            return _entries.FirstOrDefault(entry => entry.Key == key);
-        }
+    public StationpediaEntry GetByKey(string key)
+    {
+        return _entries.FirstOrDefault(entry => entry.Key == key);
     }
 }
