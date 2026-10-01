@@ -75,6 +75,37 @@ namespace StationeersAi.Tool
                     slots.Select(slot => new[] { slot.Index.ToString(), slot.Slot, slot.Occupant })));
             }
 
+            if (details.Devices != null)
+            {
+                lines.Add("Devices:");
+                lines.Add(Markdown.Build(
+                    new[] { "Index", "Label", "Thing" },
+                    details.Devices.Select(entry => new[]
+                    {
+                        entry.Index,
+                        entry.Label,
+                        entry.Thing == 0 ? "disconnected" : $"{entry.Label} #{entry.Thing}",
+                    })));
+            }
+
+            if (details.Chip != null)
+            {
+                lines.Add("Chip:");
+                lines.Add(details.Chip.ErrorType == null
+                    ? "Error: none"
+                    : $"Error: {details.Chip.ErrorType}" +
+                        (details.Chip.ErrorLine == null ? string.Empty : $" at line {details.Chip.ErrorLine}"));
+                if (details.Chip.Display.HasValue)
+                {
+                    lines.Add($"Display: {Format(details.Chip.Display.Value)}");
+                }
+
+                if (!string.IsNullOrEmpty(details.Chip.CodeHash))
+                {
+                    lines.Add($"Code hash: {details.Chip.CodeHash}");
+                }
+            }
+
             return string.Join("\n", lines);
         }
 

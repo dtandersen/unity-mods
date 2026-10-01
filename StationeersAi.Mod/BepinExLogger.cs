@@ -18,6 +18,6 @@ public sealed class BepinExLogger : Logger
 
     public void Log(string message)
     {
-        _logger.LogInfo(message);
+        _logger.LogInfo(StationeersAi.Formatting.LogText.Sanitize(message));
     }
 }

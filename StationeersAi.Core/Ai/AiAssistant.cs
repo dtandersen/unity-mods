@@ -67,7 +67,7 @@ namespace StationeersAi.Ai
             }
 
             messages.Add(new ChatMessage(ChatRole.User, prompt));
-            Log($"question: {prompt}");
+            Log($"You: {prompt}");
 
             for (var i = 0; i < _maxIterations; i++)
             {
@@ -75,12 +75,12 @@ namespace StationeersAi.Ai
 
                 if (!string.IsNullOrEmpty(completion?.Content))
                 {
-                    Log($"assistant: {completion.Content}");
+                    Log($"Sage thinking: {completion.Content}");
                 }
 
                 if (!string.IsNullOrEmpty(completion?.Reasoning))
                 {
-                    Log($"reasoning: {completion.Reasoning}");
+                    Log($"Sage thinking: {Readable(completion.Reasoning)}");
                     _activity?.OnReasoning(completion.Reasoning);
                 }
 
@@ -89,7 +89,12 @@ namespace StationeersAi.Ai
                     var answer = completion?.Content ?? string.Empty;
                     conversation?.Add(new ChatMessage(ChatRole.User, prompt));
                     conversation?.Add(new ChatMessage(ChatRole.Assistant, answer));
-                    Log($"done after {i + 1} turn(s)");
+                    if (!string.IsNullOrEmpty(answer))
+                    {
+                        Log($"Sage: {answer}");
+                    }
+
+                    Log($"(done in {i + 1} {(i == 0 ? "turn" : "turns")})");
                     return answer;
                 }
 
@@ -103,17 +108,17 @@ namespace StationeersAi.Ai
                 foreach (var call in completion.ToolCalls)
                 {
                     var described = $"{call.Name}({Describe(call.Arguments)})";
-                    Log($"tool call: {described}");
+                    Log($"Sage runs {described}");
                     _activity?.OnToolCall(described);
 
                     var result = _tools.Handle(call);
-                    Log($"tool result: {result.Content}");
+                    Log($"Result:\n{result.Content}");
                     _activity?.OnToolOutput(result.Content);
                     messages.Add(new ChatMessage(ChatRole.Tool, result.Content, ToolCallId: call.Id));
                 }
             }
 
-            Log($"gave up: reached MaxToolIterations ({_maxIterations}) without a final answer");
+            Log($"(gave up after {_maxIterations} tool rounds)");
             return "I couldn't complete that request.";
         }
 
@@ -158,7 +163,32 @@ namespace StationeersAi.Ai
         {
             return arguments?.Values == null
                 ? string.Empty
-                : string.Join(", ", arguments.Values.Select(pair => $"{pair.Key}={pair.Value}"));
+                : string.Join(", ", arguments.Values.Select(pair => $"{pair.Key}={Summarize(pair.Value)}"));
+        }
+
+        /// <summary>One-line argument for the log: long values collapse to a size.</summary>
+        private static string Summarize(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return string.Empty;
+            }
+
+            var lines = value.Split('\n');
+            if (lines.Length > 4)
+            {
+                return $"<{lines.Length} lines>";
+            }
+
+            var flat = value.Replace("\r", string.Empty).Replace("\n", "\\n");
+            return flat.Length > 80 ? flat.Substring(0, 80) + "\u2026" : flat;
+        }
+
+        /// <summary>Reasoning as one thought per line, for the log only.</summary>
+        private static string Readable(string text)
+        {
+            var spaced = System.Text.RegularExpressions.Regex.Replace(text ?? string.Empty, @"\.(?=[A-Z])", ". ");
+            return System.Text.RegularExpressions.Regex.Replace(spaced, @"\. (?=[A-Z])", ".\n");
         }
     }
 }

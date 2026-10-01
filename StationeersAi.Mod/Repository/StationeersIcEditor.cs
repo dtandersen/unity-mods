@@ -13,11 +13,11 @@ namespace StationeersAi.Repository
     /// </summary>
     public sealed class StationeersIcEditor : IIcEditor
     {
-        public IcWriteResult Write(string device, string code)
+        public IcWriteResult Write(string computerName, long? computerThing, string code)
         {
             try
             {
-                return BepInExPlugin.RunOnMainThreadSync(() => WriteInner(device, code ?? string.Empty));
+                return BepInExPlugin.RunOnMainThreadSync(() => WriteInner(computerName, computerThing, code ?? string.Empty));
             }
             catch (Exception ex)
             {
@@ -26,17 +26,17 @@ namespace StationeersAi.Repository
             }
         }
 
-        private static IcWriteResult WriteInner(string device, string code)
+        private static IcWriteResult WriteInner(string computerName, long? computerThing, string code)
         {
-            var matches = ComputerBoards.Match(device);
+            var matches = ComputerBoards.Match(computerName, computerThing);
             if (matches.Count == 0)
             {
-                return new IcWriteResult(false, null, 0, $"Computer '{device}' not found. Available: {ComputerBoards.Available()}");
+                return new IcWriteResult(false, null, 0, $"Computer '{computerName ?? computerThing.ToString()}' not found. Available: {ComputerBoards.Available()}");
             }
 
             if (matches.Count > 1)
             {
-                return new IcWriteResult(false, null, 0, $"Several computers match '{device}': {ComputerBoards.Names(matches)}");
+                return new IcWriteResult(false, null, 0, $"Several computers match '{computerName}': {ComputerBoards.Names(matches)}");
             }
 
             matches[0].Motherboard.SetSourceCode(code);
@@ -50,6 +50,46 @@ namespace StationeersAi.Repository
             }
 
             return new IcWriteResult(true, matches[0].Name, code.Split('\n').Length, null);
+        }
+        public IcReadResult Read(string computerName, long? computerThing)
+        {
+            try
+            {
+                return BepInExPlugin.RunOnMainThreadSync(() => ReadInner(computerName, computerThing));
+            }
+            catch (Exception ex)
+            {
+                BepInExPlugin.Log.Log(ex.ToString());
+                return new IcReadResult(false, null, null, "Editor read failed.");
+            }
+        }
+
+        private static IcReadResult ReadInner(string computerName, long? computerThing)
+        {
+            var matches = ComputerBoards.Match(computerName, computerThing);
+            if (matches.Count == 0)
+            {
+                return new IcReadResult(false, null, null, $"Computer '{computerName ?? computerThing.ToString()}' not found. Available: {ComputerBoards.Available()}");
+            }
+
+            if (matches.Count > 1)
+            {
+                return new IcReadResult(false, null, null, $"Several computers match '{computerName}': {ComputerBoards.Names(matches)}");
+            }
+
+            string code;
+            try
+            {
+                var source = matches[0].Motherboard.GetSourceCode();
+                code = source != null ? source.ToString() : string.Empty;
+            }
+            catch (Exception ex)
+            {
+                BepInExPlugin.Log.Log(ex.ToString());
+                return new IcReadResult(false, null, null, "Editor read failed.");
+            }
+
+            return new IcReadResult(true, matches[0].Name, code ?? string.Empty, null);
         }
     }
 }

@@ -10,9 +10,13 @@ namespace StationeersAi.Ai
         {
         }
 
-        public AiClientException(string message, Exception inner)
+        public AiClientException(string message, int? statusCode, Exception inner)
             : base(message, inner)
         {
+            StatusCode = statusCode;
         }
+
+        /// <summary>The HTTP status when the service answered, or null when it never did.</summary>
+        public int? StatusCode { get; }
     }
 }

@@ -49,7 +49,9 @@ namespace StationeersAi.Mod.Ai
                     if (www.result != UnityWebRequest.Result.Success)
                     {
                         completion.TrySetException(new AiClientException(
-                            $"Request failed: {www.error} (HTTP {www.responseCode})"));
+                            $"Request failed: {www.error} (HTTP {www.responseCode})",
+                            www.responseCode > 0 ? (int?)www.responseCode : null,
+                            null));
                     }
                     else
                     {

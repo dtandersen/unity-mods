@@ -10,20 +10,47 @@ namespace StationeersAi.Repository
     {
         internal sealed class Board
         {
-            public Board(ProgrammableChipMotherboard motherboard, string name)
+            public Board(ProgrammableChipMotherboard motherboard, string name, long computerId)
             {
                 Motherboard = motherboard;
                 Name = name;
+                ComputerId = computerId;
             }
 
             public ProgrammableChipMotherboard Motherboard { get; }
 
             public string Name { get; }
+
+            public long ComputerId { get; }
         }
 
-        internal static IReadOnlyList<Board> Match(string device)
+        internal static IReadOnlyList<Board> Match(string name, long? thing)
         {
-            return ThingMatching.Match(All(), board => board.Name, board => board.Motherboard.ReferenceId, device);
+            if (thing.HasValue)
+            {
+                var matches = new List<Board>();
+                foreach (var board in All())
+                {
+                    long reference;
+                    try
+                    {
+                        reference = board.Motherboard.ReferenceId;
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
+
+                    if (reference == thing.Value || board.ComputerId == thing.Value)
+                    {
+                        matches.Add(board);
+                    }
+                }
+
+                return matches;
+            }
+
+            return ThingMatching.Match(All(), board => board.Name, board => board.Motherboard.ReferenceId, name);
         }
 
         internal static string Names(IReadOnlyList<Board> boards)
@@ -61,9 +88,12 @@ namespace StationeersAi.Repository
                 }
 
                 string computer = null;
+                long computerId = 0;
                 try
                 {
-                    computer = motherboard.ParentComputer?.AsThing()?.DisplayName;
+                    var computerThing = motherboard.ParentComputer?.AsThing();
+                    computer = computerThing?.DisplayName;
+                    computerId = computerThing != null ? computerThing.ReferenceId : 0;
                 }
                 catch (Exception)
                 {
@@ -78,7 +108,7 @@ namespace StationeersAi.Repository
                 {
                 }
 
-                boards.Add(new Board(motherboard, computer ?? own ?? "unnamed editor"));
+                boards.Add(new Board(motherboard, computer ?? own ?? "unnamed editor", computerId));
             }
 
             return boards;

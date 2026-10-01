@@ -36,6 +36,22 @@ Feature: OpenAI chat client over HTTP
     When I complete a chat with "Hi" using model "test-model"
     Then the completion fails with "401"
 
+  Scenario: A 503 is retried and then succeeds
+    Given the server will reply 503 with:
+      """
+      {"error":"busy"}
+      """
+    And the server will reply 503 with:
+      """
+      {"error":"busy"}
+      """
+    And the server will reply 200 with:
+      """
+      {"choices":[{"message":{"role":"assistant","content":"Hello"}}]}
+      """
+    When I complete a chat with "Hi" using model "test-model"
+    Then the completion content is "Hello"
+
   Scenario: A reasoning reply is parsed
     Given the server will reply 200 with:
       """

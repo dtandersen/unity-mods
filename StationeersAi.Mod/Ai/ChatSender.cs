@@ -45,21 +45,17 @@ namespace StationeersAi.Mod.Ai
 
             try
             {
-                BepInExPlugin.Log.Log($"chat send: client={NetworkManager.IsClient} server={NetworkManager.IsServer} batch={GameManager.IsBatchMode} line='{line}'");
                 if (NetworkManager.IsClient)
                 {
                     NetworkClient.SendToServer(message, NetworkChannel.GeneralTraffic);
-                    BepInExPlugin.Log.Log("chat send: forwarded to server");
                     return;
                 }
 
                 message.PrintToConsole();
-                BepInExPlugin.Log.Log("chat send: printed locally");
 
                 if (NetworkManager.IsServer)
                 {
                     NetworkServer.SendToClients(message, NetworkChannel.GeneralTraffic, -1L);
-                    BepInExPlugin.Log.Log("chat send: relayed to clients");
                 }
             }
             catch (Exception ex)

@@ -29,11 +29,13 @@ namespace StationeersAi.Tool
             var lines = new System.Collections.Generic.List<string>();
             foreach (var entry in instructions)
             {
-                lines.Add($"{entry.Name}: {entry.Example}");
-                if (!string.IsNullOrWhiteSpace(instruction) && !string.IsNullOrWhiteSpace(entry.Description))
+                var line = $"{entry.Name}: {entry.Example}";
+                if (!string.IsNullOrWhiteSpace(entry.Description))
                 {
-                    lines.Add(entry.Description);
+                    line += $" - {entry.Description}";
                 }
+
+                lines.Add(line);
             }
 
             return new ToolSuccess<MipsReferenceResult>(

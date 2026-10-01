@@ -41,6 +41,46 @@ Feature: Describe device tool
       | 0 | Filter | empty    |
       """
 
+  Scenario: Describe a housing
+    Given the housing "Housing" exists
+    When I describe the device "Housing"
+    Then the tool succeeds
+    And the tool result is:
+      """
+      Device: Housing (StructureCircuitHousing #100)
+      Network: 7
+      Logic: none readable.
+      Slots: none.
+      Devices:
+      | Index | Label   | Thing        |
+      | ----- | ------- | ------------ |
+      | db    | Housing | Housing #100 |
+      | d0    | Heater  | Heater #101  |
+      | d1    | empty   | disconnected |
+      """
+
+  Scenario: Housing chip state
+    Given the housing "Housing" runs code
+    When I describe the device "Housing"
+    Then the tool succeeds
+    And the tool result is:
+      """
+      Device: Housing (StructureCircuitHousing #100)
+      Network: 7
+      Logic: none readable.
+      Slots: none.
+      Devices:
+      | Index | Label   | Thing        |
+      | ----- | ------- | ------------ |
+      | db    | Housing | Housing #100 |
+      | d0    | Heater  | Heater #101  |
+      | d1    | empty   | disconnected |
+      Chip:
+      Error: IncorrectVariable at line 12
+      Display: 294
+      Code hash: 6c96f2ae
+      """
+
   Scenario: Unknown device
     Given no device matches
     When I describe the device "Nope"

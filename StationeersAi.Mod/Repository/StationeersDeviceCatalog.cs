@@ -32,7 +32,7 @@ namespace StationeersAi.Repository
         private static IReadOnlyList<DeviceInfo> SearchInner(string query, long? network, bool? logic)
         {
             var devices = new List<DeviceInfo>();
-            foreach (var structure in UnityEngine.Object.FindObjectsOfType<Structure>())
+            foreach (var structure in UnityEngine.Object.FindObjectsOfType<Assets.Scripts.Objects.Structure>())
             {
                 var info = Describe(structure);
                 if (info != null &&
@@ -47,7 +47,7 @@ namespace StationeersAi.Repository
             return devices;
         }
 
-        private static DeviceInfo Describe(Structure structure)
+        private static DeviceInfo Describe(Assets.Scripts.Objects.Structure structure)
         {
             try
             {

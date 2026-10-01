@@ -230,21 +230,46 @@ namespace StationeersAi.Test
             var result = Call(
                 Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), editor, new InMemoryMipsReference()),
                 "write_ic",
-                ("device", "Lab Computer"),
+                ("computer_name", "Lab Computer"),
                 ("code", "alias Device d0\n yield"));
 
             result.IsSuccess.ShouldBeTrue();
             result.Content.ShouldContain("Wrote 2 lines to Lab Computer");
             editor.Writes.Count.ShouldBe(1);
-            editor.Writes[0].Device.ShouldBe("Lab Computer");
+            editor.Writes[0].Name.ShouldBe("Lab Computer");
+            editor.Writes[0].Thing.ShouldBeNull();
         }
 
         [Test]
-        public void Write_ic_missing_device_fails()
+        public void Write_ic_places_code_by_thing_id()
+        {
+            var editor = new InMemoryIcEditor();
+
+            var result = Call(
+                Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), editor, new InMemoryMipsReference()),
+                "write_ic",
+                ("computer_thing", "1189"),
+                ("code", "yield"));
+
+            result.IsSuccess.ShouldBeTrue();
+            editor.Writes[0].Thing.ShouldBe(1189);
+        }
+
+        [Test]
+        public void Write_ic_missing_computer_fails()
         {
             var result = Call(Tools(), "write_ic", ("code", "yield"));
             result.IsSuccess.ShouldBeFalse();
-            result.Content.ShouldContain("'device'");
+            result.Content.ShouldContain("'computer_name'");
+            result.Content.ShouldContain("'computer_thing'");
+        }
+
+        [Test]
+        public void Write_ic_rejects_a_bad_thing_id()
+        {
+            var result = Call(Tools(), "write_ic", ("computer_thing", "abc"), ("code", "yield"));
+            result.IsSuccess.ShouldBeFalse();
+            result.Content.ShouldContain("'abc'");
         }
 
         [Test]
@@ -255,7 +280,7 @@ namespace StationeersAi.Test
             var result = Call(
                 Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), editor, new InMemoryMipsReference()),
                 "write_ic",
-                ("device", "Nope"),
+                ("computer_name", "Nope"),
                 ("code", "yield"));
 
             result.IsSuccess.ShouldBeFalse();
@@ -410,7 +435,9 @@ namespace StationeersAi.Test
                     7,
                     true,
                     new[] { new DeviceLogicValue("Pressure", 101.3, false), new DeviceLogicValue("On", 1, true) },
-                    new[] { new DeviceSlotInfo(0, "Filter", "empty") }),
+                    new[] { new DeviceSlotInfo(0, "Filter", "empty") },
+                    null,
+                    null),
             };
             var tools = new ToolHandler(new ITool[]
             {
@@ -424,6 +451,41 @@ namespace StationeersAi.Test
             result.Content.ShouldContain("Network: 7, On: yes");
             result.Content.ShouldContain("Pressure");
             result.Content.ShouldContain("Filter");
+        }
+
+        [Test]
+        public void Describe_device_lists_housing_devices()
+        {
+            var inspector = new InMemoryDeviceInspector
+            {
+                Details = new DeviceDetails(
+                    "Housing",
+                    "StructureCircuitHousing",
+                    100,
+                    7,
+                    null,
+                    new DeviceLogicValue[0],
+                    new DeviceSlotInfo[0],
+                    new[]
+                    {
+                        new HousingDeviceEntry("db", "Housing", 100),
+                        new HousingDeviceEntry("d0", "Heater", 101),
+                        new HousingDeviceEntry("d1", "empty", 0),
+                    },
+                    new ChipState("IncorrectVariable", "12", 294, "6c96f2ae")),
+            };
+            var tools = new ToolHandler(new ITool[]
+            {
+                new DescribeDeviceTool(new DescribeDeviceCommand(inspector)),
+            });
+
+            var result = Call(tools, "describe_device", ("device", "Housing"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Content.ShouldContain("Devices:");
+            result.Content.ShouldContain("Heater #101");
+            result.Content.ShouldContain("Error: IncorrectVariable at line 12");
+            result.Content.ShouldContain("Display: 294");
+            result.Content.ShouldContain("Code hash: 6c96f2ae");
         }
 
         [Test]
@@ -448,6 +510,75 @@ namespace StationeersAi.Test
             });
 
             var result = Call(tools, "describe_device", ("device", "Nope"));
+            result.IsSuccess.ShouldBeFalse();
+            result.Content.ShouldContain("Nope");
+        }
+
+        [Test]
+        public void Write_ic_rejects_code_over_the_line_cap()
+        {
+            var editor = new InMemoryIcEditor();
+            var tools = new ToolHandler(new ITool[]
+            {
+                new WriteIcTool(new WriteIcCommand(editor)),
+            });
+            var code = string.Join("\n", System.Linq.Enumerable.Repeat("yield", WriteIcTool.MaxCodeLines + 1));
+
+            var result = Call(tools, "write_ic", ("computer_name", "Lab Computer"), ("code", code));
+            result.IsSuccess.ShouldBeFalse();
+            result.Content.ShouldContain("128 lines");
+            editor.Writes.Count.ShouldBe(0);
+        }
+
+        [Test]
+        public void Read_ic_returns_the_editor_text()
+        {
+            var editor = new InMemoryIcEditor { EditorCode = "yield\n sleep 1" };
+            var tools = new ToolHandler(new ITool[]
+            {
+                new ReadIcTool(new ReadIcCommand(editor)),
+            });
+
+            var result = Call(tools, "read_ic", ("computer_name", "Lab Computer"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Content.ShouldBe("yield\n sleep 1\nCode hash: d59a099c");
+        }
+
+        [Test]
+        public void Read_ic_empty_editor_says_so()
+        {
+            var tools = new ToolHandler(new ITool[]
+            {
+                new ReadIcTool(new ReadIcCommand(new InMemoryIcEditor())),
+            });
+
+            var result = Call(tools, "read_ic", ("computer_thing", "1189"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Content.ShouldBe("(editor is empty)");
+        }
+
+        [Test]
+        public void Read_ic_missing_computer_fails()
+        {
+            var tools = new ToolHandler(new ITool[]
+            {
+                new ReadIcTool(new ReadIcCommand(new InMemoryIcEditor())),
+            });
+
+            var result = Call(tools, "read_ic");
+            result.IsSuccess.ShouldBeFalse();
+            result.Content.ShouldContain("'computer_name'");
+        }
+
+        [Test]
+        public void Read_ic_unknown_computer_fails()
+        {
+            var tools = new ToolHandler(new ITool[]
+            {
+                new ReadIcTool(new ReadIcCommand(new InMemoryIcEditor { ResolveAs = null })),
+            });
+
+            var result = Call(tools, "read_ic", ("computer_name", "Nope"));
             result.IsSuccess.ShouldBeFalse();
             result.Content.ShouldContain("Nope");
         }

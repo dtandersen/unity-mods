@@ -22,6 +22,9 @@ namespace StationeersAi.Ai.OpenAi
     /// </remarks>
     public sealed class OpenAiChatClient : IAiClient
     {
+        /// <summary>Retries after a retryable failure, on top of the first attempt.</summary>
+        private const int MaxRetries = 3;
+
         private readonly IChatTransport _transport;
         private readonly OpenAiOptions _options;
 
@@ -42,26 +45,59 @@ namespace StationeersAi.Ai.OpenAi
                 BuildBody(messages, tools));
 
             HttpReply reply;
-            try
+            var attempts = 0;
+            while (true)
             {
-                reply = await _transport.PostAsync(request, cancellationToken).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                throw new AiClientException("Could not reach the AI service.", ex);
-            }
+                attempts++;
+                try
+                {
+                    reply = await _transport.PostAsync(request, cancellationToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (AiClientException ex) when (IsRetryable(ex.StatusCode) && attempts <= MaxRetries)
+                {
+                    await WaitBeforeRetry(cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+                catch (Exception ex) when (!(ex is AiClientException))
+                {
+                    throw new AiClientException("Could not reach the AI service.", null, ex);
+                }
 
-            if (reply.StatusCode < 200 || reply.StatusCode >= 300)
-            {
-                throw new AiClientException(
-                    $"The AI service returned HTTP {reply.StatusCode}: {Truncate(reply.Body, 300)}");
-            }
+                if (reply.StatusCode < 200 || reply.StatusCode >= 300)
+                {
+                    if (IsRetryable(reply.StatusCode) && attempts <= MaxRetries)
+                    {
+                        await WaitBeforeRetry(cancellationToken).ConfigureAwait(false);
+                        continue;
+                    }
 
-            return Parse(reply.Body);
+                    throw new AiClientException(
+                        $"The AI service returned HTTP {reply.StatusCode}: {Truncate(reply.Body, 300)} (after {attempts} {(attempts == 1 ? "attempt" : "attempts")})",
+                        reply.StatusCode,
+                        null);
+                }
+
+                return Parse(reply.Body);
+            }
+        }
+
+        private static bool IsRetryable(int? statusCode)
+        {
+            return statusCode == 408 ||
+                statusCode == 429 ||
+                statusCode == 500 ||
+                statusCode == 502 ||
+                statusCode == 503 ||
+                statusCode == 504;
+        }
+
+        private static Task WaitBeforeRetry(CancellationToken cancellationToken)
+        {
+            return Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
         }
 
         private static string Truncate(string value, int max)
@@ -176,7 +212,7 @@ namespace StationeersAi.Ai.OpenAi
             }
             catch (Exception ex)
             {
-                throw new AiClientException("The AI service returned a malformed response.", ex);
+                throw new AiClientException("The AI service returned a malformed response.", null, ex);
             }
 
             var message = response?.Choices != null && response.Choices.Count > 0
@@ -238,7 +274,7 @@ namespace StationeersAi.Ai.OpenAi
             }
             catch (Exception ex)
             {
-                throw new AiClientException($"The AI service returned malformed tool arguments: {json}", ex);
+                throw new AiClientException($"The AI service returned malformed tool arguments: {json}", null, ex);
             }
 
             return new ToolArguments(values);

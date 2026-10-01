@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
+using UnityEngine;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -51,6 +53,7 @@ namespace StationeersAi.Mod
         public static ConfigEntry<bool> showToolCalls;
         public static ConfigEntry<bool> showToolResults;
         public static ConfigEntry<bool> respondToMentions;
+        public static ConfigEntry<KeyboardShortcut> windowToggle;
         public static ConfigEntry<string> mentionTrigger;
         public static ConfigEntry<string> aiName;
         public static ConfigEntry<string> endpoint;
@@ -100,6 +103,8 @@ namespace StationeersAi.Mod
                 "Print each tool's raw output (CSV) to the console.");
             respondToMentions = Config.Bind("General", "RespondToMentions", true,
                 "Answer chat messages that start with the mention trigger (e.g. @sage). The answer is posted to chat as the assistant.");
+            windowToggle = Config.Bind("General", "WindowToggle", new KeyboardShortcut(KeyCode.F4),
+                "Key that opens the Sage window for typing to the assistant directly.");
             mentionTrigger = Config.Bind("General", "MentionTrigger", "@sage",
                 "Chat prefix that asks the assistant a question.");
             aiName = Config.Bind("General", "Name", "Sage",
@@ -129,6 +134,9 @@ namespace StationeersAi.Mod
 
             CommandLine.AddCommand("ai", new AiConsoleCommand());
             Log.Log("registered 'ai' console command");
+
+            gameObject.AddComponent<SageWindow>();
+            Log.Log("Sage window ready (F4)");
 
             Log.Log($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");
         }
@@ -243,14 +251,14 @@ namespace StationeersAi.Mod
                 return;
             }
 
-            Log.Log($"chat seen from '{message.DisplayName}': {Truncate(message.ChatText, 80)}");
-
             // Skip our own answers echoing back through the server relay.
             if (message.DisplayName != null &&
                 message.DisplayName.Equals(AssistantName, StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }
+
+            Log.Log($"chat seen from '{message.DisplayName}': {Truncate(message.ChatText, 80)}");
 
             if (!Mention.TryParse(mentionTrigger.Value, message.ChatText, out var prompt))
             {
@@ -292,6 +300,23 @@ namespace StationeersAi.Mod
                 .AskAsync(prompt, contextMessages.Value > 0 ? Conversation : null);
         }
 
+        /// <summary>
+        /// Handles one question typed in the Sage window. Answers stream back
+        /// into the window through <see cref="SageWindow"/>.
+        /// </summary>
+        public void AskInWindow(SageWindow window, string prompt)
+        {
+            if (window == null)
+            {
+                return;
+            }
+
+            window.Busy = true;
+            _ = CreateWindowPresenter(window)
+                .AskAsync(prompt, contextMessages.Value > 0 ? Conversation : null)
+                .ContinueWith(_ => window.Busy = false, TaskScheduler.Default);
+        }
+
         public void ClearContext()
         {
             CreatePresenter().Clear(Conversation);
@@ -314,6 +339,20 @@ namespace StationeersAi.Mod
                 showToolCalls: showToolCalls.Value,
                 showToolResults: showToolResults.Value,
                 clock: SystemClock.Instance);
+        }
+
+        private static ChatPresenter CreateWindowPresenter(SageWindow window)
+        {
+            return new ChatPresenter(
+                new WindowChatSink(window.AddLine),
+                activity => BuildAssistant(activity),
+                PlayerName,
+                AssistantName,
+                Log,
+                showThinking: showThinking.Value,
+                showToolCalls: showToolCalls.Value,
+                showToolResults: showToolResults.Value,
+                clock: StationeersAi.Time.SystemClock.Instance);
         }
 
         /// <summary>
@@ -393,6 +432,7 @@ namespace StationeersAi.Mod
                 new GetStatusTool(new GetStatusCommand(playerContext)),
                 new GetWorldTool(new GetWorldCommand(new StationeersWorldContext())),
                 new WriteIcTool(new WriteIcCommand(new StationeersIcEditor())),
+                new ReadIcTool(new ReadIcCommand(new StationeersIcEditor())),
                 new MipsReferenceTool(new ReadMipsCommand(new StationeersMipsReference())),
                 new SearchDevicesTool(new SearchDevicesCommand(new StationeersDeviceCatalog())),
                 new DescribeDeviceTool(new DescribeDeviceCommand(new StationeersDeviceInspector())),

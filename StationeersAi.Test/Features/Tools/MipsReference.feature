@@ -9,8 +9,8 @@ Feature: MIPS reference tool
     Then the tool succeeds
     And the tool result is:
       """
-      l: l r? device var
-      yield: yield
+      l: l r? device var - Does l.
+      yield: yield - Does yield.
       """
 
   Scenario: Describe one instruction
@@ -19,8 +19,7 @@ Feature: MIPS reference tool
     Then the tool succeeds
     And the tool result is:
       """
-      l: l r? device var
-      Does l.
+      l: l r? device var - Does l.
       """
 
   Scenario: Unknown instruction

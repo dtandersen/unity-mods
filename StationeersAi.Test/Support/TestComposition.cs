@@ -25,6 +25,7 @@ namespace StationeersAi.Test.Support
                 new GetStatusTool(new GetStatusCommand(world.Player)),
                 new GetWorldTool(new GetWorldCommand(world.Worlds)),
                 new WriteIcTool(new WriteIcCommand(world.Ic)),
+                new ReadIcTool(new ReadIcCommand(world.Ic)),
                 new MipsReferenceTool(new ReadMipsCommand(world.Mips)),
                 new SearchDevicesTool(new SearchDevicesCommand(world.Devices)),
                 new DescribeDeviceTool(new DescribeDeviceCommand(world.Inspector)),

@@ -43,6 +43,7 @@ Sage can call these tools:
 | `get_status` | Your position and world |
 | `get_world` | World, orbit, sunlight, and outside air |
 | `write_ic` | Place MIPS source in a computer's editor |
+| `read_ic` | Read a computer's editor text |
 | `mips_reference` | IC10 instruction usage and descriptions |
 | `search_devices` | Live devices: labels, types, networks |
 | `describe_device` | One device: ports, settings, slots |

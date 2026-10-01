@@ -23,5 +23,20 @@ namespace StationeersAi.Test
             MarkdownToPlain.ToPlainText("- item").ShouldBe("• item");
             MarkdownToPlain.ToPlainText("[link](http://example.com)").ShouldBe("link");
         }
+        [Test]
+        public void Log_text_folds_outside_latin1()
+        {
+            LogText.Sanitize("a\u2014b\u2022c\u2026d\U0001F44Be\u00B0f").ShouldBe("a-b-c...d??e\u00B0f");
+            LogText.Sanitize(null).ShouldBeNull();
+        }
+
+        [Test]
+        public void Code_hash_is_stable_short_hex()
+        {
+            CodeHash.Hash(string.Empty).ShouldBe("811c9dc5");
+            CodeHash.Hash("a").ShouldBe("e40c292c");
+            CodeHash.Hash("yield").ShouldBe("6c96f2ae");
+            CodeHash.Hash(null).ShouldBe(CodeHash.Hash(string.Empty));
+        }
     }
 }
