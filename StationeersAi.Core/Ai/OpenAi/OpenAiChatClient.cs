@@ -221,7 +221,7 @@ namespace StationeersAi.Ai.OpenAi
 
             if (message == null)
             {
-                throw new AiClientException("The AI service response contained no message.");
+                throw new AiClientException($"The AI service response contained no message: {Truncate(json, 300)}");
             }
 
             return new AiCompletion(message.Content, ParseToolCalls(message.ToolCalls), Reasoning(message));

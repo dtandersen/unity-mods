@@ -87,7 +87,7 @@ namespace StationeersAi.Repository
                     return 0;
                 }
 
-                var room = controller.GetRoom(thing.ThingTransformPosition);
+                var room = controller.GetRoom(thing.GridPosition);
                 return room != null ? room.RoomId : 0;
             }
             catch (Exception)

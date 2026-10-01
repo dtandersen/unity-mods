@@ -500,7 +500,34 @@ namespace StationeersAi.Mod
                 new UnityWebRequestTransport(timeoutSeconds.Value),
                 new OpenAiOptions(endpoint.Value, apiKey.Value, model.Value, reasoningEffort.Value));
 
-            return new AiAssistant(client, tools, systemPrompt.Value, maxIterations.Value, Log, activity);
+            return new AiAssistant(client, tools, SystemPromptText(), maxIterations.Value, Log, activity);
+        }
+
+        /// <summary>
+        /// The system prompt: <c>SYSTEM.md</c> beside the config when it exists
+        /// (re-read per question, so edits apply without a restart), else the
+        /// configured text.
+        /// </summary>
+        private static string SystemPromptText()
+        {
+            try
+            {
+                var path = System.IO.Path.Combine(BepInEx.Paths.ConfigPath, "SYSTEM.md");
+                if (System.IO.File.Exists(path))
+                {
+                    var text = System.IO.File.ReadAllText(path).Trim();
+                    if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        return text;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Log($"SYSTEM.md unreadable, using configured prompt: {ex.Message}");
+            }
+
+            return systemPrompt.Value;
         }
     }
 }

@@ -47,7 +47,8 @@ namespace StationeersAi.Ai
 
         /// <summary>
         /// Answers a question. If <paramref name="conversation"/> is non-null, prior
-        /// turns are sent with the request and this turn is appended to it.
+        /// turns (user, assistant, and tool traffic) are sent with the request and
+        /// this turn's full transcript is appended to it.
         /// </summary>
         public async Task<string> AskAsync(
             string prompt,
@@ -87,8 +88,8 @@ namespace StationeersAi.Ai
                 if (completion == null || !completion.HasToolCalls)
                 {
                     var answer = completion?.Content ?? string.Empty;
-                    conversation?.Add(new ChatMessage(ChatRole.User, prompt));
-                    conversation?.Add(new ChatMessage(ChatRole.Assistant, answer));
+                    messages.Add(new ChatMessage(ChatRole.Assistant, answer));
+                    Persist(conversation, messages);
                     if (!string.IsNullOrEmpty(answer))
                     {
                         Log($"Sage: {answer}");
@@ -118,8 +119,20 @@ namespace StationeersAi.Ai
                 }
             }
 
+            Persist(conversation, messages);
             Log($"(gave up after {_maxIterations} tool rounds)");
             return "I couldn't complete that request.";
+        }
+
+        /// <summary>Keeps the whole turn — user, assistant, and tool traffic — for next time.</summary>
+        private static void Persist(Conversation conversation, List<ChatMessage> messages)
+        {
+            if (conversation == null)
+            {
+                return;
+            }
+
+            conversation.Replace(messages.Where(message => message.Role != ChatRole.System));
         }
 
         /// <summary>

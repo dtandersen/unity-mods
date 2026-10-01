@@ -148,7 +148,7 @@ namespace StationeersAi.Repository
                     return null;
                 }
 
-                var room = controller.GetRoom(human.ThingTransformPosition);
+                var room = controller.GetRoom(human.Position);
                 return room != null ? (long?)room.RoomId : null;
             }
             catch (System.Exception)

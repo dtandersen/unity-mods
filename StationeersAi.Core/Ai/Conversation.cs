@@ -4,8 +4,9 @@ namespace StationeersAi.Ai
 {
     /// <summary>
     /// Conversation history carried across questions so the model can refer back to
-    /// earlier turns. Only user/assistant text is retained (not tool traffic), and
-    /// the oldest messages are dropped once the size limit is exceeded.
+    /// earlier turns. Every message persists verbatim — user and assistant text
+    /// plus tool calls and their results, like a standard agent transcript — and
+    /// the oldest turns drop whole once the size limit is exceeded.
     /// </summary>
     public sealed class Conversation
     {
@@ -41,9 +42,22 @@ namespace StationeersAi.Ai
 
         private void Trim()
         {
-            while (_messages.Count > _maxMessages)
+            while (_messages.Count > _maxMessages && _messages.Count > 0)
             {
-                _messages.RemoveAt(0);
+                if (_messages[0].Role != ChatRole.User)
+                {
+                    _messages.RemoveAt(0);
+                    continue;
+                }
+
+                var nextTurn = _messages.FindIndex(1, message => message.Role == ChatRole.User);
+                if (nextTurn < 0)
+                {
+                    _messages.RemoveAt(0);
+                    continue;
+                }
+
+                _messages.RemoveRange(0, nextTurn);
             }
         }
     }
