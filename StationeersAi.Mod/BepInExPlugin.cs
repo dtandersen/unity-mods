@@ -334,6 +334,7 @@ namespace StationeersAi.Mod
                 new ReadStationpediaTool(new ReadStationpediaCommand(catalogueStationpedia)),
                 new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(playerContext))),
                 new GetStatusTool(new GetStatusCommand(playerContext)),
+                new GetWorldTool(new GetWorldCommand(new StationeersWorldContext())),
             });
 
             var client = new OpenAiChatClient(

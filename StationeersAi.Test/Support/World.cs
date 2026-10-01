@@ -24,6 +24,8 @@ namespace StationeersAi.Test.Support
 
         public InMemoryPlayerContext Player { get; } = new InMemoryPlayerContext();
 
+        public InMemoryWorldContext Worlds { get; } = new InMemoryWorldContext();
+
         public FakeAiClient Ai { get; set; }
 
         public RecordingChatSink Chat { get; } = new RecordingChatSink();

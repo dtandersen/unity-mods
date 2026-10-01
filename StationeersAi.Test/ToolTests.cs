@@ -12,10 +12,10 @@ namespace StationeersAi.Test
     {
         private static ToolHandler Tools()
         {
-            return Tools(new InMemoryPlayerContext());
+            return Tools(new InMemoryPlayerContext(), new InMemoryWorldContext());
         }
 
-        private static ToolHandler Tools(InMemoryPlayerContext player)
+        private static ToolHandler Tools(InMemoryPlayerContext player, InMemoryWorldContext world)
         {
             var items = new InMemoryItemRepository(new[]
             {
@@ -45,6 +45,7 @@ namespace StationeersAi.Test
                 new ReadStationpediaTool(new ReadStationpediaCommand(pages)),
                 new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(player))),
                 new GetStatusTool(new GetStatusCommand(player)),
+                new GetWorldTool(new GetWorldCommand(world)),
             });
         }
 
@@ -144,7 +145,7 @@ namespace StationeersAi.Test
             var player = new InMemoryPlayerContext();
             player.Carry(new ItemStack("ItemWelder", "Welder", "85%", "Right hand"));
 
-            var result = Call(Tools(player), "search_inventory", ("query", "weld"));
+            var result = Call(Tools(player, new InMemoryWorldContext()), "search_inventory", ("query", "weld"));
             result.IsSuccess.ShouldBeTrue();
             result.Content.ShouldContain("Welder,85%,Right hand");
         }
@@ -157,7 +158,7 @@ namespace StationeersAi.Test
                 Status = new PlayerStatus(1.5f, 2.25f, -3f, "Europa", null),
             };
 
-            var result = Call(Tools(player), "get_status");
+            var result = Call(Tools(player, new InMemoryWorldContext()), "get_status");
             result.IsSuccess.ShouldBeTrue();
             result.Content.ShouldContain("Position: (1.5, 2.3, -3.0)");
             result.Content.ShouldContain("World: Europa");
@@ -167,6 +168,49 @@ namespace StationeersAi.Test
         public void Get_status_unavailable_fails()
         {
             var result = Call(Tools(), "get_status");
+            result.IsSuccess.ShouldBeFalse();
+        }
+
+        [Test]
+        public void Get_world_reports_setup_orbit_and_air()
+        {
+            var world = new InMemoryWorldContext
+            {
+                Info = new WorldInfo(
+                    "Europa",
+                    "Europa1",
+                    -9.8f,
+                    12,
+                    false,
+                    false,
+                    "20m",
+                    "60d",
+                    72.0,
+                    0.01f,
+                    5.2,
+                    3.1f,
+                    false,
+                    500f,
+                    0.37f,
+                    0.35f,
+                    false,
+                    -20.0,
+                    0.0,
+                    new[] { new GasMixEntry("Nitrogen", 90.0), new GasMixEntry("Oxygen", 10.0) }),
+            };
+
+            var result = Call(Tools(new InMemoryPlayerContext(), world), "get_world");
+            result.IsSuccess.ShouldBeTrue();
+            result.Content.ShouldContain("World: Europa");
+            result.Content.ShouldContain("Day length: 20m");
+            result.Content.ShouldContain("500 W/m");
+            result.Content.ShouldContain("Nitrogen 90%");
+        }
+
+        [Test]
+        public void Get_world_unavailable_fails()
+        {
+            var result = Call(Tools(), "get_world");
             result.IsSuccess.ShouldBeFalse();
         }
 

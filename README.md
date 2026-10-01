@@ -5,13 +5,13 @@ questions and it looks up live game data — items, structures, manufacturing
 recipes, Stationpedia pages, your inventory, and your position — before
 answering.
 
-## Use
+## Usage
 
-Press Enter to open chat and mention SAGE or press F3 to use the console (`ai <prompt>`):
+There are two ways to interact with SAGE. You can mention `@sage <prompt>` in a chat message or use `ai <prompt>` in the Stationeers console.
 
 ```
 @sage how do I make cable coil?
-@sage what does the autolathe need for steel sheets?
+ai what does the autolathe need for steel sheets?
 ```
 
 SAGE posts the answer to chat — on a server, every player sees it. Two settings control mention handling:
@@ -41,6 +41,7 @@ Sage can call these tools:
 | `search_stationpedia` / `read_stationpedia` | In-game encyclopedia pages |
 | `search_inventory` | What you are carrying and where it is worn |
 | `get_status` | Your position and world |
+| `get_world` | World, orbit, sunlight, and outside air |
 
 ## Development
 
@@ -48,4 +49,4 @@ Building, testing, and architecture notes live in [development.md](development.m
 
 ## License
 
-Public domain.
+[MIT](license.md). Use at your own risk.

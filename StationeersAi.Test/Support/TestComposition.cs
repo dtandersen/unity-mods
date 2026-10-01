@@ -23,6 +23,7 @@ namespace StationeersAi.Test.Support
                 new ReadStationpediaTool(new ReadStationpediaCommand(world.Stationpedia)),
                 new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(world.Player))),
                 new GetStatusTool(new GetStatusCommand(world.Player)),
+                new GetWorldTool(new GetWorldCommand(world.Worlds)),
             });
         }
 
