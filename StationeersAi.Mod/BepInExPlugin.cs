@@ -170,6 +170,63 @@ namespace StationeersAi.Mod
         }
 
         /// <summary>
+        /// Runs work on Unity's main thread and returns its result, blocking the
+        /// caller. Tools run off the main thread, but Unity objects demand it.
+        /// Throws when the context was never captured or the wait times out.
+        /// </summary>
+        internal static T RunOnMainThreadSync<T>(Func<T> func, int timeoutMilliseconds = 10000)
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (Thread.CurrentThread.ManagedThreadId == unityThreadId)
+            {
+                return func();
+            }
+
+            var synchronizationContext = unitySynchronizationContext;
+            if (synchronizationContext == null)
+            {
+                throw new InvalidOperationException("Unity synchronization context was not captured.");
+            }
+
+            T result = default(T);
+            Exception error = null;
+            using (var done = new ManualResetEventSlim(false))
+            {
+                synchronizationContext.Post(_ =>
+                {
+                    try
+                    {
+                        result = func();
+                    }
+                    catch (Exception ex)
+                    {
+                        error = ex;
+                    }
+                    finally
+                    {
+                        done.Set();
+                    }
+                }, null);
+
+                if (!done.Wait(timeoutMilliseconds))
+                {
+                    throw new TimeoutException("Timed out waiting for Unity's main thread.");
+                }
+            }
+
+            if (error != null)
+            {
+                throw error;
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Called for every chat message displayed on this machine. If it is a
         /// mention and mention handling is enabled, asks Sage in chat. Runs on
         /// the Unity main thread, so the game-data snapshot is safe to build.
@@ -335,6 +392,8 @@ namespace StationeersAi.Mod
                 new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(playerContext))),
                 new GetStatusTool(new GetStatusCommand(playerContext)),
                 new GetWorldTool(new GetWorldCommand(new StationeersWorldContext())),
+                new WriteIcTool(new WriteIcCommand(new StationeersIcEditor())),
+                new MipsReferenceTool(new ReadMipsCommand(new StationeersMipsReference())),
             });
 
             var client = new OpenAiChatClient(

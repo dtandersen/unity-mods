@@ -24,6 +24,8 @@ namespace StationeersAi.Test.Support
                 new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(world.Player))),
                 new GetStatusTool(new GetStatusCommand(world.Player)),
                 new GetWorldTool(new GetWorldCommand(world.Worlds)),
+                new WriteIcTool(new WriteIcCommand(world.Ic)),
+                new MipsReferenceTool(new ReadMipsCommand(world.Mips)),
             });
         }
 

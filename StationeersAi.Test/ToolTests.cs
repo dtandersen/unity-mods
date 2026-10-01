@@ -12,10 +12,10 @@ namespace StationeersAi.Test
     {
         private static ToolHandler Tools()
         {
-            return Tools(new InMemoryPlayerContext(), new InMemoryWorldContext());
+            return Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference());
         }
 
-        private static ToolHandler Tools(InMemoryPlayerContext player, InMemoryWorldContext world)
+        private static ToolHandler Tools(InMemoryPlayerContext player, InMemoryWorldContext world, InMemoryIcEditor editor, InMemoryMipsReference mips)
         {
             var items = new InMemoryItemRepository(new[]
             {
@@ -46,6 +46,8 @@ namespace StationeersAi.Test
                 new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(player))),
                 new GetStatusTool(new GetStatusCommand(player)),
                 new GetWorldTool(new GetWorldCommand(world)),
+                new WriteIcTool(new WriteIcCommand(editor)),
+                new MipsReferenceTool(new ReadMipsCommand(mips)),
             });
         }
 
@@ -145,7 +147,7 @@ namespace StationeersAi.Test
             var player = new InMemoryPlayerContext();
             player.Carry(new ItemStack("ItemWelder", "Welder", "85%", "Right hand"));
 
-            var result = Call(Tools(player, new InMemoryWorldContext()), "search_inventory", ("query", "weld"));
+            var result = Call(Tools(player, new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference()), "search_inventory", ("query", "weld"));
             result.IsSuccess.ShouldBeTrue();
             result.Content.ShouldContain("Welder,85%,Right hand");
         }
@@ -158,7 +160,7 @@ namespace StationeersAi.Test
                 Status = new PlayerStatus(1.5f, 2.25f, -3f, "Europa", null),
             };
 
-            var result = Call(Tools(player, new InMemoryWorldContext()), "get_status");
+            var result = Call(Tools(player, new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference()), "get_status");
             result.IsSuccess.ShouldBeTrue();
             result.Content.ShouldContain("Position: (1.5, 2.3, -3.0)");
             result.Content.ShouldContain("World: Europa");
@@ -199,7 +201,7 @@ namespace StationeersAi.Test
                     new[] { new GasMixEntry("Nitrogen", 90.0), new GasMixEntry("Oxygen", 10.0) }),
             };
 
-            var result = Call(Tools(new InMemoryPlayerContext(), world), "get_world");
+            var result = Call(Tools(new InMemoryPlayerContext(), world, new InMemoryIcEditor(), new InMemoryMipsReference()), "get_world");
             result.IsSuccess.ShouldBeTrue();
             result.Content.ShouldContain("World: Europa");
             result.Content.ShouldContain("Day length: 20m");
@@ -212,6 +214,85 @@ namespace StationeersAi.Test
         {
             var result = Call(Tools(), "get_world");
             result.IsSuccess.ShouldBeFalse();
+        }
+
+        [Test]
+        public void Write_ic_places_code_in_the_named_editor()
+        {
+            var editor = new InMemoryIcEditor();
+
+            var result = Call(
+                Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), editor, new InMemoryMipsReference()),
+                "write_ic",
+                ("device", "Lab Computer"),
+                ("code", "alias Device d0\n yield"));
+
+            result.IsSuccess.ShouldBeTrue();
+            result.Content.ShouldContain("Wrote 2 lines to Lab Computer");
+            editor.Writes.Count.ShouldBe(1);
+            editor.Writes[0].Device.ShouldBe("Lab Computer");
+        }
+
+        [Test]
+        public void Write_ic_missing_device_fails()
+        {
+            var result = Call(Tools(), "write_ic", ("code", "yield"));
+            result.IsSuccess.ShouldBeFalse();
+            result.Content.ShouldContain("'device'");
+        }
+
+        [Test]
+        public void Write_ic_unknown_computer_fails()
+        {
+            var editor = new InMemoryIcEditor { ResolveAs = null };
+
+            var result = Call(
+                Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), editor, new InMemoryMipsReference()),
+                "write_ic",
+                ("device", "Nope"),
+                ("code", "yield"));
+
+            result.IsSuccess.ShouldBeFalse();
+            result.Content.ShouldContain("Nope");
+        }
+
+        [Test]
+        public void Mips_reference_lists_every_instruction()
+        {
+            var mips = new InMemoryMipsReference();
+            mips.Instructions.Add(new MipsInstruction("l", "l r? device var", "Loads a value."));
+            mips.Instructions.Add(new MipsInstruction("yield", "yield", "Pauses the script."));
+
+            var result = Call(
+                Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcEditor(), mips),
+                "mips_reference");
+
+            result.IsSuccess.ShouldBeTrue();
+            result.Content.ShouldContain("l: l r? device var");
+            result.Content.ShouldContain("yield: yield");
+        }
+
+        [Test]
+        public void Mips_reference_describes_one_instruction()
+        {
+            var mips = new InMemoryMipsReference();
+            mips.Instructions.Add(new MipsInstruction("l", "l r? device var", "Loads a value."));
+
+            var result = Call(
+                Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcEditor(), mips),
+                "mips_reference",
+                ("instruction", "L"));
+
+            result.IsSuccess.ShouldBeTrue();
+            result.Content.ShouldContain("Loads a value.");
+        }
+
+        [Test]
+        public void Mips_reference_unknown_instruction_fails()
+        {
+            var result = Call(Tools(), "mips_reference", ("instruction", "nope"));
+            result.IsSuccess.ShouldBeFalse();
+            result.Content.ShouldContain("nope");
         }
 
         [Test]

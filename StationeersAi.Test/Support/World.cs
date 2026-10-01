@@ -26,6 +26,10 @@ namespace StationeersAi.Test.Support
 
         public InMemoryWorldContext Worlds { get; } = new InMemoryWorldContext();
 
+        public InMemoryIcEditor Ic { get; } = new InMemoryIcEditor();
+
+        public InMemoryMipsReference Mips { get; } = new InMemoryMipsReference();
+
         public FakeAiClient Ai { get; set; }
 
         public RecordingChatSink Chat { get; } = new RecordingChatSink();

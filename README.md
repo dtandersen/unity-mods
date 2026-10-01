@@ -42,6 +42,8 @@ Sage can call these tools:
 | `search_inventory` | What you are carrying and where it is worn |
 | `get_status` | Your position and world |
 | `get_world` | World, orbit, sunlight, and outside air |
+| `write_ic` | Place MIPS source in a computer's editor |
+| `mips_reference` | IC10 instruction usage and descriptions |
 
 ## Development
 
