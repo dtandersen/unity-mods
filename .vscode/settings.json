@@ -4,5 +4,6 @@
   "files.trimFinalNewlines": true,
   "files.exclude": {
     "**/*.feature.cs": true
-  }
+  },
+  "editor.colorDecorators": false
 }

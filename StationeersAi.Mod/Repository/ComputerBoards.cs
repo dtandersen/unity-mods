@@ -23,47 +23,7 @@ namespace StationeersAi.Repository
 
         internal static IReadOnlyList<Board> Match(string device)
         {
-            var candidates = All();
-            long id;
-            if (long.TryParse(device.Trim(), out id))
-            {
-                var byId = new List<Board>();
-                foreach (var candidate in candidates)
-                {
-                    long reference;
-                    try
-                    {
-                        reference = candidate.Motherboard.ReferenceId;
-                    }
-                    catch (Exception)
-                    {
-                        continue;
-                    }
-
-                    if (reference == id)
-                    {
-                        byId.Add(candidate);
-                    }
-                }
-
-                return byId;
-            }
-
-            var exact = new List<Board>();
-            var partial = new List<Board>();
-            foreach (var candidate in candidates)
-            {
-                if (candidate.Name.Equals(device, StringComparison.OrdinalIgnoreCase))
-                {
-                    exact.Add(candidate);
-                }
-                else if (candidate.Name.IndexOf(device, StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    partial.Add(candidate);
-                }
-            }
-
-            return exact.Count > 0 ? exact : partial;
+            return ThingMatching.Match(All(), board => board.Name, board => board.Motherboard.ReferenceId, device);
         }
 
         internal static string Names(IReadOnlyList<Board> boards)

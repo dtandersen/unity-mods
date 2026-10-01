@@ -3,14 +3,15 @@ using StationeersAi.Entity;
 
 namespace StationeersAi.Repository
 {
-    /// <summary>Live logic devices in the world.</summary>
+    /// <summary>Built things in the world: devices, pipes, walls.</summary>
     public interface IDeviceCatalog
     {
         /// <summary>
-        /// Devices matching <paramref name="query"/> (blank matches all),
-        /// limited to one computer's data network when <paramref name="computer"/>
-        /// names one (null searches the whole world).
+        /// Things matching <paramref name="query"/> (blank matches all), on data
+        /// network <paramref name="network"/> (null searches every network), speaking
+        /// logic when <paramref name="logic"/> is true, dumb ones when false, all
+        /// when null.
         /// </summary>
-        IReadOnlyList<DeviceInfo> Search(string query, string computer);
+        IReadOnlyList<DeviceInfo> Search(string query, long? network, bool? logic);
     }
 }

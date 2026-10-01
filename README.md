@@ -45,6 +45,7 @@ Sage can call these tools:
 | `write_ic` | Place MIPS source in a computer's editor |
 | `mips_reference` | IC10 instruction usage and descriptions |
 | `search_devices` | Live devices: labels, types, networks |
+| `describe_device` | One device: ports, settings, slots |
 
 ## Development
 

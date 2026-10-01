@@ -14,9 +14,9 @@ namespace StationeersAi.Command
             _devices = devices;
         }
 
-        public IReadOnlyList<DeviceInfo> Execute(string query, string computer)
+        public IReadOnlyList<DeviceInfo> Execute(string query, long? network, bool? logic)
         {
-            return _devices.Search(query, computer);
+            return _devices.Search(query, network, logic);
         }
     }
 }

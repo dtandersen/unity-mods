@@ -32,6 +32,8 @@ namespace StationeersAi.Test.Support
 
         public InMemoryDeviceCatalog Devices { get; } = new InMemoryDeviceCatalog();
 
+        public InMemoryDeviceInspector Inspector { get; } = new InMemoryDeviceInspector();
+
         public FakeAiClient Ai { get; set; }
 
         public RecordingChatSink Chat { get; } = new RecordingChatSink();

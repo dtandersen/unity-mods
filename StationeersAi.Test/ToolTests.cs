@@ -305,8 +305,8 @@ namespace StationeersAi.Test
         public void Search_devices_lists_name_type_and_network()
         {
             var devices = new InMemoryDeviceCatalog();
-            devices.Devices.Add(new DeviceInfo("Air Vent", "StructureAirVent", 101, 7));
-            devices.Devices.Add(new DeviceInfo("Gas Sensor", "StructureGasSensor", 102, 0));
+            devices.Devices.Add(new DeviceInfo("Air Vent", "StructureAirVent", 101, 7, true));
+            devices.Devices.Add(new DeviceInfo("Gas Sensor", "StructureGasSensor", 102, 0, true));
 
             var result = Call(
                 Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference(), devices),
@@ -314,22 +314,80 @@ namespace StationeersAi.Test
                 ("query", "vent"));
 
             result.IsSuccess.ShouldBeTrue();
-            result.Content.ShouldContain("| Air Vent | StructureAirVent |         101 |       7 |");
+            result.Content.ShouldContain("| Air Vent | StructureAirVent |   101 |       7 | yes   |");
             result.Content.ShouldNotContain("Gas Sensor");
         }
 
         [Test]
-        public void Search_devices_passes_the_computer_through()
+        public void Search_devices_passes_the_network_through()
         {
             var devices = new InMemoryDeviceCatalog();
 
             var result = Call(
                 Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference(), devices),
                 "search_devices",
-                ("computer", "Lab Computer"));
+                ("network", "7"));
 
             result.IsSuccess.ShouldBeTrue();
-            devices.LastComputer.ShouldBe("Lab Computer");
+            devices.LastNetwork.ShouldBe(7);
+        }
+
+        [Test]
+        public void Search_devices_filters_by_network()
+        {
+            var devices = new InMemoryDeviceCatalog();
+            devices.Devices.Add(new DeviceInfo("Air Vent", "StructureAirVent", 101, 7, true));
+            devices.Devices.Add(new DeviceInfo("Gas Sensor", "StructureGasSensor", 102, 0, true));
+
+            var result = Call(
+                Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference(), devices),
+                "search_devices",
+                ("network", "7"));
+
+            result.IsSuccess.ShouldBeTrue();
+            result.Content.ShouldContain("Air Vent");
+            result.Content.ShouldNotContain("Gas Sensor");
+        }
+
+        [Test]
+        public void Search_devices_filters_by_logic()
+        {
+            var devices = new InMemoryDeviceCatalog();
+            devices.Devices.Add(new DeviceInfo("Air Vent", "StructureAirVent", 101, 7, true));
+            devices.Devices.Add(new DeviceInfo("Iron Pipe", "StructurePipe", 103, 0, false));
+
+            var smart = Call(
+                Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference(), devices),
+                "search_devices",
+                ("logic", "true"));
+            smart.IsSuccess.ShouldBeTrue();
+            smart.Content.ShouldContain("Air Vent");
+            smart.Content.ShouldNotContain("Iron Pipe");
+            devices.LastLogic.ShouldBe(true);
+
+            var dumb = Call(
+                Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference(), devices),
+                "search_devices",
+                ("logic", "no"));
+            dumb.IsSuccess.ShouldBeTrue();
+            dumb.Content.ShouldContain("Iron Pipe");
+            dumb.Content.ShouldNotContain("Air Vent");
+        }
+
+        [Test]
+        public void Search_devices_rejects_bad_logic()
+        {
+            var result = Call(Tools(), "search_devices", ("logic", "maybe"));
+            result.IsSuccess.ShouldBeFalse();
+            result.Content.ShouldContain("'maybe'");
+        }
+
+        [Test]
+        public void Search_devices_rejects_a_bad_network()
+        {
+            var result = Call(Tools(), "search_devices", ("network", "abc"));
+            result.IsSuccess.ShouldBeFalse();
+            result.Content.ShouldContain("'abc'");
         }
 
         [Test]
@@ -338,6 +396,60 @@ namespace StationeersAi.Test
             var result = Call(Tools(), "search_devices", ("query", "nope"));
             result.IsSuccess.ShouldBeTrue();
             result.Content.ShouldContain("No devices found for 'nope'.");
+        }
+
+        [Test]
+        public void Describe_device_reports_logic_and_slots()
+        {
+            var inspector = new InMemoryDeviceInspector
+            {
+                Details = new DeviceDetails(
+                    "Air Vent",
+                    "StructureAirVent",
+                    101,
+                    7,
+                    true,
+                    new[] { new DeviceLogicValue("Pressure", 101.3, false), new DeviceLogicValue("On", 1, true) },
+                    new[] { new DeviceSlotInfo(0, "Filter", "empty") }),
+            };
+            var tools = new ToolHandler(new ITool[]
+            {
+                new DescribeDeviceTool(new DescribeDeviceCommand(inspector)),
+            });
+
+            var result = Call(tools, "describe_device", ("device", "Air Vent"));
+            result.IsSuccess.ShouldBeTrue();
+            inspector.LastDevice.ShouldBe("Air Vent");
+            result.Content.ShouldContain("Device: Air Vent (StructureAirVent #101)");
+            result.Content.ShouldContain("Network: 7, On: yes");
+            result.Content.ShouldContain("Pressure");
+            result.Content.ShouldContain("Filter");
+        }
+
+        [Test]
+        public void Describe_device_missing_argument_fails()
+        {
+            var tools = new ToolHandler(new ITool[]
+            {
+                new DescribeDeviceTool(new DescribeDeviceCommand(new InMemoryDeviceInspector())),
+            });
+
+            var result = Call(tools, "describe_device");
+            result.IsSuccess.ShouldBeFalse();
+            result.Content.ShouldContain("'device'");
+        }
+
+        [Test]
+        public void Describe_device_unknown_device_fails()
+        {
+            var tools = new ToolHandler(new ITool[]
+            {
+                new DescribeDeviceTool(new DescribeDeviceCommand(new InMemoryDeviceInspector())),
+            });
+
+            var result = Call(tools, "describe_device", ("device", "Nope"));
+            result.IsSuccess.ShouldBeFalse();
+            result.Content.ShouldContain("Nope");
         }
 
         [Test]

@@ -395,6 +395,7 @@ namespace StationeersAi.Mod
                 new WriteIcTool(new WriteIcCommand(new StationeersIcEditor())),
                 new MipsReferenceTool(new ReadMipsCommand(new StationeersMipsReference())),
                 new SearchDevicesTool(new SearchDevicesCommand(new StationeersDeviceCatalog())),
+                new DescribeDeviceTool(new DescribeDeviceCommand(new StationeersDeviceInspector())),
             });
 
             var client = new OpenAiChatClient(
