@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>Caev</AssemblyName>
+    <RootNamespace>Caev</RootNamespace>
+    <Version>0.1.0</Version>
+    <Description>Generic agent engine: model loop, turns, tool ports. Sees game data only as per-turn arguments.</Description>
+  </PropertyGroup>
+
+  <!--
+    The engine holds the model loop, turns, clients, messages, and tool
+    ports. It must never reference game data, Unity, Stationeers, BepInEx,
+    or prefab types; ArchitectureTests enforces this. Per-turn game data
+    arrives as arguments.
+  -->
+
+  <!--
+    Newtonsoft ships with Stationeers, so we compile against it but do not ship our own
+    copy; at runtime the game's assembly is used.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StationeersAi.Common\StationeersAi.Common.csproj" />
+  </ItemGroup>
+
+</Project>

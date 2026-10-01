@@ -3,14 +3,19 @@
 ## Projects
 
 ```
-StationeersAi.Core/   netstandard2.0   Unity-free logic (models, tools, LLM loop, parsing)
+StationeersAi.Common/ netstandard2.0   Shared bits used on both sides (trace log)
+StationeersAi.Core/   netstandard2.0   Unity-free game data (models, tools, commands, chat, window)
+Caev/               netstandard2.0   Generic agent engine (loop, clients, messages, tool ports)
 StationeersAi.Test/   net8.0           TUnit + Shouldly + ArchUnitNET specs
 StationeersAi.Mod/    net48            BepInEx plugin: Unity/HTTP/game-data adapter
 ```
 
-The split is deliberate: **`StationeersAi.Core` must not touch Unity or
-Stationeers types**, so `StationeersAi.Test` can specify and test it without
-the game. The plugin only adapts: it reads `Prefab.AllPrefabs`, the
+The split is deliberate: **the engine (`Caev`) sees game data
+only as per-turn arguments and references `Common` alone**; the domain
+(`Core`) may use the engine but never the game. None of the three touch
+Unity or Stationeers types, so `StationeersAi.Test` can specify and test
+them without the game running. Prefab checks stay in the plugin.
+The plugin only adapts: it reads `Prefab.AllPrefabs`, the
 `ElectronicReader` recipe tables, `Stationpedia` pages and
 `Human.LocalHuman`, calls the LLM over `UnityWebRequest`, and prints results.
 (You cannot construct `Thing`, `Human` and friends outside the game — they
@@ -30,7 +35,9 @@ local.props.example    # template for local.props
 StationeersMods.sln
 lib/BepInEx/           # bundled BepInEx 5.4.22 references (compile fallback when the
                        #   game has no BepInEx installed; never shipped)
+StationeersAi.Common/
 StationeersAi.Core/
+Caev/
 StationeersAi.Test/
 StationeersAi.Mod/
   BepInExPlugin.cs

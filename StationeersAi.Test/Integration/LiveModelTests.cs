@@ -1,10 +1,10 @@
 using System.Net.Http;
 using System.Threading.Tasks;
-using StationeersAi.Ai;
-using StationeersAi.Ai.OpenAi;
-using StationeersAi.Tool;
+using Caev;
+using Caev.Tools;
 using Shouldly;
 using TUnit.Core;
+using Caev.OpenAi;
 
 namespace StationeersAi.Test.Integration;
 

@@ -2,6 +2,7 @@ using System;
 using Assets.Scripts;
 using Assets.Scripts.Networking;
 using NetChatMessage = Assets.Scripts.Networking.ChatMessage;
+using Caev;
 
 namespace StationeersAi.Mod.Ai;
 

@@ -1,6 +1,8 @@
-using StationeersAi.Ai;
+using Caev;
 using StationeersAi.Command;
 using StationeersAi.Query;
+using Caev.Tools;
+using StationeersAi.Ai;
 using StationeersAi.Tool;
 
 namespace StationeersAi.Test.Support;
@@ -47,7 +49,7 @@ internal static class TestComposition
     {
         return new MentionResponder(
             world.Chat,
-            () => Assistant(world),
+            activity => Assistant(world, activity),
             world.AssistantName,
             world.Log);
     }
@@ -62,7 +64,6 @@ internal static class TestComposition
             world.Log,
             showThinking: world.ShowThinking,
             showToolCalls: world.ShowToolCalls,
-            showToolResults: world.ShowToolResults,
-            clock: world.Clock);
+            showToolResults: world.ShowToolResults);
     }
 }

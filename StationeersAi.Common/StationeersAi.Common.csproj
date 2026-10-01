@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>StationeersAi.Common</AssemblyName>
+    <RootNamespace>StationeersAi.Common</RootNamespace>
+    <Version>0.1.0</Version>
+    <Description>Shared primitives for the Stationeers AI libraries. References nothing.</Description>
+  </PropertyGroup>
+
+  <!--
+    Primitives used on both sides of the agent/domain split (tracing).
+    This project must stay dependency-free so it cannot drag anything with it.
+  -->
+
+</Project>

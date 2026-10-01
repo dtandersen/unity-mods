@@ -1,6 +1,6 @@
 using Reqnroll;
 using Shouldly;
-using StationeersAi.Ai;
+using Caev;
 
 namespace StationeersAi.Test.Features.Assistant;
 

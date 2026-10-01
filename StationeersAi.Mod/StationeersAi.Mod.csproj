@@ -5,8 +5,10 @@
     <Description>Sage - an LLM assistant for Stationeers.</Description>
   </PropertyGroup>
 
-  <!-- The plugin consumes the Unity-free core library. -->
+  <!-- The plugin consumes the Unity-free agent and core libraries. -->
   <ItemGroup>
+    <ProjectReference Include="..\Caev\Caev.csproj" />
+    <ProjectReference Include="..\StationeersAi.Common\StationeersAi.Common.csproj" />
     <ProjectReference Include="..\StationeersAi.Core\StationeersAi.Core.csproj" />
   </ItemGroup>
 

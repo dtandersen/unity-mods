@@ -3,6 +3,7 @@ using StationeersAi.Command;
 using StationeersAi.Entity;
 using StationeersAi.Query;
 using StationeersAi.Repository;
+using Caev.Tools;
 using StationeersAi.Tool;
 
 namespace StationeersAi.Test;

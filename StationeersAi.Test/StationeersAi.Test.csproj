@@ -22,6 +22,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Caev\Caev.csproj" />
+    <ProjectReference Include="..\StationeersAi.Common\StationeersAi.Common.csproj" />
     <ProjectReference Include="..\StationeersAi.Core\StationeersAi.Core.csproj" />
   </ItemGroup>
 

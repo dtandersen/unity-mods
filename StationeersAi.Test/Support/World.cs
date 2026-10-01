@@ -1,11 +1,12 @@
 using System;
 using System.Threading.Tasks;
-using StationeersAi.Ai;
+using Caev;
 using StationeersAi.Entity;
 using StationeersAi.Repository;
 using StationeersAi.Test.Fakes;
-using StationeersAi.Tool;
+using Caev.Tools;
 using StationeersAi.Window;
+using StationeersAi.Ai;
 
 namespace StationeersAi.Test.Support;
 
@@ -49,8 +50,6 @@ public sealed class World : IDisposable
 
     public string AssistantName { get; set; } = "Sage";
 
-    public FakeClock Clock { get; } = new FakeClock();
-
     public WindowModel Window { get; set; } = new WindowModel(200);
 
     public FakeSageView WindowView { get; set; }
@@ -66,8 +65,6 @@ public sealed class World : IDisposable
     public bool ShowToolCalls { get; set; }
 
     public bool ShowToolResults { get; set; }
-
-    public ChatPresenter Presenter { get; set; }
 
     public MentionResponder MentionResponder { get; set; }
 

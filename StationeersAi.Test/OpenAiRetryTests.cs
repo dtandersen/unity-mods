@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Shouldly;
-using StationeersAi.Ai;
-using StationeersAi.Ai.OpenAi;
+using Caev;
+using Caev.Tools;
+using Caev.OpenAi;
 
 namespace StationeersAi.Test;
 
@@ -58,7 +59,7 @@ public class OpenAiRetryTests
             new HttpReply(503, "busy"),
             new HttpReply(200, OkBody));
 
-        var completion = await Client(transport).CompleteAsync(Messages(), Array.Empty<Tool.ToolDefinition>());
+        var completion = await Client(transport).CompleteAsync(Messages(), Array.Empty<ToolDefinition>());
 
         completion.Content.ShouldBe("ok");
         transport.Calls.ShouldBe(3);
@@ -75,7 +76,7 @@ public class OpenAiRetryTests
             new HttpReply(200, OkBody));
 
         var ex = await Should.ThrowAsync<AiClientException>(() =>
-            Client(transport).CompleteAsync(Messages(), Array.Empty<Tool.ToolDefinition>()));
+            Client(transport).CompleteAsync(Messages(), Array.Empty<ToolDefinition>()));
 
         ex.Message.ShouldContain("503");
         ex.Message.ShouldContain("after 4 attempts");
@@ -89,7 +90,7 @@ public class OpenAiRetryTests
             new AiClientException("Request failed: HTTP 503", 503, null),
             new HttpReply(200, OkBody));
 
-        var completion = await Client(transport).CompleteAsync(Messages(), Array.Empty<Tool.ToolDefinition>());
+        var completion = await Client(transport).CompleteAsync(Messages(), Array.Empty<ToolDefinition>());
 
         completion.Content.ShouldBe("ok");
         transport.Calls.ShouldBe(2);
@@ -101,7 +102,7 @@ public class OpenAiRetryTests
         var transport = new ScriptedTransport(new HttpReply(401, "nope"));
 
         await Should.ThrowAsync<AiClientException>(() =>
-            Client(transport).CompleteAsync(Messages(), Array.Empty<Tool.ToolDefinition>()));
+            Client(transport).CompleteAsync(Messages(), Array.Empty<ToolDefinition>()));
 
         transport.Calls.ShouldBe(1);
     }
@@ -113,7 +114,7 @@ public class OpenAiRetryTests
             new AiClientException("Request failed: connection refused", null, new InvalidOperationException("down")));
 
         await Should.ThrowAsync<AiClientException>(() =>
-            Client(transport).CompleteAsync(Messages(), Array.Empty<Tool.ToolDefinition>()));
+            Client(transport).CompleteAsync(Messages(), Array.Empty<ToolDefinition>()));
 
         transport.Calls.ShouldBe(1);
     }

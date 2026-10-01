@@ -3,6 +3,7 @@ using Reqnroll;
 using Shouldly;
 using StationeersAi.Entity;
 using StationeersAi.Test.Support;
+using Caev.Tools;
 using StationeersAi.Tool;
 
 namespace StationeersAi.Test.Features.Tools;

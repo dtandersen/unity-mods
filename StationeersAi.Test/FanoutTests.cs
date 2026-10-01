@@ -1,6 +1,7 @@
 using Shouldly;
-using StationeersAi.Ai;
+using Caev;
 using StationeersAi.Test.Fakes;
+using StationeersAi.Ai;
 
 namespace StationeersAi.Test;
 

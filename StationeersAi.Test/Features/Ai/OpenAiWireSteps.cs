@@ -5,11 +5,11 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Reqnroll;
 using Shouldly;
-using StationeersAi.Ai;
-using StationeersAi.Ai.OpenAi;
+using Caev;
 using StationeersAi.Test.Fakes;
 using StationeersAi.Test.Support;
-using StationeersAi.Tool;
+using Caev.Tools;
+using Caev.OpenAi;
 
 namespace StationeersAi.Test.Features.Ai;
 

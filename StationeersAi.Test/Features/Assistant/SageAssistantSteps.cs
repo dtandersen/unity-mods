@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Reqnroll;
 using Shouldly;
-using StationeersAi.Ai;
+using Caev;
 using StationeersAi.Test.Fakes;
 using StationeersAi.Test.Support;
-using StationeersAi.Tool;
+using Caev.Tools;
 
 namespace StationeersAi.Test.Features.Assistant;
 

@@ -4,6 +4,7 @@ using System.Linq;
 using Reqnroll;
 using Shouldly;
 using StationeersAi.Test.Support;
+using Caev.Tools;
 using StationeersAi.Tool;
 
 namespace StationeersAi.Test.Features.Tools;

@@ -10,8 +10,7 @@ using Assets.Scripts.Objects;
 using Assets.Scripts.Objects.Entities;
 using Assets.Scripts.Objects.Items;
 using Assets.Scripts.UI;
-using StationeersAi.Ai;
-using StationeersAi.Ai.OpenAi;
+using Caev;
 using StationeersAi.Command;
 using StationeersAi.Core;
 using StationeersAi.Formatting;
@@ -19,9 +18,12 @@ using StationeersAi.Mod.Ai;
 using StationeersAi.Mod.Patch;
 using StationeersAi.Query;
 using StationeersAi.Repository;
-using StationeersAi.Tool;
+using Caev.Tools;
 using StationeersAi.Window;
 using Util.Commands;
+using Caev.OpenAi;
+using StationeersAi.Ai;
+using StationeersAi.Tool;
 
 namespace StationeersAi.Mod;
 
@@ -326,7 +328,7 @@ public class BepInExPlugin : BaseUnityPlugin
         EnsureWindow();
         return mentionResponder ??= new MentionResponder(
             new FanoutChatSink(sage, new ChatMessageSink(RunOnMainThread)),
-            () => BuildAssistant(null),
+            activity => BuildAssistant(activity),
             AssistantName,
             Log);
     }
@@ -407,8 +409,7 @@ public class BepInExPlugin : BaseUnityPlugin
             Log,
             showThinking: showThinking.Value,
             showToolCalls: showToolCalls.Value,
-            showToolResults: showToolResults.Value,
-            clock: StationeersAi.Time.SystemClock.Instance);
+            showToolResults: showToolResults.Value);
     }
 
     /// <summary>

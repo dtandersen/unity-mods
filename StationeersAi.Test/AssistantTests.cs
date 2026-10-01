@@ -1,13 +1,14 @@
 using System;
 using System.Threading.Tasks;
 using Shouldly;
-using StationeersAi.Ai;
+using Caev;
 using StationeersAi.Command;
 using StationeersAi.Entity;
 using StationeersAi.Query;
 using StationeersAi.Repository;
 using StationeersAi.Test.Fakes;
-using StationeersAi.Time;
+using Caev.Tools;
+using StationeersAi.Ai;
 using StationeersAi.Tool;
 
 namespace StationeersAi.Test;
@@ -111,8 +112,7 @@ public class AssistantTests
             new RecordingLogger(),
             showThinking: false,
             showToolCalls: false,
-            showToolResults: false,
-            clock: SystemClock.Instance);
+            showToolResults: false);
 
         await presenter.AskAsync("how do I make cable coil?", null);
 
@@ -125,7 +125,7 @@ public class AssistantTests
     public async Task Presenter_reports_game_data_not_loaded()
     {
         var chat = new RecordingChatSink();
-        var presenter = new ChatPresenter(chat, _ => null, () => "Tester", "Sage", new RecordingLogger(), showThinking: false, showToolCalls: false, showToolResults: false, clock: SystemClock.Instance);
+        var presenter = new ChatPresenter(chat, _ => null, () => "Tester", "Sage", new RecordingLogger(), showThinking: false, showToolCalls: false, showToolResults: false);
 
         await presenter.AskAsync("hi", null);
 
@@ -139,7 +139,7 @@ public class AssistantTests
         var ai = new FakeAiClient().RespondWith(Answer("hello"));
         var responder = new MentionResponder(
             chat,
-            () => new AiAssistant(ai, RecipeTools(), systemPrompt: null, maxIterations: 5, log: new RecordingLogger(), activity: null),
+            activity => new AiAssistant(ai, RecipeTools(), systemPrompt: null, maxIterations: 5, log: new RecordingLogger(), activity: activity),
             "Sage",
             new RecordingLogger());
 

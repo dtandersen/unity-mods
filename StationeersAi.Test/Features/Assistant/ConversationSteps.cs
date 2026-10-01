@@ -2,7 +2,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Reqnroll;
 using Shouldly;
-using StationeersAi.Ai;
+using Caev;
 using StationeersAi.Test.Support;
 
 namespace StationeersAi.Test.Features.Assistant;

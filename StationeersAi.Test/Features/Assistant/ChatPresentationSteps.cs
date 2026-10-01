@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Reqnroll;
@@ -64,30 +63,6 @@ public sealed class ChatPresentationSteps
         await TestComposition.Presenter(World).AskAsync(prompt, null);
     }
 
-    [When("I start asking the assistant in chat {string}")]
-    public void WhenIStartAskingTheAssistantInChat(string prompt)
-    {
-        World.Ai ??= new FakeAiClient();
-        World.Presenter = TestComposition.Presenter(World);
-        World.AskTask = World.Presenter.AskAsync(prompt, null);
-    }
-
-    [When("the assistant reports a tool call {string}")]
-    public void WhenTheAssistantReportsAToolCall(string text)
-    {
-        World.Presenter.OnToolCall(text);
-    }
-
-    [When("I advance the clock by {int} seconds")]
-    public async Task WhenIAdvanceTheClockBy(int seconds)
-    {
-        var before = World.Chat.Lines.Count;
-        World.Clock.Advance(TimeSpan.FromSeconds(seconds));
-
-        // Let the presenter's continuation run before the assertion.
-        await WaitUntil(() => World.Chat.Lines.Count > before);
-    }
-
     [When("I release the AI model")]
     public async Task WhenIReleaseTheAiModel()
     {
@@ -104,14 +79,5 @@ public sealed class ChatPresentationSteps
             .ToArray();
 
         World.Chat.Lines.ShouldBe(lines);
-    }
-
-    private static async Task WaitUntil(Func<bool> condition)
-    {
-        var deadline = Environment.TickCount64 + 1000;
-        while (!condition() && Environment.TickCount64 < deadline)
-        {
-            await Task.Delay(10);
-        }
     }
 }

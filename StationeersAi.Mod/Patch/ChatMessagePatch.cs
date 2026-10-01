@@ -1,5 +1,6 @@
 using HarmonyLib;
 using NetChatMessage = Assets.Scripts.Networking.ChatMessage;
+using Caev;
 
 namespace StationeersAi.Mod.Patch;
 

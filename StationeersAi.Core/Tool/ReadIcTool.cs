@@ -1,6 +1,7 @@
 using StationeersAi.Command;
 using StationeersAi.Entity;
 using StationeersAi.Formatting;
+using Caev.Tools;
 
 namespace StationeersAi.Tool;
 
