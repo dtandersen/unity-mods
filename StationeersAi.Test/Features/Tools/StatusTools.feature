@@ -15,7 +15,7 @@ Feature: Status tool
   Scenario: The status is returned as text
     When I call the "get_status" tool
     Then the tool succeeds
-    And the tool result contains:
+    And the tool result is:
       """
       Position: (1.5, 2.3, -3.0)
       World: Europa

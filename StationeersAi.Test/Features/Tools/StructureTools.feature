@@ -23,4 +23,7 @@ Feature: Structure tools
   Scenario: No match reports the query
     When I call the "search_structures" tool with query "airlock"
     Then the tool succeeds
-    And the tool result contains "No structures found for 'airlock'."
+    And the tool result is:
+      """
+      No structures found for 'airlock'.
+      """

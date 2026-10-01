@@ -20,7 +20,7 @@ Feature: Item tools
   Scenario: Matching item names ignores case and excludes non-matches
     When I call the "search_items" tool with query "STEEL"
     Then the tool succeeds
-    And the tool result contains:
+    And the tool result is:
       """
       Name,Type,Id
       Steel,Ingot,Steel

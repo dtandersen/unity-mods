@@ -12,10 +12,15 @@ namespace StationeersAi.Test
     {
         private static ToolHandler Tools()
         {
-            return Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference());
+            return Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference(), new InMemoryDeviceCatalog());
         }
 
         private static ToolHandler Tools(InMemoryPlayerContext player, InMemoryWorldContext world, InMemoryIcEditor editor, InMemoryMipsReference mips)
+        {
+            return Tools(player, world, editor, mips, new InMemoryDeviceCatalog());
+        }
+
+        private static ToolHandler Tools(InMemoryPlayerContext player, InMemoryWorldContext world, InMemoryIcEditor editor, InMemoryMipsReference mips, InMemoryDeviceCatalog devices)
         {
             var items = new InMemoryItemRepository(new[]
             {
@@ -48,6 +53,7 @@ namespace StationeersAi.Test
                 new GetWorldTool(new GetWorldCommand(world)),
                 new WriteIcTool(new WriteIcCommand(editor)),
                 new MipsReferenceTool(new ReadMipsCommand(mips)),
+                new SearchDevicesTool(new SearchDevicesCommand(devices)),
             });
         }
 
@@ -293,6 +299,45 @@ namespace StationeersAi.Test
             var result = Call(Tools(), "mips_reference", ("instruction", "nope"));
             result.IsSuccess.ShouldBeFalse();
             result.Content.ShouldContain("nope");
+        }
+
+        [Test]
+        public void Search_devices_lists_name_type_and_network()
+        {
+            var devices = new InMemoryDeviceCatalog();
+            devices.Devices.Add(new DeviceInfo("Air Vent", "StructureAirVent", 101, 7));
+            devices.Devices.Add(new DeviceInfo("Gas Sensor", "StructureGasSensor", 102, 0));
+
+            var result = Call(
+                Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference(), devices),
+                "search_devices",
+                ("query", "vent"));
+
+            result.IsSuccess.ShouldBeTrue();
+            result.Content.ShouldContain("| Air Vent | StructureAirVent |         101 |       7 |");
+            result.Content.ShouldNotContain("Gas Sensor");
+        }
+
+        [Test]
+        public void Search_devices_passes_the_computer_through()
+        {
+            var devices = new InMemoryDeviceCatalog();
+
+            var result = Call(
+                Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference(), devices),
+                "search_devices",
+                ("computer", "Lab Computer"));
+
+            result.IsSuccess.ShouldBeTrue();
+            devices.LastComputer.ShouldBe("Lab Computer");
+        }
+
+        [Test]
+        public void Search_devices_empty_reports_no_devices()
+        {
+            var result = Call(Tools(), "search_devices", ("query", "nope"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Content.ShouldContain("No devices found for 'nope'.");
         }
 
         [Test]

@@ -61,10 +61,10 @@ namespace StationeersAi.Test.Features.Tools
             World.ToolResult.Content.ShouldBe(message);
         }
 
-        [Then("the tool result contains:")]
-        public void ThenTheToolResultContains(string expected)
+        [Then("the tool result is:")]
+        public void ThenTheToolResultIs(string expected)
         {
-            World.ToolResult.Content.ShouldContain(expected.Replace("\r\n", "\n").Trim());
+            World.ToolResult.Content.ShouldBe(expected.Replace("\r\n", "\n").Trim());
         }
 
         [Then("the tool result contains {string}")]

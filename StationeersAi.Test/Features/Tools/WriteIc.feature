@@ -11,7 +11,10 @@ Feature: Write IC tool
       yield
       """
     Then the tool succeeds
-    And the tool result contains "Wrote 2 lines to Lab Computer"
+    And the tool result is:
+      """
+      Wrote 2 lines to Lab Computer. The stationeer can review it in the editor and press Export.
+      """
 
   Scenario: Unknown computer
     Given no computer is found

@@ -25,7 +25,7 @@ Feature: Recipe tools
   Scenario: The tool returns ingredients as CSV
     When I call the "search_recipes" tool with query "coil"
     Then the tool succeeds
-    And the tool result contains:
+    And the tool result is:
       """
       Name,Station,Ingredients
       Cable Coil,Electronics Printer,Copper x5; Plastic x0.5

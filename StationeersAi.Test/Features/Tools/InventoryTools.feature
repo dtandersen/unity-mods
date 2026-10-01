@@ -25,4 +25,7 @@ Feature: Inventory tools
   Scenario: No match reports the query
     When I call the "search_inventory" tool with query "helmet"
     Then the tool succeeds
-    And the tool result contains "No carried items found for 'helmet'."
+    And the tool result is:
+      """
+      No carried items found for 'helmet'.
+      """

@@ -30,6 +30,8 @@ namespace StationeersAi.Test.Support
 
         public InMemoryMipsReference Mips { get; } = new InMemoryMipsReference();
 
+        public InMemoryDeviceCatalog Devices { get; } = new InMemoryDeviceCatalog();
+
         public FakeAiClient Ai { get; set; }
 
         public RecordingChatSink Chat { get; } = new RecordingChatSink();

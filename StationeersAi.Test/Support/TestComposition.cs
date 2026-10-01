@@ -26,6 +26,7 @@ namespace StationeersAi.Test.Support
                 new GetWorldTool(new GetWorldCommand(world.Worlds)),
                 new WriteIcTool(new WriteIcCommand(world.Ic)),
                 new MipsReferenceTool(new ReadMipsCommand(world.Mips)),
+                new SearchDevicesTool(new SearchDevicesCommand(world.Devices)),
             });
         }
 
