@@ -28,6 +28,8 @@ namespace StationeersAi.Test.Support
 
         public InMemoryIcEditor Ic { get; } = new InMemoryIcEditor();
 
+        public InMemoryIcExport Export { get; } = new InMemoryIcExport();
+
         public InMemoryMipsReference Mips { get; } = new InMemoryMipsReference();
 
         public InMemoryDeviceCatalog Devices { get; } = new InMemoryDeviceCatalog();

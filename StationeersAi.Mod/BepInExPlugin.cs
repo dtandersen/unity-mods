@@ -121,7 +121,7 @@ namespace StationeersAi.Mod
             reasoningEffort = Config.Bind("AI", "ReasoningEffort", "",
                 "Optional reasoning effort for reasoning models (e.g. low, medium, high). Leave blank to omit; valid values are model/provider specific.");
             systemPrompt = Config.Bind("AI", "SystemPrompt",
-                $"You are {AssistantName}, a Stationeers assistant. Use the provided tools to look up game data before answering. Keep answers short and use simple Markdown (**bold**, bullet lists, and small tables). Batch independent searches in one block. IC facts: lb/sb see only the housing network; sb needs a register, not a bare number; wall heaters need pressure above 6.3 kPa; after Export, the chip hash must equal the editor hash.",
+                $"You are {AssistantName}, a Stationeers assistant. Use the provided tools to look up game data before answering. Keep answers short and use simple Markdown (**bold**, bullet lists, and small tables). Batch independent searches in one block. Trust conversation history: never re-call a tool whose result is already above — live readings refresh on describe, but static answers (mips_reference, search_structures, search_recipes) never change. Prefer describe_device without full: Temp and Pressure lead the short list; pass full only for gas ratios. IC facts: lb/sb see only the housing network; sb needs a register, not a bare number; wall heaters need pressure above 6.3 kPa; after Export, the chip hash must equal the editor hash.",
                 "System prompt sent to the model.");
             maxIterations = Config.Bind("AI", "MaxToolIterations", 5, "Maximum tool round-trips per question.");
             timeoutSeconds = Config.Bind("AI", "TimeoutSeconds", 120, "HTTP timeout for model requests, in seconds. Raise it if the model is slow with a large conversation.");
@@ -490,6 +490,7 @@ namespace StationeersAi.Mod
                 new GetWorldTool(new GetWorldCommand(new StationeersWorldContext())),
                 new WriteIcTool(new WriteIcCommand(new StationeersIcEditor())),
                 new ReadIcTool(new ReadIcCommand(new StationeersIcEditor())),
+                new ExportIcTool(new ExportIcCommand(new StationeersIcExport())),
                 new MipsReferenceTool(new ReadMipsCommand(new StationeersMipsReference())),
                 new SearchDevicesTool(new SearchDevicesCommand(new StationeersDeviceCatalog())),
                 new DescribeDeviceTool(new DescribeDeviceCommand(new StationeersDeviceInspector(), new StationeersDeviceCatalog())),

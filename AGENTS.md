@@ -1,3 +1,9 @@
+## Product
+
+Sage diagnoses, drafts, and — only when the stationeer agrees — burns code
+to chips through `export_ic` with hash verification. It never sets device
+values: automating the station defeats IC10, which is the game.
+
 ## Testing
 
 Create Reqnroll features instead of TUnit test cases when able.

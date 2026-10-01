@@ -20,6 +20,8 @@ namespace StationeersAi.Mod
         private Vector2 _scroll;
         private string _input = string.Empty;
         private GUIStyle _wrapped;
+        private GUIStyle _windowStyle;
+        private Texture2D _background;
         private bool _focusInput;
         private bool _probed;
 
@@ -125,7 +127,21 @@ namespace StationeersAi.Mod
                 _wrapped = new GUIStyle(GUI.skin.label) { wordWrap = true };
             }
 
-            _area = GUI.Window(WindowId, _area, DrawWindow, "SAGE");
+            if (_windowStyle == null)
+            {
+                _background = new Texture2D(1, 1);
+                _background.SetPixel(0, 0, new Color(0.06f, 0.06f, 0.06f, 1f));
+                _background.Apply();
+                _windowStyle = new GUIStyle(GUI.skin.window);
+                _windowStyle.normal.background = _background;
+                _windowStyle.onNormal.background = _background;
+                _windowStyle.hover.background = _background;
+                _windowStyle.onHover.background = _background;
+                _windowStyle.focused.background = _background;
+                _windowStyle.onFocused.background = _background;
+            }
+
+            _area = GUI.Window(WindowId, _area, DrawWindow, "SAGE", _windowStyle);
         }
 
         private void DrawWindow(int id)

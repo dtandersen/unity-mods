@@ -103,8 +103,8 @@ namespace StationeersAi.Repository
                 {
                     if (chip.CompilationError)
                     {
-                        errorType = CompileErrorType(chip) ?? "compile error";
-                        errorLine = CompileErrorLine(chip);
+                        errorType = ChipErrorReading.CompileErrorType(chip) ?? "compile error";
+                        errorLine = ChipErrorReading.CompileErrorLine(chip);
                     }
                     else if (!string.IsNullOrEmpty(chip.ErrorTypeString) &&
                         !chip.ErrorTypeString.Equals("None", StringComparison.OrdinalIgnoreCase))
@@ -146,19 +146,6 @@ namespace StationeersAi.Repository
             {
                 return null;
             }
-        }
-
-        private static string CompileErrorType(ProgrammableChip chip)
-        {
-            var field = typeof(ProgrammableChip).GetField("_compileErrorType", BindingFlags.NonPublic | BindingFlags.Instance);
-            return field?.GetValue(chip)?.ToString();
-        }
-
-        private static string CompileErrorLine(ProgrammableChip chip)
-        {
-            var field = typeof(ProgrammableChip).GetField("_compileErrorLineNumber", BindingFlags.NonPublic | BindingFlags.Instance);
-            var value = field?.GetValue(chip);
-            return value != null ? value.ToString() : null;
         }
 
         private static IReadOnlyList<HousingDeviceEntry> ReadHousingDevices(Device target)

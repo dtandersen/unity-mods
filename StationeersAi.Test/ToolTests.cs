@@ -573,6 +573,52 @@ namespace StationeersAi.Test
         }
 
         [Test]
+        public void Export_ic_burns_and_verifies()
+        {
+            var export = new InMemoryIcExport();
+            var tools = new ToolHandler(new ITool[]
+            {
+                new ExportIcTool(new ExportIcCommand(export)),
+            });
+
+            var result = Call(tools, "export_ic", ("computer", "Lab Computer"), ("device", "Climate Control"));
+            result.IsSuccess.ShouldBeTrue();
+            result.Content.ShouldContain("Exported 37 lines to Climate Control. Chip hash matches the editor.");
+            export.Exports.Count.ShouldBe(1);
+            export.Exports[0].Computer.ShouldBe("Lab Computer");
+            export.Exports[0].Device.ShouldBe("Climate Control");
+        }
+
+        [Test]
+        public void Export_ic_missing_device_fails()
+        {
+            var tools = new ToolHandler(new ITool[]
+            {
+                new ExportIcTool(new ExportIcCommand(new InMemoryIcExport())),
+            });
+
+            var result = Call(tools, "export_ic", ("computer", "Lab Computer"));
+            result.IsSuccess.ShouldBeFalse();
+            result.Content.ShouldContain("'device'");
+        }
+
+        [Test]
+        public void Export_ic_failed_burn_fails()
+        {
+            var tools = new ToolHandler(new ITool[]
+            {
+                new ExportIcTool(new ExportIcCommand(new InMemoryIcExport
+                {
+                    Result = new IcWriteResult(false, null, 0, "Chip reports IncorrectVariable at line 12."),
+                })),
+            });
+
+            var result = Call(tools, "export_ic", ("computer", "Lab Computer"), ("device", "Climate Control"));
+            result.IsSuccess.ShouldBeFalse();
+            result.Content.ShouldContain("IncorrectVariable");
+        }
+
+        [Test]
         public void Unknown_tool_fails()
         {
             var result = Tools().Handle(new ToolCall("1", "search_bosses", ToolArguments.Empty));
