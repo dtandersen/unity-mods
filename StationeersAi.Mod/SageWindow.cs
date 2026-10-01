@@ -21,6 +21,7 @@ namespace StationeersAi.Mod
         private string _input = string.Empty;
         private GUIStyle _wrapped;
         private bool _focusInput;
+        private bool _probed;
 
         public bool Visible { get; set; }
 
@@ -41,17 +42,79 @@ namespace StationeersAi.Mod
             _scroll.y = float.MaxValue;
         }
 
-        private void Update()
+        private bool TogglePressed()
         {
-            if (BepInExPlugin.windowToggle != null && BepInExPlugin.windowToggle.Value.IsDown())
+            var shot = Event.current;
+            if (shot == null || shot.type != EventType.KeyDown || shot.keyCode == KeyCode.None)
             {
-                Visible = !Visible;
-                _focusInput = Visible;
+                return false;
             }
+
+            var toggle = BepInExPlugin.windowToggle != null
+                ? BepInExPlugin.windowToggle.Value
+                : default(BepInEx.Configuration.KeyboardShortcut);
+            if (shot.keyCode != toggle.MainKey || toggle.MainKey == KeyCode.None)
+            {
+                return false;
+            }
+
+            foreach (var modifier in toggle.Modifiers)
+            {
+                switch (modifier)
+                {
+                    case KeyCode.LeftControl:
+                    case KeyCode.RightControl:
+                        if (!shot.control) return false;
+                        break;
+                    case KeyCode.LeftShift:
+                    case KeyCode.RightShift:
+                        if (!shot.shift) return false;
+                        break;
+                    case KeyCode.LeftAlt:
+                    case KeyCode.RightAlt:
+                        if (!shot.alt) return false;
+                        break;
+                    default:
+                        if (!Input.GetKey(modifier)) return false;
+                        break;
+                }
+            }
+
+            return true;
+        }
+
+        public void Toggle()
+        {
+            Visible = !Visible;
+            _focusInput = Visible;
+        }
+
+        public void Show()
+        {
+            Visible = true;
+            _focusInput = true;
         }
 
         private void OnGUI()
         {
+            if (!_probed)
+            {
+                _probed = true;
+                BepInExPlugin.Log.Log("Sage window OnGUI live");
+            }
+
+            if (TogglePressed())
+            {
+                Toggle();
+                Event.current.Use();
+                if (!Visible)
+                {
+                    GUI.FocusControl(null);
+                }
+
+                return;
+            }
+
             if (!Visible)
             {
                 return;

@@ -40,6 +40,8 @@ namespace StationeersAi.Mod
 
         public static BepInExPlugin context;
 
+        public static SageWindow window;
+
         /// <summary>
         /// The core <see cref="Core.Logger"/> handed to core objects for their
         /// trace. Named <c>Log</c> (not <c>Logger</c>) to avoid hiding
@@ -105,7 +107,7 @@ namespace StationeersAi.Mod
                 "Print each tool's raw output (CSV) to the console.");
             respondToMentions = Config.Bind("General", "RespondToMentions", true,
                 "Answer chat messages that start with the mention trigger (e.g. @sage). The answer is posted to chat as the assistant.");
-            windowToggle = Config.Bind("General", "WindowToggle", new KeyboardShortcut(KeyCode.F4),
+            windowToggle = Config.Bind("General", "WindowToggle", new KeyboardShortcut(KeyCode.F7),
                 "Key that opens the Sage window for typing to the assistant directly.");
             mentionTrigger = Config.Bind("General", "MentionTrigger", "@sage",
                 "Chat prefix that asks the assistant a question.");
@@ -137,8 +139,8 @@ namespace StationeersAi.Mod
             CommandLine.AddCommand("ai", new AiConsoleCommand());
             Log.Log("registered 'ai' console command");
 
-            gameObject.AddComponent<SageWindow>();
-            Log.Log("Sage window ready (F4)");
+            EnsureWindow();
+            Log.Log($"Sage window ready ({windowToggle.Value})");
 
             Log.Log($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");
         }
@@ -310,6 +312,37 @@ namespace StationeersAi.Mod
                 () => BuildAssistant(null),
                 AssistantName,
                 Log);
+        }
+
+        /// <summary>
+        /// The window lives on its own persistent object: scene loads destroy
+        /// the plugin's GameObject, which would silently kill Update/OnGUI.
+        /// </summary>
+        private static void EnsureWindow()
+        {
+            if (window != null)
+            {
+                return;
+            }
+
+            var holder = new GameObject("SageWindow");
+            UnityEngine.Object.DontDestroyOnLoad(holder);
+            window = holder.AddComponent<SageWindow>();
+        }
+
+        /// <summary>Opens the Sage window. Used by the <c>ai window</c> command.</summary>
+        public void ShowWindow()
+        {
+            EnsureWindow();
+            if (window != null)
+            {
+                Log.Log("Sage window shown via command");
+                window.Show();
+            }
+            else
+            {
+                Log.Log("Sage window missing on show command");
+            }
         }
 
         /// <summary>

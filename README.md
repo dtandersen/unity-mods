@@ -48,6 +48,10 @@ Sage can call these tools:
 | `search_devices` | Live devices: labels, types, networks |
 | `describe_device` | One device: ports, settings, slots |
 
+Log file:
+
+`steamapps/common/Stationeers/BepInEx/LogOutput.log`
+
 ## Development
 
 Building, testing, and architecture notes live in [development.md](development.md).

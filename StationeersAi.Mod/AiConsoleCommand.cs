@@ -25,6 +25,10 @@ namespace StationeersAi.Mod
             {
                 switch (args[0].ToLowerInvariant())
                 {
+                    case "window":
+                        BepInExPlugin.context.ShowWindow();
+                        return "Sage window opened.";
+
                     case "clear":
                     case "reset":
                         BepInExPlugin.context.ClearContext();
