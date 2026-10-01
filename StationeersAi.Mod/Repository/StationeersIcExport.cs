@@ -15,20 +15,29 @@ namespace StationeersAi.Repository;
 /// </summary>
 public sealed class StationeersIcExport : IIcExport
 {
+    private readonly IMainThread _threads;
+
+    private readonly BepinExLogger _log;
+
+    public StationeersIcExport(IMainThread mainThread, BepinExLogger log)
+    {
+        _threads = mainThread;
+        _log = log;
+    }
     public IcWriteResult Export(string computer, string device)
     {
         try
         {
-            return BepInExPlugin.RunOnMainThreadSync(() => ExportInner(computer, device));
+            return _threads.RunSync(() => ExportInner(computer, device));
         }
         catch (Exception ex)
         {
-            BepInExPlugin.Log.Log(ex.ToString());
+            _log.Log(ex.ToString());
             return new IcWriteResult(false, null, 0, "Export failed.");
         }
     }
 
-    private static IcWriteResult ExportInner(string computer, string device)
+    private IcWriteResult ExportInner(string computer, string device)
     {
         var boards = ComputerBoards.Match(computer);
         if (boards.Count == 0)
@@ -49,7 +58,7 @@ public sealed class StationeersIcExport : IIcExport
         }
         catch (Exception ex)
         {
-            BepInExPlugin.Log.Log(ex.ToString());
+            _log.Log(ex.ToString());
             return new IcWriteResult(false, null, 0, "Editor read failed.");
         }
 
@@ -80,7 +89,7 @@ public sealed class StationeersIcExport : IIcExport
         }
         catch (Exception ex)
         {
-            BepInExPlugin.Log.Log(ex.ToString());
+            _log.Log(ex.ToString());
             return new IcWriteResult(false, null, 0, "Export failed.");
         }
 
@@ -102,7 +111,7 @@ public sealed class StationeersIcExport : IIcExport
         }
         catch (Exception ex)
         {
-            BepInExPlugin.Log.Log(ex.ToString());
+            _log.Log(ex.ToString());
         }
 
         if (burned == null || CodeHash.Hash(burned) != CodeHash.Hash(text))

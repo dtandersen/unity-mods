@@ -17,20 +17,29 @@ namespace StationeersAi.Repository;
 /// </summary>
 public sealed class StationeersDeviceCatalog : IDeviceCatalog
 {
+    private readonly IMainThread _threads;
+
+    private readonly BepinExLogger _log;
+
+    public StationeersDeviceCatalog(IMainThread mainThread, BepinExLogger log)
+    {
+        _threads = mainThread;
+        _log = log;
+    }
     public IReadOnlyList<DeviceInfo> Search(string query, long? network, bool? logic, long? room)
     {
         try
         {
-            return BepInExPlugin.RunOnMainThreadSync(() => SearchInner(query, network, logic, room));
+            return _threads.RunSync(() => SearchInner(query, network, logic, room));
         }
         catch (Exception ex)
         {
-            BepInExPlugin.Log.Log(ex.ToString());
+            _log.Log(ex.ToString());
             return new DeviceInfo[0];
         }
     }
 
-    private static IReadOnlyList<DeviceInfo> SearchInner(string query, long? network, bool? logic, long? room)
+    private IReadOnlyList<DeviceInfo> SearchInner(string query, long? network, bool? logic, long? room)
     {
         var devices = new List<DeviceInfo>();
         foreach (var structure in UnityEngine.Object.FindObjectsOfType<Assets.Scripts.Objects.Structure>())

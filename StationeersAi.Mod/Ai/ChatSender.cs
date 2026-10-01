@@ -13,9 +13,16 @@ namespace StationeersAi.Mod.Ai;
 /// server prints locally and relays to clients, and single-player just
 /// prints locally. Everything here runs on the Unity main thread.
 /// </summary>
-internal static class ChatSender
+internal sealed class ChatSender
 {
-    public static void Send(string displayName, string text)
+    private readonly BepinExLogger _log;
+
+    public ChatSender(BepinExLogger log)
+    {
+        _log = log;
+    }
+
+    public void Send(string displayName, string text)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -35,7 +42,7 @@ internal static class ChatSender
         }
     }
 
-    private static void SendLine(string displayName, string line)
+    private void SendLine(string displayName, string line)
     {
         var message = new NetChatMessage
         {
@@ -61,7 +68,7 @@ internal static class ChatSender
         }
         catch (Exception ex)
         {
-            BepInExPlugin.Log.Log($"chat send failed: {ex}");
+            _log.Log($"chat send failed: {ex}");
         }
     }
 }

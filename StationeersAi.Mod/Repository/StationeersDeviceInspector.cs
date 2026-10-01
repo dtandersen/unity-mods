@@ -21,20 +21,29 @@ namespace StationeersAi.Repository;
 /// </summary>
 public sealed class StationeersDeviceInspector : IDeviceInspector
 {
+    private readonly IMainThread _threads;
+
+    private readonly BepinExLogger _log;
+
+    public StationeersDeviceInspector(IMainThread mainThread, BepinExLogger log)
+    {
+        _threads = mainThread;
+        _log = log;
+    }
     public DeviceDetails Describe(string device)
     {
         try
         {
-            return BepInExPlugin.RunOnMainThreadSync(() => DescribeInner(device));
+            return _threads.RunSync(() => DescribeInner(device));
         }
         catch (Exception ex)
         {
-            BepInExPlugin.Log.Log(ex.ToString());
+            _log.Log(ex.ToString());
             return null;
         }
     }
 
-    private static DeviceDetails DescribeInner(string device)
+    private DeviceDetails DescribeInner(string device)
     {
         var matches = ThingMatching.Match(
             UnityEngine.Object.FindObjectsOfType<Device>(),

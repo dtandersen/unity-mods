@@ -34,6 +34,12 @@ public sealed class SageWindow : MonoBehaviour, ISageView
         set => _input = value ?? string.Empty;
     }
 
+    /// <summary>Trace log. Null skips logging (set by the plugin).</summary>
+    public BepinExLogger Logger { get; set; }
+
+    /// <summary>Supplies the toggle key, read live on each press. Null disables toggling.</summary>
+    public Func<BepInEx.Configuration.KeyboardShortcut> WindowToggle { get; set; }
+
     public event Action SubmitRequested;
 
     public event Action ToggleRequested;
@@ -67,8 +73,9 @@ public sealed class SageWindow : MonoBehaviour, ISageView
             return false;
         }
 
-        var toggle = BepInExPlugin.windowToggle != null
-            ? BepInExPlugin.windowToggle.Value
+        var toggleProvider = WindowToggle;
+        var toggle = toggleProvider != null
+            ? toggleProvider()
             : default(BepInEx.Configuration.KeyboardShortcut);
         if (shot.keyCode != toggle.MainKey || toggle.MainKey == KeyCode.None)
         {
@@ -105,7 +112,7 @@ public sealed class SageWindow : MonoBehaviour, ISageView
         if (!_probed)
         {
             _probed = true;
-            BepInExPlugin.Log.Log("Sage window OnGUI live");
+            Logger?.Log("Sage window OnGUI live");
         }
 
         if (TogglePressed())

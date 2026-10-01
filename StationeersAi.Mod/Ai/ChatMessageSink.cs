@@ -11,17 +11,23 @@ namespace StationeersAi.Mod.Ai;
 /// </summary>
 public sealed class ChatMessageSink : IChatSink
 {
-    private readonly Action<Action> _runOnMainThread;
+    private readonly IMainThread _threads;
+    private readonly BepinExLogger _log;
+    private readonly Func<string> _assistantName;
+    private readonly ChatSender _sender;
 
-    public ChatMessageSink(Action<Action> runOnMainThread)
+    public ChatMessageSink(IMainThread mainThread, BepinExLogger log, Func<string> assistantName)
     {
-        _runOnMainThread = runOnMainThread;
+        _threads = mainThread;
+        _log = log;
+        _assistantName = assistantName;
+        _sender = new ChatSender(log);
     }
 
     public void Write(string line)
     {
         var text = line ?? string.Empty;
-        BepInExPlugin.Log.Log($"chat sink queued: {BepInExPlugin.Truncate(text, 80)}");
-        _runOnMainThread(() => ChatSender.Send(BepInExPlugin.AssistantName, text));
+        _log.Log($"chat sink queued: {BepInExPlugin.Truncate(text, 80)}");
+        _threads.Run(() => _sender.Send(_assistantName(), text));
     }
 }

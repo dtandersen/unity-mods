@@ -13,20 +13,29 @@ namespace StationeersAi.Repository;
 /// </summary>
 public sealed class StationeersIcEditor : IIcEditor
 {
+    private readonly IMainThread _threads;
+
+    private readonly BepinExLogger _log;
+
+    public StationeersIcEditor(IMainThread mainThread, BepinExLogger log)
+    {
+        _threads = mainThread;
+        _log = log;
+    }
     public IcWriteResult Write(string computer, string code)
     {
         try
         {
-            return BepInExPlugin.RunOnMainThreadSync(() => WriteInner(computer, code ?? string.Empty));
+            return _threads.RunSync(() => WriteInner(computer, code ?? string.Empty));
         }
         catch (Exception ex)
         {
-            BepInExPlugin.Log.Log(ex.ToString());
+            _log.Log(ex.ToString());
             return new IcWriteResult(false, null, 0, "Editor write failed.");
         }
     }
 
-    private static IcWriteResult WriteInner(string computer, string code)
+    private IcWriteResult WriteInner(string computer, string code)
     {
         var matches = ComputerBoards.Match(computer);
         if (matches.Count == 0)
@@ -46,7 +55,7 @@ public sealed class StationeersIcEditor : IIcEditor
         }
         catch (Exception ex)
         {
-            BepInExPlugin.Log.Log(ex.ToString());
+            _log.Log(ex.ToString());
         }
 
         return new IcWriteResult(true, matches[0].Name, code.Split('\n').Length, null);
@@ -55,16 +64,16 @@ public sealed class StationeersIcEditor : IIcEditor
     {
         try
         {
-            return BepInExPlugin.RunOnMainThreadSync(() => ReadInner(computer));
+            return _threads.RunSync(() => ReadInner(computer));
         }
         catch (Exception ex)
         {
-            BepInExPlugin.Log.Log(ex.ToString());
+            _log.Log(ex.ToString());
             return new IcReadResult(false, null, null, "Editor read failed.");
         }
     }
 
-    private static IcReadResult ReadInner(string computer)
+    private IcReadResult ReadInner(string computer)
     {
         var matches = ComputerBoards.Match(computer);
         if (matches.Count == 0)
@@ -85,7 +94,7 @@ public sealed class StationeersIcEditor : IIcEditor
         }
         catch (Exception ex)
         {
-            BepInExPlugin.Log.Log(ex.ToString());
+            _log.Log(ex.ToString());
             return new IcReadResult(false, null, null, "Editor read failed.");
         }
 

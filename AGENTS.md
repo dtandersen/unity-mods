@@ -15,3 +15,7 @@ Create Reqnroll features instead of TUnit test cases when able.
 - If it is possible to cut a word out, always cut it out.
 - Never use the passive where you can use the active.
 - Never use a foreign phrase, a scientific word, or a jargon word if you can think of an everyday English equivalent.
+
+## Development
+
+Leave changes uncomitted for review.

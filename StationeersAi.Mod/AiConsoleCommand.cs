@@ -13,15 +13,17 @@ namespace StationeersAi.Mod;
 public sealed class AiConsoleCommand : CommandBase
 {
     private readonly SagePresenter _presenter;
+    private readonly Func<string> _assistantName;
 
-    public AiConsoleCommand(SagePresenter presenter)
+    public AiConsoleCommand(SagePresenter presenter, Func<string> assistantName)
     {
         _presenter = presenter ?? throw new ArgumentNullException(nameof(presenter));
+        _assistantName = assistantName;
     }
     public override CommandScope Scope => CommandScope.InGame;
 
     public override string HelpText =>
-        $"Ask {BepInExPlugin.AssistantName}. Usage: ai <question>  (also: ai clear, ai compact)";
+        $"Ask {_assistantName()}. Usage: ai <question>  (also: ai clear, ai compact)";
 
     public override string[] Arguments => new[] { "<question> | clear | compact" };
 
@@ -55,6 +57,6 @@ public sealed class AiConsoleCommand : CommandBase
         }
 
         _ = _presenter.AskAsync(prompt);
-        return $"Asking {BepInExPlugin.AssistantName}... (the answer follows in the Sage window)";
+        return $"Asking {_assistantName()}... (the answer follows in the Sage window)";
     }
 }

@@ -15,6 +15,12 @@ namespace StationeersAi.Repository;
 /// </summary>
 public sealed class StationeersMipsReference : IMipsReference
 {
+    private readonly BepinExLogger _log;
+
+    public StationeersMipsReference(BepinExLogger log)
+    {
+        _log = log;
+    }
     public StationeersMipsReference()
     {
         Instructions = Read();
@@ -22,7 +28,7 @@ public sealed class StationeersMipsReference : IMipsReference
 
     public IReadOnlyList<MipsInstruction> Instructions { get; }
 
-    private static IReadOnlyList<MipsInstruction> Read()
+    private IReadOnlyList<MipsInstruction> Read()
     {
         var instructions = new List<MipsInstruction>();
         foreach (ScriptCommand command in Enum.GetValues(typeof(ScriptCommand)))
@@ -41,7 +47,7 @@ public sealed class StationeersMipsReference : IMipsReference
             }
             catch (Exception ex)
             {
-                BepInExPlugin.Log.Log($"mips reference skipped {command}: {ex.Message}");
+                _log.Log($"mips reference skipped {command}: {ex.Message}");
             }
         }
 

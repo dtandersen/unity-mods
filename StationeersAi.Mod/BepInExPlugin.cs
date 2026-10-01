@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using BepInEx;
-using BepInEx.Configuration;
 using HarmonyLib;
 using Assets.Scripts.Objects;
 using Assets.Scripts.Objects.Entities;
@@ -33,15 +32,17 @@ namespace StationeersAi.Mod;
 /// <c>StationeersAi.Core</c>.
 /// </summary>
 [BepInPlugin(ModGuid, ModName, ModVersion)]
-public class BepInExPlugin : BaseUnityPlugin
+public class BepInExPlugin : BaseUnityPlugin, IMainThread
 {
     public const string ModGuid = "dtandersen.sage";
     public const string ModName = "SAGE";
     public const string ModVersion = "0.1.0";
 
-    public static SageWindow window;
+    // Harmony patches call back through this; everything else flows through
+    // constructors. Set in Awake.
+    private static BepInExPlugin _instance;
 
-    public static SagePresenter sage;
+    private SagePresenter _sage;
 
     /// <summary>
     /// The core <see cref="Core.Logger"/> handed to core objects for their
@@ -49,127 +50,105 @@ public class BepInExPlugin : BaseUnityPlugin
     /// <c>BaseUnityPlugin.Logger</c>. Assigned in <see cref="Awake"/> and
     /// never null afterwards.
     /// </summary>
-    public static BepinExLogger Log;
+    private BepinExLogger _log;
 
-    public static ConfigEntry<bool> modEnabled;
-    public static ConfigEntry<bool> showThinking;
-    public static ConfigEntry<bool> showToolCalls;
-    public static ConfigEntry<bool> showToolResults;
-    public static ConfigEntry<bool> respondToMentions;
-    public static ConfigEntry<KeyboardShortcut> windowToggle;
-    public static ConfigEntry<string> mentionTrigger;
-    public static ConfigEntry<string> aiName;
-    public static ConfigEntry<string> endpoint;
-    public static ConfigEntry<string> apiKey;
-    public static ConfigEntry<string> model;
-    public static ConfigEntry<string> reasoningEffort;
-    public static ConfigEntry<string> systemPrompt;
-    public static ConfigEntry<int> maxIterations;
-    public static ConfigEntry<int> timeoutSeconds;
-    public static ConfigEntry<int> contextMessages;
+    private SageConfig _settings;
 
-    private static Conversation conversation;
-    private static SynchronizationContext unitySynchronizationContext;
-    private static int unityThreadId;
+    private Conversation _conversation;
+    private SynchronizationContext _unitySynchronizationContext;
+    private int _unityThreadId;
 
-    private static MentionResponder mentionResponder;
+    private MentionResponder _mentionResponder;
 
-    private static readonly Dictionary<string, Conversation> mentionConversations = new Dictionary<string, Conversation>();
+    private readonly Dictionary<string, Conversation> _mentionConversations = new Dictionary<string, Conversation>();
 
     // World data does not depend on the player, so it is built once and
     // reused until the prefab catalogue changes size.
-    private static IItemRepository catalogueItems;
-    private static IStructureRepository catalogueStructures;
-    private static IRecipeRepository catalogueRecipes;
-    private static IStationpediaRepository catalogueStationpedia;
-    private static int cataloguePrefabCount = -1;
+    private IItemRepository _catalogueItems;
+    private IStructureRepository _catalogueStructures;
+    private IRecipeRepository _catalogueRecipes;
+    private IStationpediaRepository _catalogueStationpedia;
+    private int _cataloguePrefabCount = -1;
 
-    private static Conversation Conversation => conversation ??= new Conversation(contextMessages.Value);
+    private Conversation Conversation => _conversation ??= new Conversation(_settings.ContextMessages.Value);
 
     public void Awake()
     {
+        _instance = this;
         if (Logger == null)
         {
             throw new InvalidOperationException($"{ModName}: BepInEx log source is unavailable.");
         }
 
-        Log = new BepinExLogger(Logger);
-        unitySynchronizationContext = SynchronizationContext.Current;
-        unityThreadId = Thread.CurrentThread.ManagedThreadId;
-        Log.Log($"captured Unity thread {unityThreadId}; synchronization context available={unitySynchronizationContext != null}");
+        _log = new BepinExLogger(Logger);
+        _unitySynchronizationContext = SynchronizationContext.Current;
+        _unityThreadId = Thread.CurrentThread.ManagedThreadId;
+        _log.Log($"captured Unity thread {_unityThreadId}; synchronization context available={_unitySynchronizationContext != null}");
 
-        modEnabled = Config.Bind("General", "Enabled", true, "Enable Sage.");
-        showThinking = Config.Bind("General", "ShowThinking", false,
-            "Print the model's reasoning and narration to the Sage window while it works.");
-        showToolCalls = Config.Bind("General", "ShowToolCalls", false,
-            "Print each tool call (name and arguments) to the Sage window.");
-        showToolResults = Config.Bind("General", "ShowToolResults", false,
-            "Print each tool's raw output (CSV) to the Sage window.");
-        respondToMentions = Config.Bind("General", "RespondToMentions", true,
-            "Answer chat messages that start with the mention trigger (e.g. @sage). The answer is posted to chat as the assistant.");
-        windowToggle = Config.Bind("General", "WindowToggle", new KeyboardShortcut(KeyCode.F7),
-            "Key that opens the Sage window for typing to the assistant directly.");
-        mentionTrigger = Config.Bind("General", "MentionTrigger", "@sage",
-            "Chat prefix that asks the assistant a question.");
-        aiName = Config.Bind("General", "Name", "Sage",
-            "Name the assistant uses. Default: Sage.");
+        _settings = new SageConfig(Config);
 
-        endpoint = Config.Bind("AI", "Endpoint", "https://api.openai.com/v1/chat/completions",
-            "OpenAI-compatible chat completions URL.");
-        apiKey = Config.Bind("AI", "ApiKey", "", "API key for the endpoint.");
-        model = Config.Bind("AI", "Model", "gpt-4o-mini", "Model name.");
-        reasoningEffort = Config.Bind("AI", "ReasoningEffort", "",
-            "Optional reasoning effort for reasoning models (e.g. low, medium, high). Leave blank to omit; valid values are model/provider specific.");
-        systemPrompt = Config.Bind("AI", "SystemPrompt",
-            $"You are {AssistantName}, a Stationeers assistant. Use the provided tools to look up game data before answering. Keep answers short and use simple Markdown (**bold**, bullet lists, and small tables). Batch independent searches in one block. Trust conversation history: never re-call a tool whose result is already above — live readings refresh on describe, but static answers (mips_reference, search_structures, search_recipes) never change. Prefer describe_device without full: Temp and Pressure lead the short list; pass full only for gas ratios. IC facts: lb/sb see only the housing network; sb needs a register, not a bare number; wall heaters need pressure above 6.3 kPa; after Export, the chip hash must equal the editor hash.",
-            "System prompt sent to the model.");
-        maxIterations = Config.Bind("AI", "MaxToolIterations", 5, "Maximum tool round-trips per question.");
-        timeoutSeconds = Config.Bind("AI", "TimeoutSeconds", 120, "HTTP timeout for model requests, in seconds. Raise it if the model is slow with a large conversation.");
-        contextMessages = Config.Bind("AI", "ContextMessages", 20, "How many previous messages to send with each question. 0 disables conversation history.");
-
-        if (!modEnabled.Value)
+        if (!_settings.ModEnabled.Value)
         {
             return;
         }
 
         var harmony = new Harmony(ModGuid);
         harmony.PatchAll(typeof(ChatMessagePatch));
-        Log.Log($"patched {harmony.GetPatchedMethods().Count()} method(s) for chat mentions");
+        _log.Log($"patched {harmony.GetPatchedMethods().Count()} method(s) for chat mentions");
 
-        EnsureWindow();
-        Log.Log($"Sage window ready ({windowToggle.Value})");
+        // The window lives on its own persistent object: scene loads destroy
+        // the plugin's GameObject, which would silently kill Update/OnGUI.
+        // DontDestroyOnLoad keeps the holder alive, so Awake creates it once.
+        var holder = new GameObject("SageWindow");
+        UnityEngine.Object.DontDestroyOnLoad(holder);
+        var window = holder.AddComponent<SageWindow>();
+        window.Logger = _log;
+        window.WindowToggle = () => _settings.WindowToggle.Value;
+        _sage = new SagePresenter(
+            new WindowModel(200),
+            window,
+            activity => BuildAssistant(activity),
+            PlayerName,
+            () => AssistantName,
+            _log,
+            () => _settings.ShowThinking.Value,
+            () => _settings.ShowToolCalls.Value,
+            () => _settings.ShowToolResults.Value,
+            () => _settings.ContextMessages.Value > 0 ? Conversation : null,
+            Run);
+        _log.Log($"Sage window ready ({_settings.WindowToggle.Value})");
 
-        CommandLine.AddCommand("ai", new AiConsoleCommand(sage));
-        Log.Log("registered 'ai' console command");
+        CommandLine.AddCommand("ai", new AiConsoleCommand(_sage, () => AssistantName));
+        _log.Log("registered 'ai' console command");
 
-        Log.Log($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");
+        _log.Log($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");
     }
 
     /// <summary>Runs work on Unity's main thread, posting from async continuations.</summary>
-    public static void RunOnMainThread(Action action)
+    public void Run(Action action)
     {
         if (action == null)
         {
             return;
         }
 
-        if (Thread.CurrentThread.ManagedThreadId == unityThreadId)
+        if (Thread.CurrentThread.ManagedThreadId == _unityThreadId)
         {
             RunGuarded(action);
             return;
         }
 
-        var synchronizationContext = unitySynchronizationContext;
+        var synchronizationContext = _unitySynchronizationContext;
         if (synchronizationContext == null)
         {
-            Log.Log("cannot dispatch to Unity main thread: synchronization context was not captured");
+            _log.Log("cannot dispatch to Unity main thread: synchronization context was not captured");
             return;
         }
 
         synchronizationContext.Post(_ => RunGuarded(action), null);
     }
 
-    private static void RunGuarded(Action action)
+    private void RunGuarded(Action action)
     {
         try
         {
@@ -177,7 +156,7 @@ public class BepInExPlugin : BaseUnityPlugin
         }
         catch (Exception ex)
         {
-            Log.Log(ex.ToString());
+            _log.Log(ex.ToString());
         }
     }
 
@@ -186,19 +165,19 @@ public class BepInExPlugin : BaseUnityPlugin
     /// caller. Tools run off the main thread, but Unity objects demand it.
     /// Throws when the context was never captured or the wait times out.
     /// </summary>
-    internal static T RunOnMainThreadSync<T>(Func<T> func, int timeoutMilliseconds = 10000)
+    public T RunSync<T>(Func<T> func, int timeoutMilliseconds = 10000)
     {
         if (func == null)
         {
             throw new ArgumentNullException(nameof(func));
         }
 
-        if (Thread.CurrentThread.ManagedThreadId == unityThreadId)
+        if (Thread.CurrentThread.ManagedThreadId == _unityThreadId)
         {
             return func();
         }
 
-        var synchronizationContext = unitySynchronizationContext;
+        var synchronizationContext = _unitySynchronizationContext;
         if (synchronizationContext == null)
         {
             throw new InvalidOperationException("Unity synchronization context was not captured.");
@@ -245,9 +224,15 @@ public class BepInExPlugin : BaseUnityPlugin
     /// Runs on the Unity main thread, so the game-data snapshot is safe
     /// to build. Ignored while another turn is running.
     /// </summary>
+    /// <summary>Harmony entry: chat messages displayed on this machine.</summary>
     public static void OnChatMessage(Assets.Scripts.Networking.ChatMessage message)
     {
-        if (!modEnabled.Value || !respondToMentions.Value || message == null)
+        _instance?.HandleChatMessage(message);
+    }
+
+    private void HandleChatMessage(Assets.Scripts.Networking.ChatMessage message)
+    {
+        if (!_settings.ModEnabled.Value || !_settings.RespondToMentions.Value || message == null)
         {
             return;
         }
@@ -264,34 +249,33 @@ public class BepInExPlugin : BaseUnityPlugin
             return;
         }
 
-        Log.Log($"chat seen from '{message.DisplayName}': {Truncate(message.ChatText, 80)}");
+        _log.Log($"chat seen from '{message.DisplayName}': {Truncate(message.ChatText, 80)}");
 
-        if (!Mention.TryParse(mentionTrigger.Value, message.ChatText, out var prompt))
+        if (!Mention.TryParse(_settings.MentionTrigger.Value, message.ChatText, out var prompt))
         {
             return;
         }
 
-        Log.Log($"mention matched, asking: {Truncate(prompt, 80)}");
-        EnsureWindow();
+        _log.Log($"mention matched, asking: {Truncate(prompt, 80)}");
         var responder = MentionResponderInstance();
         if (responder.IsBusy)
         {
-            Log.Log("mention ignored: Sage is already answering");
+            _log.Log("mention ignored: Sage is already answering");
             return;
         }
 
-        sage.Show();
+        _sage.Show();
         var speaker = string.IsNullOrWhiteSpace(message.DisplayName)
             ? "player"
             : message.DisplayName;
-        sage.Write($"{speaker}: {prompt}");
+        _sage.Write($"{speaker}: {prompt}");
         _ = responder.HandleAsync(prompt, MentionConversation(message.DisplayName));
     }
 
     /// <summary>One chat session per player, capped like the console history.</summary>
-    private static Conversation MentionConversation(string player)
+    private Conversation MentionConversation(string player)
     {
-        if (contextMessages.Value <= 0)
+        if (_settings.ContextMessages.Value <= 0)
         {
             return null;
         }
@@ -301,10 +285,10 @@ public class BepInExPlugin : BaseUnityPlugin
             player = "player";
         }
 
-        if (!mentionConversations.TryGetValue(player, out var conversation))
+        if (!_mentionConversations.TryGetValue(player, out var conversation))
         {
-            conversation = new Conversation(contextMessages.Value);
-            mentionConversations[player] = conversation;
+            conversation = new Conversation(_settings.ContextMessages.Value);
+            _mentionConversations[player] = conversation;
         }
 
         return conversation;
@@ -320,53 +304,22 @@ public class BepInExPlugin : BaseUnityPlugin
         return value.Substring(0, max) + "...";
     }
 
-    private static MentionResponder MentionResponderInstance()
+    private MentionResponder MentionResponderInstance()
     {
-        EnsureWindow();
-        return mentionResponder ??= new MentionResponder(
-            new FanoutChatSink(sage, new ChatMessageSink(RunOnMainThread)),
+        return _mentionResponder ??= new MentionResponder(
+            new FanoutChatSink(_sage, new ChatMessageSink(this, _log, () => AssistantName)),
             activity => BuildAssistant(activity),
             AssistantName,
-            Log);
-    }
-
-    /// <summary>
-    /// The window lives on its own persistent object: scene loads destroy
-    /// the plugin's GameObject, which would silently kill Update/OnGUI.
-    /// The presenter owns the history model and drives the passive view;
-    /// submitted questions run as assistant turns that stream back into it.
-    /// </summary>
-    private static void EnsureWindow()
-    {
-        if (window != null)
-        {
-            return;
-        }
-
-        var holder = new GameObject("SageWindow");
-        UnityEngine.Object.DontDestroyOnLoad(holder);
-        window = holder.AddComponent<SageWindow>();
-        sage = new SagePresenter(
-            new WindowModel(200),
-            window,
-            activity => BuildAssistant(activity),
-            PlayerName,
-            () => AssistantName,
-            Log,
-            () => showThinking.Value,
-            () => showToolCalls.Value,
-            () => showToolResults.Value,
-            () => contextMessages.Value > 0 ? Conversation : null,
-            RunOnMainThread);
+            _log);
     }
 
     /// <summary>
     /// Display name for the assistant. Configurable via the
     /// <c>General/Name</c> entry; falls back to "Sage" when blank.
     /// </summary>
-    public static string AssistantName => ChatNaming.Resolve(aiName?.Value);
+    public string AssistantName => ChatNaming.Resolve(_settings.AiName?.Value);
 
-    private static string PlayerName()
+    private string PlayerName()
     {
         try
         {
@@ -388,24 +341,24 @@ public class BepInExPlugin : BaseUnityPlugin
     /// the player, so it is built once and reused until the prefab catalogue
     /// changes (game load, mods adding prefabs).
     /// </summary>
-    private static void EnsureCatalogues()
+    private void EnsureCatalogues()
     {
         var prefabs = Prefab.AllPrefabs;
         var count = prefabs != null ? prefabs.Count : 0;
-        if (catalogueItems != null && cataloguePrefabCount == count && count > 0)
+        if (_catalogueItems != null && _cataloguePrefabCount == count && count > 0)
         {
             return;
         }
 
-        catalogueItems = new StationeersItemRepository(prefabs);
-        catalogueStructures = new StationeersStructureRepository(prefabs);
-        catalogueRecipes = new StationeersRecipeRepository();
-        catalogueStationpedia = new StationeersStationpediaRepository(Stationpedia.StationpediaPages);
-        cataloguePrefabCount = count;
-        Log.Log($"rebuilt world catalogues ({count} prefabs)");
+        _catalogueItems = new StationeersItemRepository(prefabs);
+        _catalogueStructures = new StationeersStructureRepository(prefabs);
+        _catalogueRecipes = new StationeersRecipeRepository();
+        _catalogueStationpedia = new StationeersStationpediaRepository(Stationpedia.StationpediaPages);
+        _cataloguePrefabCount = count;
+        _log.Log($"rebuilt world catalogues ({count} prefabs)");
     }
 
-    private static AiAssistant BuildAssistant(IAssistantActivity activity)
+    private AiAssistant BuildAssistant(IAssistantActivity activity)
     {
         var prefabs = Prefab.AllPrefabs;
         if (prefabs == null || prefabs.Count == 0)
@@ -428,27 +381,27 @@ public class BepInExPlugin : BaseUnityPlugin
 
         var tools = new ToolHandler(new ITool[]
         {
-            new SearchItemsTool(new SearchItemsCommand(new ItemIndex(catalogueItems))),
-            new SearchStructuresTool(new SearchStructuresCommand(new StructureIndex(catalogueStructures))),
-            new SearchRecipesTool(new SearchRecipesCommand(new RecipeIndex(catalogueRecipes))),
-            new SearchStationpediaTool(new SearchStationpediaCommand(new StationpediaIndex(catalogueStationpedia))),
-            new ReadStationpediaTool(new ReadStationpediaCommand(catalogueStationpedia)),
+            new SearchItemsTool(new SearchItemsCommand(new ItemIndex(_catalogueItems))),
+            new SearchStructuresTool(new SearchStructuresCommand(new StructureIndex(_catalogueStructures))),
+            new SearchRecipesTool(new SearchRecipesCommand(new RecipeIndex(_catalogueRecipes))),
+            new SearchStationpediaTool(new SearchStationpediaCommand(new StationpediaIndex(_catalogueStationpedia))),
+            new ReadStationpediaTool(new ReadStationpediaCommand(_catalogueStationpedia)),
             new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(playerContext))),
             new GetStatusTool(new GetStatusCommand(playerContext)),
             new GetWorldTool(new GetWorldCommand(new StationeersWorldContext())),
-            new WriteIcTool(new WriteIcCommand(new StationeersIcEditor())),
-            new ReadIcTool(new ReadIcCommand(new StationeersIcEditor())),
-            new ExportIcTool(new ExportIcCommand(new StationeersIcExport())),
-            new MipsReferenceTool(new ReadMipsCommand(new StationeersMipsReference())),
-            new SearchDevicesTool(new SearchDevicesCommand(new StationeersDeviceCatalog())),
-            new DescribeDeviceTool(new DescribeDeviceCommand(new StationeersDeviceInspector(), new StationeersDeviceCatalog())),
+            new WriteIcTool(new WriteIcCommand(new StationeersIcEditor(this, _log))),
+            new ReadIcTool(new ReadIcCommand(new StationeersIcEditor(this, _log))),
+            new ExportIcTool(new ExportIcCommand(new StationeersIcExport(this, _log))),
+            new MipsReferenceTool(new ReadMipsCommand(new StationeersMipsReference(_log))),
+            new SearchDevicesTool(new SearchDevicesCommand(new StationeersDeviceCatalog(this, _log))),
+            new DescribeDeviceTool(new DescribeDeviceCommand(new StationeersDeviceInspector(this, _log), new StationeersDeviceCatalog(this, _log))),
         });
 
         var client = new OpenAiChatClient(
-            new UnityWebRequestTransport(timeoutSeconds.Value),
-            new OpenAiOptions(endpoint.Value, apiKey.Value, model.Value, reasoningEffort.Value));
+            new UnityWebRequestTransport(_settings.TimeoutSeconds.Value),
+            new OpenAiOptions(_settings.Endpoint.Value, _settings.ApiKey.Value, _settings.Model.Value, _settings.ReasoningEffort.Value));
 
-        return new AiAssistant(client, tools, SystemPromptText(), maxIterations.Value, Log, activity);
+        return new AiAssistant(client, tools, SystemPromptText(), _settings.MaxIterations.Value, _log, activity);
     }
 
     /// <summary>
@@ -456,7 +409,7 @@ public class BepInExPlugin : BaseUnityPlugin
     /// (re-read per question, so edits apply without a restart), else the
     /// configured text.
     /// </summary>
-    private static string SystemPromptText()
+    private string SystemPromptText()
     {
         try
         {
@@ -472,9 +425,9 @@ public class BepInExPlugin : BaseUnityPlugin
         }
         catch (Exception ex)
         {
-            Log.Log($"SYSTEM.md unreadable, using configured prompt: {ex.Message}");
+            _log.Log($"SYSTEM.md unreadable, using configured prompt: {ex.Message}");
         }
 
-        return systemPrompt.Value;
+        return _settings.SystemPrompt.Value;
     }
 }
