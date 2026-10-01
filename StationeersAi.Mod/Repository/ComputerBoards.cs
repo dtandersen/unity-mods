@@ -24,9 +24,10 @@ namespace StationeersAi.Repository
             public long ComputerId { get; }
         }
 
-        internal static IReadOnlyList<Board> Match(string name, long? thing)
+        internal static IReadOnlyList<Board> Match(string computer)
         {
-            if (thing.HasValue)
+            long thing;
+            if (!string.IsNullOrWhiteSpace(computer) && long.TryParse(computer.Trim(), out thing))
             {
                 var matches = new List<Board>();
                 foreach (var board in All())
@@ -41,7 +42,7 @@ namespace StationeersAi.Repository
                         continue;
                     }
 
-                    if (reference == thing.Value || board.ComputerId == thing.Value)
+                    if (reference == thing || board.ComputerId == thing)
                     {
                         matches.Add(board);
                     }
@@ -50,7 +51,7 @@ namespace StationeersAi.Repository
                 return matches;
             }
 
-            return ThingMatching.Match(All(), board => board.Name, board => board.Motherboard.ReferenceId, name);
+            return ThingMatching.Match(All(), board => board.Name, board => board.Motherboard.ReferenceId, computer);
         }
 
         internal static string Names(IReadOnlyList<Board> boards)

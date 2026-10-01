@@ -18,12 +18,13 @@ namespace StationeersAi.Tool
 
         public ToolDefinition Definition { get; } = new ToolDefinition(
             "search_devices",
-            "Search built things by name: devices, pipes, walls. Labels, prefab types, thing ids, data networks, and whether each speaks logic. Returns a Markdown table with columns Name, Type, Thing, Network, Logic.",
+            "Search built things by name: devices, pipes, walls. Labels, prefab types, thing ids, data networks, and whether each speaks logic. Logic devices list first, 10 at a time (30 for logic-only); pass offset to page. Returns a Markdown table with columns Name, Type, Thing, Network, Logic.",
             new[]
             {
                 new ToolParameter("query", "Text to match against device names, e.g. 'vent'. Omit to list all.", Required: false),
                 new ToolParameter("network", "Limit to one data network id, e.g. '7'. Omit for every network.", Required: false),
                 new ToolParameter("logic", "Only logic devices ('true') or only dumb objects ('false'). Omit for both.", Required: false),
+                new ToolParameter("offset", "Skip this many matches before listing. Omit to start at the top.", Required: false),
             });
 
         public ToolResult Execute(ToolArguments arguments)
@@ -40,14 +41,22 @@ namespace StationeersAi.Tool
                 return new ToolFailure($"Logic '{arguments.Get("logic")}' is not true or false.");
             }
 
-            var devices = _command.Execute(arguments.Get("query"), network.Value, logic.Value)
-                .OrderBy(device => device.Name, StringComparer.OrdinalIgnoreCase)
-                .Take(ToolLimits.MaxResults)
+            var offset = ParseOffset(arguments.Get("offset"));
+            if (!offset.Parsed)
+            {
+                return new ToolFailure($"Offset '{arguments.Get("offset")}' is not a number.");
+            }
+
+            var matches = _command.Execute(arguments.Get("query"), network.Value, logic.Value)
+                .OrderByDescending(device => device.Logic)
+                .ThenBy(device => device.Name, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
+            var cap = logic.Value == true ? ToolLimits.MaxLogicResults : ToolLimits.MaxResults;
+            var page = matches.Skip(offset.Value).Take(cap).ToArray();
 
             return new ToolSuccess<SearchDevicesResult>(
-                new SearchDevicesResult(devices),
-                FormatContent(arguments.Get("query"), devices));
+                new SearchDevicesResult(page),
+                FormatContent(arguments.Get("query"), matches.Length, page));
         }
 
         private static (bool Parsed, bool? Value) ParseLogic(string value)
@@ -73,6 +82,22 @@ namespace StationeersAi.Tool
             return (false, null);
         }
 
+        private static (bool Parsed, int Value) ParseOffset(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return (true, 0);
+            }
+
+            int offset;
+            if (int.TryParse(value.Trim(), out offset))
+            {
+                return (true, Math.Max(0, offset));
+            }
+
+            return (false, 0);
+        }
+
         private static (bool Parsed, long? Value) ParseNetwork(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -89,9 +114,9 @@ namespace StationeersAi.Tool
             return (false, null);
         }
 
-        private static string FormatContent(string query, IReadOnlyList<DeviceInfo> devices)
+        private static string FormatContent(string query, int total, IReadOnlyList<DeviceInfo> devices)
         {
-            if (devices.Count == 0)
+            if (total == 0)
             {
                 return string.IsNullOrWhiteSpace(query)
                     ? "No devices found."
@@ -107,7 +132,8 @@ namespace StationeersAi.Tool
                 device.Logic ? "yes" : "no",
             });
 
-            return Markdown.Build(new[] { "Name", "Type", "Thing", "Network", "Logic" }, rows);
+            return Markdown.Build(new[] { "Name", "Type", "Thing", "Network", "Logic" }, rows) +
+                $"\nShowing {devices.Count} of {total}.";
         }
     }
 }

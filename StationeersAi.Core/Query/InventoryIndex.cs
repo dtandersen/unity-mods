@@ -23,7 +23,7 @@ namespace StationeersAi.Query
         {
             if (string.IsNullOrWhiteSpace(query))
             {
-                return Array.Empty<ItemStack>();
+                return _player.Inventory.ToArray();
             }
 
             return _player.Inventory

@@ -67,6 +67,13 @@ namespace StationeersAi.Test.Features.Tools
             World.ToolResult.Content.ShouldBe(expected.Replace("\r\n", "\n").Trim());
         }
 
+        [Then("the tool fails with:")]
+        public void ThenTheToolFailsWithBlock(string expected)
+        {
+            World.ToolResult.IsSuccess.ShouldBeFalse();
+            World.ToolResult.Content.ShouldBe(expected.Replace("\r\n", "\n").Trim());
+        }
+
         [Then("the tool result contains {string}")]
         public void ThenTheToolResultContainsInline(string expected)
         {

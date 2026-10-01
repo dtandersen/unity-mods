@@ -22,6 +22,16 @@ Feature: Read IC tool
       (editor is empty)
       """
 
+  Scenario: Read by thing id
+    Given the editor holds "yield"
+    When I read computer "1189"
+    Then the tool succeeds
+    And the tool result is:
+      """
+      yield
+      Code hash: 6c96f2ae
+      """
+
   Scenario: Unknown computer
     Given no computer is found
     When I read computer "Nope"

@@ -35,7 +35,7 @@ namespace StationeersAi.Test.Features.Tools
             World.ToolResult = TestComposition.Tools(World).Handle(new ToolCall(
                 "call_1",
                 "read_ic",
-                new ToolArguments(new Dictionary<string, string> { ["computer_name"] = computer })));
+                new ToolArguments(new Dictionary<string, string> { ["computer"] = computer })));
         }
     }
 }

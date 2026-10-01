@@ -71,6 +71,8 @@ namespace StationeersAi.Mod
 
         private static MentionResponder mentionResponder;
 
+        private static readonly Dictionary<string, Conversation> mentionConversations = new Dictionary<string, Conversation>();
+
         // World data does not depend on the player, so it is built once and
         // reused until the prefab catalogue changes size.
         private static IItemRepository catalogueItems;
@@ -117,7 +119,7 @@ namespace StationeersAi.Mod
             reasoningEffort = Config.Bind("AI", "ReasoningEffort", "",
                 "Optional reasoning effort for reasoning models (e.g. low, medium, high). Leave blank to omit; valid values are model/provider specific.");
             systemPrompt = Config.Bind("AI", "SystemPrompt",
-                $"You are {AssistantName}, a Stationeers assistant. Use the provided tools to look up game data before answering. Keep answers short and use simple Markdown (**bold**, bullet lists, and small tables).",
+                $"You are {AssistantName}, a Stationeers assistant. Use the provided tools to look up game data before answering. Keep answers short and use simple Markdown (**bold**, bullet lists, and small tables). Batch independent searches in one block. IC facts: lb/sb see only the housing network; sb needs a register, not a bare number; wall heaters need pressure above 6.3 kPa; after Export, the chip hash must equal the editor hash.",
                 "System prompt sent to the model.");
             maxIterations = Config.Bind("AI", "MaxToolIterations", 5, "Maximum tool round-trips per question.");
             timeoutSeconds = Config.Bind("AI", "TimeoutSeconds", 120, "HTTP timeout for model requests, in seconds. Raise it if the model is slow with a large conversation.");
@@ -266,7 +268,29 @@ namespace StationeersAi.Mod
             }
 
             Log.Log($"mention matched, asking: {Truncate(prompt, 80)}");
-            _ = MentionResponderInstance().HandleAsync(prompt);
+            _ = MentionResponderInstance().HandleAsync(prompt, MentionConversation(message.DisplayName));
+        }
+
+        /// <summary>One chat session per player, capped like the console history.</summary>
+        private static Conversation MentionConversation(string player)
+        {
+            if (contextMessages.Value <= 0)
+            {
+                return null;
+            }
+
+            if (string.IsNullOrWhiteSpace(player))
+            {
+                player = "player";
+            }
+
+            if (!mentionConversations.TryGetValue(player, out var conversation))
+            {
+                conversation = new Conversation(contextMessages.Value);
+                mentionConversations[player] = conversation;
+            }
+
+            return conversation;
         }
 
         internal static string Truncate(string value, int max)
@@ -435,7 +459,7 @@ namespace StationeersAi.Mod
                 new ReadIcTool(new ReadIcCommand(new StationeersIcEditor())),
                 new MipsReferenceTool(new ReadMipsCommand(new StationeersMipsReference())),
                 new SearchDevicesTool(new SearchDevicesCommand(new StationeersDeviceCatalog())),
-                new DescribeDeviceTool(new DescribeDeviceCommand(new StationeersDeviceInspector())),
+                new DescribeDeviceTool(new DescribeDeviceCommand(new StationeersDeviceInspector(), new StationeersDeviceCatalog())),
             });
 
             var client = new OpenAiChatClient(

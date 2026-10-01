@@ -18,17 +18,12 @@ namespace StationeersAi.Tool
 
         public ToolDefinition Definition { get; } = new ToolDefinition(
             "search_inventory",
-            "Search what the player is carrying by name. Returns CSV with columns Name, Quantity, Slot.",
-            new[] { new ToolParameter("query", "Text to match against carried item names, e.g. 'welder'.") });
+            "Search what the player is carrying by name. Omit the query to list everything carried and worn. Returns CSV with columns Name, Quantity, Slot.",
+            new[] { new ToolParameter("query", "Text to match against carried item names, e.g. 'welder'. Omit to list all.", Required: false) });
 
         public ToolResult Execute(ToolArguments arguments)
         {
             var query = arguments.Get("query");
-            if (string.IsNullOrWhiteSpace(query))
-            {
-                return new ToolFailure("Missing required argument 'query'.");
-            }
-
             var stacks = _command.Execute(query)
                 .OrderBy(stack => stack.Name, StringComparer.OrdinalIgnoreCase)
                 .Take(ToolLimits.MaxResults)
@@ -43,7 +38,9 @@ namespace StationeersAi.Tool
         {
             if (stacks.Count == 0)
             {
-                return $"No carried items found for '{query}'.";
+                return string.IsNullOrWhiteSpace(query)
+                    ? "No carried items found."
+                    : $"No carried items found for '{query}'.";
             }
 
             var rows = stacks.Select(stack => new[]

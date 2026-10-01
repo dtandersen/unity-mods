@@ -13,9 +13,9 @@ namespace StationeersAi.Command
             _editor = editor;
         }
 
-        public IcWriteResult Execute(string computerName, long? computerThing, string code)
+        public IcWriteResult Execute(string computer, string code)
         {
-            return _editor.Write(computerName, computerThing, code);
+            return _editor.Write(computer, code);
         }
     }
 }

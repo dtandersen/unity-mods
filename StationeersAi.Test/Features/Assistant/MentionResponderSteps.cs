@@ -22,7 +22,7 @@ namespace StationeersAi.Test.Features.Assistant
         {
             World.MentionResponder ??= TestComposition.Responder(World);
             Mention.TryParse(World.MentionTrigger, message, out var prompt);
-            await World.MentionResponder.HandleAsync(prompt);
+            await World.MentionResponder.HandleAsync(prompt, World.Conversation);
         }
 
         [When("I start a mention {string}")]
@@ -30,7 +30,7 @@ namespace StationeersAi.Test.Features.Assistant
         {
             World.MentionResponder ??= TestComposition.Responder(World);
             Mention.TryParse(World.MentionTrigger, message, out var prompt);
-            World.AskTask = World.MentionResponder.HandleAsync(prompt);
+            World.AskTask = World.MentionResponder.HandleAsync(prompt, World.Conversation);
         }
     }
 }

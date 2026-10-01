@@ -75,6 +75,48 @@ namespace StationeersAi.Test.Features.Tools
             World.Inspector.Details = null;
         }
 
+        [Given("the gas sensor {string} reads 290K at 3.3 kPa")]
+        public void GivenTheGasSensorReads(string name)
+        {
+            World.Inspector.Details = new DeviceDetails(
+                name,
+                "StructureGasSensor",
+                1482,
+                1194,
+                null,
+                new[]
+                {
+                    new DeviceLogicValue("Pressure", 3.35518, false),
+                    new DeviceLogicValue("Temperature", 290.131, false),
+                    new DeviceLogicValue("RatioOxygen", 0.195957, false),
+                    new DeviceLogicValue("RatioCarbonDioxide", 0.774701, false),
+                    new DeviceLogicValue("RatioMethane", 0, false),
+                    new DeviceLogicValue("RatioWater", 0, false),
+                    new DeviceLogicValue("RatioNitrogen", 0.0241535, false),
+                },
+                new DeviceSlotInfo[0],
+                null,
+                null);
+        }
+
+        [Given("two devices share the name {string}")]
+        public void GivenTwoDevicesShareTheName(string name)
+        {
+            World.Devices.Devices.Clear();
+            World.Devices.Devices.Add(new DeviceInfo(name, "StructureGasSensor", 1482, 1194, true));
+            World.Devices.Devices.Add(new DeviceInfo(name, "StructureGasSensor", 1123, 1119, true));
+            World.Inspector.Details = null;
+        }
+
+        [When("I describe the device {string} with full {string}")]
+        public void WhenIDescribeTheDeviceWithFull(string device, string full)
+        {
+            World.ToolResult = TestComposition.Tools(World).Handle(new ToolCall(
+                "call_1",
+                "describe_device",
+                new ToolArguments(new System.Collections.Generic.Dictionary<string, string> { ["device"] = device, ["full"] = full })));
+        }
+
         [When("I describe the device {string}")]
         public void WhenIDescribeTheDevice(string device)
         {

@@ -18,9 +18,27 @@ Feature: Inventory tools
       | Steel | x10      | Backpack |
       | Steel | x4       | Toolbelt |
 
-  Scenario: The inventory tool requires its query argument
-    When I call the "search_inventory" tool without arguments
-    Then the tool fails with "Missing required argument 'query'."
+  Scenario: Blank query lists all
+    When I call the "search_inventory" tool
+    Then the tool succeeds
+    And the tool result is:
+      """
+      Name,Quantity,Slot
+      Steel,x10,Backpack
+      Steel,x4,Toolbelt
+      Welder,85%,Right hand
+      """
+
+  Scenario: Blank query with explicit empty string lists all
+    When I call the "search_inventory" tool with query ""
+    Then the tool succeeds
+    And the tool result is:
+      """
+      Name,Quantity,Slot
+      Steel,x10,Backpack
+      Steel,x4,Toolbelt
+      Welder,85%,Right hand
+      """
 
   Scenario: No match reports the query
     When I call the "search_inventory" tool with query "helmet"

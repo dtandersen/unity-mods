@@ -18,7 +18,7 @@ Feature: Write IC tool
 
   Scenario: Write code by thing id
     Given a computer "Lab Computer"
-    When I write to thing "1189":
+    When I write to computer "1189":
       """
       yield
       """

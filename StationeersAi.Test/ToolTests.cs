@@ -230,29 +230,28 @@ namespace StationeersAi.Test
             var result = Call(
                 Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), editor, new InMemoryMipsReference()),
                 "write_ic",
-                ("computer_name", "Lab Computer"),
+                ("computer", "Lab Computer"),
                 ("code", "alias Device d0\n yield"));
 
             result.IsSuccess.ShouldBeTrue();
             result.Content.ShouldContain("Wrote 2 lines to Lab Computer");
             editor.Writes.Count.ShouldBe(1);
-            editor.Writes[0].Name.ShouldBe("Lab Computer");
-            editor.Writes[0].Thing.ShouldBeNull();
+            editor.Writes[0].Computer.ShouldBe("Lab Computer");
         }
 
         [Test]
-        public void Write_ic_places_code_by_thing_id()
+        public void Write_ic_passes_thing_ids_through()
         {
             var editor = new InMemoryIcEditor();
 
             var result = Call(
                 Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), editor, new InMemoryMipsReference()),
                 "write_ic",
-                ("computer_thing", "1189"),
+                ("computer", "1189"),
                 ("code", "yield"));
 
             result.IsSuccess.ShouldBeTrue();
-            editor.Writes[0].Thing.ShouldBe(1189);
+            editor.Writes[0].Computer.ShouldBe("1189");
         }
 
         [Test]
@@ -260,16 +259,7 @@ namespace StationeersAi.Test
         {
             var result = Call(Tools(), "write_ic", ("code", "yield"));
             result.IsSuccess.ShouldBeFalse();
-            result.Content.ShouldContain("'computer_name'");
-            result.Content.ShouldContain("'computer_thing'");
-        }
-
-        [Test]
-        public void Write_ic_rejects_a_bad_thing_id()
-        {
-            var result = Call(Tools(), "write_ic", ("computer_thing", "abc"), ("code", "yield"));
-            result.IsSuccess.ShouldBeFalse();
-            result.Content.ShouldContain("'abc'");
+            result.Content.ShouldContain("'computer'");
         }
 
         [Test]
@@ -280,7 +270,7 @@ namespace StationeersAi.Test
             var result = Call(
                 Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), editor, new InMemoryMipsReference()),
                 "write_ic",
-                ("computer_name", "Nope"),
+                ("computer", "Nope"),
                 ("code", "yield"));
 
             result.IsSuccess.ShouldBeFalse();
@@ -288,7 +278,7 @@ namespace StationeersAi.Test
         }
 
         [Test]
-        public void Mips_reference_lists_every_instruction()
+        public void Mips_reference_lists_names_on_blank()
         {
             var mips = new InMemoryMipsReference();
             mips.Instructions.Add(new MipsInstruction("l", "l r? device var", "Loads a value."));
@@ -299,8 +289,7 @@ namespace StationeersAi.Test
                 "mips_reference");
 
             result.IsSuccess.ShouldBeTrue();
-            result.Content.ShouldContain("l: l r? device var");
-            result.Content.ShouldContain("yield: yield");
+            result.Content.ShouldBe("l\nyield");
         }
 
         [Test]
@@ -441,7 +430,7 @@ namespace StationeersAi.Test
             };
             var tools = new ToolHandler(new ITool[]
             {
-                new DescribeDeviceTool(new DescribeDeviceCommand(inspector)),
+                new DescribeDeviceTool(new DescribeDeviceCommand(inspector, new InMemoryDeviceCatalog())),
             });
 
             var result = Call(tools, "describe_device", ("device", "Air Vent"));
@@ -476,7 +465,7 @@ namespace StationeersAi.Test
             };
             var tools = new ToolHandler(new ITool[]
             {
-                new DescribeDeviceTool(new DescribeDeviceCommand(inspector)),
+                new DescribeDeviceTool(new DescribeDeviceCommand(inspector, new InMemoryDeviceCatalog())),
             });
 
             var result = Call(tools, "describe_device", ("device", "Housing"));
@@ -493,7 +482,7 @@ namespace StationeersAi.Test
         {
             var tools = new ToolHandler(new ITool[]
             {
-                new DescribeDeviceTool(new DescribeDeviceCommand(new InMemoryDeviceInspector())),
+                new DescribeDeviceTool(new DescribeDeviceCommand(new InMemoryDeviceInspector(), new InMemoryDeviceCatalog())),
             });
 
             var result = Call(tools, "describe_device");
@@ -506,7 +495,7 @@ namespace StationeersAi.Test
         {
             var tools = new ToolHandler(new ITool[]
             {
-                new DescribeDeviceTool(new DescribeDeviceCommand(new InMemoryDeviceInspector())),
+                new DescribeDeviceTool(new DescribeDeviceCommand(new InMemoryDeviceInspector(), new InMemoryDeviceCatalog())),
             });
 
             var result = Call(tools, "describe_device", ("device", "Nope"));
@@ -524,7 +513,7 @@ namespace StationeersAi.Test
             });
             var code = string.Join("\n", System.Linq.Enumerable.Repeat("yield", WriteIcTool.MaxCodeLines + 1));
 
-            var result = Call(tools, "write_ic", ("computer_name", "Lab Computer"), ("code", code));
+            var result = Call(tools, "write_ic", ("computer", "Lab Computer"), ("code", code));
             result.IsSuccess.ShouldBeFalse();
             result.Content.ShouldContain("128 lines");
             editor.Writes.Count.ShouldBe(0);
@@ -539,7 +528,7 @@ namespace StationeersAi.Test
                 new ReadIcTool(new ReadIcCommand(editor)),
             });
 
-            var result = Call(tools, "read_ic", ("computer_name", "Lab Computer"));
+            var result = Call(tools, "read_ic", ("computer", "Lab Computer"));
             result.IsSuccess.ShouldBeTrue();
             result.Content.ShouldBe("yield\n sleep 1\nCode hash: d59a099c");
         }
@@ -552,7 +541,7 @@ namespace StationeersAi.Test
                 new ReadIcTool(new ReadIcCommand(new InMemoryIcEditor())),
             });
 
-            var result = Call(tools, "read_ic", ("computer_thing", "1189"));
+            var result = Call(tools, "read_ic", ("computer", "1189"));
             result.IsSuccess.ShouldBeTrue();
             result.Content.ShouldBe("(editor is empty)");
         }
@@ -567,7 +556,7 @@ namespace StationeersAi.Test
 
             var result = Call(tools, "read_ic");
             result.IsSuccess.ShouldBeFalse();
-            result.Content.ShouldContain("'computer_name'");
+            result.Content.ShouldContain("'computer'");
         }
 
         [Test]
@@ -578,7 +567,7 @@ namespace StationeersAi.Test
                 new ReadIcTool(new ReadIcCommand(new InMemoryIcEditor { ResolveAs = null })),
             });
 
-            var result = Call(tools, "read_ic", ("computer_name", "Nope"));
+            var result = Call(tools, "read_ic", ("computer", "Nope"));
             result.IsSuccess.ShouldBeFalse();
             result.Content.ShouldContain("Nope");
         }

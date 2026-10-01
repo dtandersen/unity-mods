@@ -143,7 +143,7 @@ namespace StationeersAi.Test
                 "Sage",
                 new RecordingLogger());
 
-            (await responder.HandleAsync("hi")).ShouldBeTrue();
+            (await responder.HandleAsync("hi", null)).ShouldBeTrue();
             responder.IsBusy.ShouldBeFalse();
             chat.Lines.Count.ShouldBe(1);
             chat.Lines[0].ShouldBe("Sage: hello");

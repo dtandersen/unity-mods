@@ -42,10 +42,11 @@ namespace StationeersAi.Ai
         public bool IsBusy => _busy;
 
         /// <summary>
-        /// Answers <paramref name="prompt"/>. Returns false (and does nothing) when a
-        /// question is already being answered.
+        /// Answers <paramref name="prompt"/>, sending <paramref name="conversation"/>
+        /// history with the request (null sends none). Returns false (and does
+        /// nothing) when a question is already being answered.
         /// </summary>
-        public async Task<bool> HandleAsync(string prompt, CancellationToken cancellationToken = default)
+        public async Task<bool> HandleAsync(string prompt, Conversation conversation, CancellationToken cancellationToken = default)
         {
             if (_busy)
             {
@@ -62,7 +63,7 @@ namespace StationeersAi.Ai
                     return true;
                 }
 
-                var answer = await assistant.AskAsync(prompt, null, cancellationToken);
+                var answer = await assistant.AskAsync(prompt, conversation, cancellationToken);
                 Say(MarkdownToPlain.ToPlainText(answer));
                 return true;
             }

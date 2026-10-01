@@ -32,26 +32,11 @@ namespace StationeersAi.Test.Features.Tools
         [When("I write to computer {string}:")]
         public void WhenIWriteToComputer(string computer, string code)
         {
-            Write(new Dictionary<string, string>
+            var values = new Dictionary<string, string>
             {
-                ["computer_name"] = computer,
-                ["code"] = code,
-            });
-        }
-
-        [When("I write to thing {string}:")]
-        public void WhenIWriteToThing(string thing, string code)
-        {
-            Write(new Dictionary<string, string>
-            {
-                ["computer_thing"] = thing,
-                ["code"] = code,
-            });
-        }
-
-        private void Write(Dictionary<string, string> values)
-        {
-            values["code"] = values["code"].Replace("\r\n", "\n").Trim();
+                ["computer"] = computer,
+                ["code"] = code.Replace("\r\n", "\n").Trim(),
+            };
             World.ToolResult = TestComposition.Tools(World).Handle(new ToolCall(
                 "call_1",
                 "write_ic",

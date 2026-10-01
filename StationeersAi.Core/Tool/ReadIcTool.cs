@@ -16,28 +16,21 @@ namespace StationeersAi.Tool
 
         public ToolDefinition Definition { get; } = new ToolDefinition(
             "read_ic",
-            "Read the MIPS code of an IC editor.",
+            "Read the full text in a computer or laptop's IC editor. Takes the computer, by label or thing id.",
             new[]
             {
-                new ToolParameter("computer_name", "The computer or laptop, by label.", Required: false),
-                new ToolParameter("computer_thing", "The computer or laptop, by thing id. Wins over the label when both are given.", Required: false),
+                new ToolParameter("computer", "The computer or laptop, by label or thing id."),
             });
 
         public ToolResult Execute(ToolArguments arguments)
         {
-            var name = arguments.Get("computer_name");
-            var thing = ParseThing(arguments.Get("computer_thing"));
-            if (!thing.Parsed)
+            var computer = arguments.Get("computer");
+            if (string.IsNullOrWhiteSpace(computer))
             {
-                return new ToolFailure($"Computer thing '{arguments.Get("computer_thing")}' is not a number.");
+                return new ToolFailure("Missing required argument 'computer'.");
             }
 
-            if (string.IsNullOrWhiteSpace(name) && !thing.Value.HasValue)
-            {
-                return new ToolFailure("Give the computer's label ('computer_name') or thing id ('computer_thing').");
-            }
-
-            var result = _command.Execute(name, thing.Value);
+            var result = _command.Execute(computer);
             if (result == null || !result.Found)
             {
                 return new ToolFailure(result?.Error ?? "Computer not found.");
@@ -50,20 +43,5 @@ namespace StationeersAi.Tool
                     : result.Code + $"\nCode hash: {CodeHash.Hash(result.Code)}");
         }
 
-        private static (bool Parsed, long? Value) ParseThing(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return (true, null);
-            }
-
-            long thing;
-            if (long.TryParse(value.Trim(), out thing))
-            {
-                return (true, thing);
-            }
-
-            return (false, null);
-        }
     }
 }

@@ -1,4 +1,5 @@
 using StationeersAi.Command;
+using System.Linq;
 
 namespace StationeersAi.Tool
 {
@@ -14,7 +15,7 @@ namespace StationeersAi.Tool
 
         public ToolDefinition Definition { get; } = new ToolDefinition(
             "mips_reference",
-            "Look up IC10 instructions: usage and what each one does. Omit the argument to list every instruction; name one for its full description.",
+            "Look up IC10 instructions: usage and what each one does. Name one for its usage and description; omit the argument for the bare name list.",
             new[] { new ToolParameter("instruction", "One instruction mnemonic, e.g. 'l'.", Required: false) });
 
         public ToolResult Execute(ToolArguments arguments)
@@ -24,6 +25,13 @@ namespace StationeersAi.Tool
             if (instructions.Count == 0)
             {
                 return new ToolFailure($"Unknown MIPS instruction '{instruction}'.");
+            }
+
+            if (string.IsNullOrWhiteSpace(instruction))
+            {
+                return new ToolSuccess<MipsReferenceResult>(
+                    new MipsReferenceResult(instructions),
+                    string.Join("\n", instructions.Select(entry => entry.Name)));
             }
 
             var lines = new System.Collections.Generic.List<string>();
