@@ -35,11 +35,9 @@ namespace StationeersAi.Mod;
 [BepInPlugin(ModGuid, ModName, ModVersion)]
 public class BepInExPlugin : BaseUnityPlugin
 {
-    public const string ModGuid = "davidandersen.stationeersai";
-    public const string ModName = "Sage";
+    public const string ModGuid = "dtandersen.sage";
+    public const string ModName = "SAGE";
     public const string ModVersion = "0.1.0";
-
-    public static BepInExPlugin context;
 
     public static SageWindow window;
 
@@ -90,7 +88,6 @@ public class BepInExPlugin : BaseUnityPlugin
 
     public void Awake()
     {
-        context = this;
         if (Logger == null)
         {
             throw new InvalidOperationException($"{ModName}: BepInEx log source is unavailable.");
@@ -103,11 +100,11 @@ public class BepInExPlugin : BaseUnityPlugin
 
         modEnabled = Config.Bind("General", "Enabled", true, "Enable Sage.");
         showThinking = Config.Bind("General", "ShowThinking", false,
-            "Print the model's reasoning and narration to the console while it works.");
+            "Print the model's reasoning and narration to the Sage window while it works.");
         showToolCalls = Config.Bind("General", "ShowToolCalls", false,
-            "Print each tool call (name and arguments) to the console.");
+            "Print each tool call (name and arguments) to the Sage window.");
         showToolResults = Config.Bind("General", "ShowToolResults", false,
-            "Print each tool's raw output (CSV) to the console.");
+            "Print each tool's raw output (CSV) to the Sage window.");
         respondToMentions = Config.Bind("General", "RespondToMentions", true,
             "Answer chat messages that start with the mention trigger (e.g. @sage). The answer is posted to chat as the assistant.");
         windowToggle = Config.Bind("General", "WindowToggle", new KeyboardShortcut(KeyCode.F7),
@@ -139,11 +136,11 @@ public class BepInExPlugin : BaseUnityPlugin
         harmony.PatchAll(typeof(ChatMessagePatch));
         Log.Log($"patched {harmony.GetPatchedMethods().Count()} method(s) for chat mentions");
 
-        CommandLine.AddCommand("ai", new AiConsoleCommand());
-        Log.Log("registered 'ai' console command");
-
         EnsureWindow();
         Log.Log($"Sage window ready ({windowToggle.Value})");
+
+        CommandLine.AddCommand("ai", new AiConsoleCommand(sage));
+        Log.Log("registered 'ai' console command");
 
         Log.Log($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");
     }
@@ -352,64 +349,15 @@ public class BepInExPlugin : BaseUnityPlugin
         sage = new SagePresenter(
             new WindowModel(200),
             window,
-            prompt => CreateWindowPresenter(sage)
-                .AskAsync(prompt, contextMessages.Value > 0 ? Conversation : null),
-            RunOnMainThread);
-    }
-
-    /// <summary>Opens the Sage window. Used by the <c>ai window</c> command.</summary>
-    public void ShowWindow()
-    {
-        EnsureWindow();
-        if (sage != null)
-        {
-            Log.Log("Sage window shown via command");
-            sage.Show();
-        }
-        else
-        {
-            Log.Log("Sage window missing on show command");
-        }
-    }
-
-    /// <summary>
-    /// Handles one <c>ai</c> question: runs it through the window presenter
-    /// like a submit, so the answer streams into the Sage window. Ignored
-    /// while another turn is running.
-    /// </summary>
-    public void Ask(string prompt)
-    {
-        EnsureWindow();
-        sage.Show();
-        _ = sage.RunTurnAsync(
-            prompt,
-            question => CreateWindowPresenter(sage)
-                .AskAsync(question, contextMessages.Value > 0 ? Conversation : null));
-    }
-
-    public void ClearContext()
-    {
-        EnsureWindow();
-        CreateWindowPresenter(sage).Clear(Conversation);
-    }
-
-    public void CompactContext()
-    {
-        EnsureWindow();
-        _ = CreateWindowPresenter(sage).CompactAsync(Conversation);
-    }
-
-    private static ChatPresenter CreateWindowPresenter(SagePresenter sink)
-    {
-        return new ChatPresenter(
-            sink,
             activity => BuildAssistant(activity),
             PlayerName,
-            AssistantName,
+            () => AssistantName,
             Log,
-            showThinking: showThinking.Value,
-            showToolCalls: showToolCalls.Value,
-            showToolResults: showToolResults.Value);
+            () => showThinking.Value,
+            () => showToolCalls.Value,
+            () => showToolResults.Value,
+            () => contextMessages.Value > 0 ? Conversation : null,
+            RunOnMainThread);
     }
 
     /// <summary>

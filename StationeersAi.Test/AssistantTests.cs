@@ -33,46 +33,6 @@ public class AssistantTests
     private static AiCompletion Answer(string text) =>
         new AiCompletion(text, Array.Empty<ToolCall>());
 
-    private static AiCompletion CallTool(string id, string name, string query) =>
-        new AiCompletion(null, new[]
-        {
-            new ToolCall(id, name, new ToolArguments(
-                new System.Collections.Generic.Dictionary<string, string> { ["query"] = query })),
-        });
-
-    [Test]
-    public async Task Presenter_echoes_question_and_posts_plain_answer()
-    {
-        var chat = new RecordingChatSink();
-        var ai = new FakeAiClient().RespondWith(Answer("**Cable** Coil needs `5` copper."));
-        var presenter = new ChatPresenter(
-            chat,
-            _ => new AiAssistant(ai, RecipeTools(), systemPrompt: null, maxIterations: 5, log: new RecordingLogger(), activity: null),
-            () => "Tester",
-            "Sage",
-            new RecordingLogger(),
-            showThinking: false,
-            showToolCalls: false,
-            showToolResults: false);
-
-        await presenter.AskAsync("how do I make cable coil?", null);
-
-        chat.Lines.Count.ShouldBe(2);
-        chat.Lines[0].ShouldBe("Tester: how do I make cable coil?");
-        chat.Lines[1].ShouldBe("Sage: Cable Coil needs 5 copper.");
-    }
-
-    [Test]
-    public async Task Presenter_reports_game_data_not_loaded()
-    {
-        var chat = new RecordingChatSink();
-        var presenter = new ChatPresenter(chat, _ => null, () => "Tester", "Sage", new RecordingLogger(), showThinking: false, showToolCalls: false, showToolResults: false);
-
-        await presenter.AskAsync("hi", null);
-
-        chat.Lines[^1].ShouldContain("game data is not loaded yet.");
-    }
-
     [Test]
     public async Task Mention_responder_answers_once_at_a_time()
     {

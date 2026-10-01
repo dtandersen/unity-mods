@@ -53,17 +53,4 @@ internal static class TestComposition
             world.AssistantName,
             world.Log);
     }
-
-    public static ChatPresenter Presenter(World world)
-    {
-        return new ChatPresenter(
-            world.Chat,
-            activity => world.GameDataLoaded ? Assistant(world, activity) : null,
-            () => world.PlayerName,
-            world.AssistantName,
-            world.Log,
-            showThinking: world.ShowThinking,
-            showToolCalls: world.ShowToolCalls,
-            showToolResults: world.ShowToolResults);
-    }
 }

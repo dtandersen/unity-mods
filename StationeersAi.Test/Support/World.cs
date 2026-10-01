@@ -56,10 +56,6 @@ public sealed class World : IDisposable
 
     public SagePresenter WindowPresenter { get; set; }
 
-    public List<string> AskedPrompts { get; } = new List<string>();
-
-    public TaskCompletionSource<object> PendingAnswer { get; set; }
-
     public bool ShowThinking { get; set; }
 
     public bool ShowToolCalls { get; set; }

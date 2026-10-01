@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Caev;
 using Reqnroll;
 using Shouldly;
 using StationeersAi.Test.Fakes;
@@ -29,19 +30,34 @@ public sealed class SagePresenterSteps
         }
 
         World.WindowView = new FakeSageView();
-        World.WindowPresenter = new SagePresenter(
-            World.Window,
-            World.WindowView,
-            Ask);
+        World.WindowPresenter = BuildPresenter(World.Window);
         return World.WindowPresenter;
     }
 
-    private Task Ask(string prompt)
+    private SagePresenter BuildPresenter(WindowModel model)
     {
-        World.AskedPrompts.Add(prompt);
-        World.PendingAnswer ??= new TaskCompletionSource<object>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
-        return World.PendingAnswer.Task;
+        return new SagePresenter(
+            model,
+            World.WindowView,
+            activity => World.GameDataLoaded ? TestComposition.Assistant(World, activity) : null,
+            () => World.PlayerName,
+            () => World.AssistantName,
+            World.Log,
+            () => World.ShowThinking,
+            () => World.ShowToolCalls,
+            () => World.ShowToolResults,
+            () => World.Conversation);
+    }
+
+    private string[] AskedQuestions()
+    {
+        return World.Ai == null
+            ? Array.Empty<string>()
+            : World.Ai.Transcript
+                .SelectMany(messages => messages)
+                .Where(message => message.Role == ChatRole.User)
+                .Select(message => message.Content)
+                .ToArray();
     }
 
     [Given("the window input is {string}")]
@@ -56,19 +72,19 @@ public sealed class SagePresenterSteps
     {
         World.Window = new WindowModel(count);
         World.WindowView = new FakeSageView();
-        World.WindowPresenter = new SagePresenter(
-            World.Window,
-            World.WindowView,
-            Ask);
+        World.WindowPresenter = BuildPresenter(World.Window);
     }
 
     [Given("the assistant is still answering {string}")]
-    public void GivenTheAssistantIsStillAnswering(string question)
+    public async Task GivenTheAssistantIsStillAnswering(string question)
     {
         EnsurePresenter().ShouldNotBeNull();
+        World.Ai ??= new FakeAiClient();
+        World.Ai.Hold = true;
         World.WindowView.Input = question;
         World.WindowView.RaiseSubmit();
-        World.AskedPrompts.ShouldBe(new[] { question });
+        World.WindowPresenter.Busy.ShouldBeTrue();
+        await WaitUntil(() => AskedQuestions().Contains(question));
     }
 
     [When("the user submits")]
@@ -81,7 +97,7 @@ public sealed class SagePresenterSteps
     public void WhenTheConsoleAsks(string question)
     {
         EnsurePresenter().ShouldNotBeNull();
-        World.AskTask = World.WindowPresenter.RunTurnAsync(question, Ask);
+        World.AskTask = World.WindowPresenter.AskAsync(question);
     }
 
     [When("the user toggles the window")]
@@ -98,29 +114,44 @@ public sealed class SagePresenterSteps
         World.WindowPresenter.Write(line);
     }
 
+    [When("the turn completes")]
+    public async Task WhenTheTurnCompletes()
+    {
+        await WaitUntil(() => !World.WindowPresenter.Busy);
+    }
+
     [When("the answer finishes")]
     public async Task WhenTheAnswerFinishes()
     {
-        World.PendingAnswer.ShouldNotBeNull();
-        World.PendingAnswer.TrySetResult(null);
-        var deadline = Environment.TickCount64 + 5000;
-        while (World.WindowPresenter.Busy && Environment.TickCount64 < deadline)
-        {
-            await Task.Delay(10);
-        }
+        World.Ai.ShouldNotBeNull();
+        World.Ai.Release();
+        await WaitUntil(() => !World.WindowPresenter.Busy);
+    }
+
+    [When("the user clears the context")]
+    public void WhenTheUserClearsTheContext()
+    {
+        EnsurePresenter().ShouldNotBeNull();
+        World.WindowPresenter.ClearConversation();
+    }
+
+    [When("the user compacts the context")]
+    public async Task WhenTheUserCompactsTheContext()
+    {
+        EnsurePresenter().ShouldNotBeNull();
+        await World.WindowPresenter.CompactConversation();
     }
 
     [Then("the asked question is {string}")]
     public void ThenTheAskedQuestionIs(string expected)
     {
-        World.AskedPrompts.Count.ShouldBe(1);
-        World.AskedPrompts[0].ShouldBe(expected);
+        AskedQuestions().ShouldBe(new[] { expected });
     }
 
     [Then("nothing is asked")]
     public void ThenNothingIsAsked()
     {
-        World.AskedPrompts.ShouldBeEmpty();
+        AskedQuestions().ShouldBeEmpty();
     }
 
     [Then("the window input is {string}")]
@@ -177,5 +208,16 @@ public sealed class SagePresenterSteps
     public void ThenTheInputIsFocused()
     {
         World.WindowView.FocusRequests.ShouldBeGreaterThan(0);
+    }
+
+    private static async Task WaitUntil(Func<bool> condition)
+    {
+        var deadline = Environment.TickCount64 + 5000;
+        while (!condition() && Environment.TickCount64 < deadline)
+        {
+            await Task.Delay(10);
+        }
+
+        condition().ShouldBeTrue("timed out waiting for the window");
     }
 }

@@ -37,12 +37,6 @@ public sealed class ChatPresentationSteps
         World.AssistantName = name;
     }
 
-    [Given("thinking display is off")]
-    public void GivenThinkingDisplayIsOff()
-    {
-        World.ShowThinking = false;
-    }
-
     [Given("thinking display is on")]
     public void GivenThinkingDisplayIsOn()
     {
@@ -54,13 +48,6 @@ public sealed class ChatPresentationSteps
     {
         World.Ai ??= new FakeAiClient();
         World.Ai.Hold = true;
-    }
-
-    [When("I ask the assistant in chat {string}")]
-    public async Task WhenIAskTheAssistantInChat(string prompt)
-    {
-        World.Ai ??= new FakeAiClient();
-        await TestComposition.Presenter(World).AskAsync(prompt, null);
     }
 
     [When("I release the AI model")]

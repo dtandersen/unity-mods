@@ -1,28 +1,38 @@
 using System;
 using System.Threading.Tasks;
 using Caev;
-using StationeersAi.Ai;
+using StationeersAi.Command;
+using StationeersAi.Core;
+using StationeersAi.Formatting;
 
 namespace StationeersAi.Window;
 
 /// <summary>
-/// Presenter for the Sage window (passive view): owns the
-/// <see cref="WindowModel"/>, answers the <see cref="ISageView"/> events,
-/// and pushes every state change to the view. The view never touches the
-/// model and decides nothing. This is also the <see cref="IChatSink"/> the
-/// assistant writes to, so the player's echo and the answer land in the
-/// window history.
+/// Presents Sage turns in the window: owns the <see cref="WindowModel"/>,
+/// answers the <see cref="ISageView"/> events, and pushes every state change
+/// to the view. Each turn echoes the question, runs through
+/// <see cref="RunTurnCommand"/>, and shows reasoning and tool traffic per
+/// its options. This is also the <see cref="IChatSink"/> the mention answers
+/// stream into, so the window keeps the full history.
 /// </summary>
 /// <remarks>
 /// The view is only touched through <paramref name="marshal"/>, which the
 /// plugin wires to its main-thread dispatcher; specs run it inline. The
-/// model stays readable from any thread.
+/// model stays readable from any thread. Display options are read per turn,
+/// so config edits apply without a restart.
 /// </remarks>
 public sealed class SagePresenter : IChatSink
 {
     private readonly WindowModel _model;
     private readonly ISageView _view;
-    private readonly Func<string, Task> _ask;
+    private readonly Func<IAssistantActivity, AiAssistant> _assistantFactory;
+    private readonly Func<string> _playerName;
+    private readonly Func<string> _assistantName;
+    private readonly Logger _log;
+    private readonly Func<bool> _showThinking;
+    private readonly Func<bool> _showToolCalls;
+    private readonly Func<bool> _showToolResults;
+    private readonly Func<Conversation> _conversation;
     private readonly Action<Action> _marshal;
     private readonly object _gate = new object();
     private bool _busy;
@@ -30,11 +40,17 @@ public sealed class SagePresenter : IChatSink
 
     /// <param name="model">History store. Never null.</param>
     /// <param name="view">Passive view to drive. Never null.</param>
-    /// <param name="ask">
-    /// Handles a submitted question (usually a <see cref="ChatPresenter"/>
-    /// turn). May return null when there is nothing to run; the window
-    /// still clears busy. May be null in specs that only check view wiring.
+    /// <param name="assistantFactory">
+    /// Builds the assistant, or returns null when game data is not loaded. It
+    /// receives the activity sink to report reasoning and tool use to.
     /// </param>
+    /// <param name="playerName">Supplies the local player's name for the echo. May return null, which echoes as "You".</param>
+    /// <param name="assistantName">Supplies the name the assistant posts under. May return null, which posts as "Sage".</param>
+    /// <param name="log">Receives exception details.</param>
+    /// <param name="showThinking">Post the model's reasoning and narration.</param>
+    /// <param name="showToolCalls">Post each requested tool call.</param>
+    /// <param name="showToolResults">Post each tool's raw output.</param>
+    /// <param name="conversation">Supplies the shared conversation. May return null, which sends no history.</param>
     /// <param name="marshal">
     /// Runs view updates where the view demands it (Unity's main thread).
     /// Defaults to running inline.
@@ -42,12 +58,26 @@ public sealed class SagePresenter : IChatSink
     public SagePresenter(
         WindowModel model,
         ISageView view,
-        Func<string, Task> ask,
+        Func<IAssistantActivity, AiAssistant> assistantFactory,
+        Func<string> playerName,
+        Func<string> assistantName,
+        Logger log,
+        Func<bool> showThinking,
+        Func<bool> showToolCalls,
+        Func<bool> showToolResults,
+        Func<Conversation> conversation,
         Action<Action> marshal = null)
     {
         _model = model ?? throw new ArgumentNullException(nameof(model));
         _view = view ?? throw new ArgumentNullException(nameof(view));
-        _ask = ask;
+        _assistantFactory = assistantFactory;
+        _playerName = playerName;
+        _assistantName = assistantName;
+        _log = log;
+        _showThinking = showThinking;
+        _showToolCalls = showToolCalls;
+        _showToolResults = showToolResults;
+        _conversation = conversation;
         _marshal = marshal ?? (action => action());
 
         _view.SubmitRequested += OnSubmitRequested;
@@ -99,38 +129,68 @@ public sealed class SagePresenter : IChatSink
     }
 
     /// <summary>
-    /// Runs one assistant turn for a prompt from outside the view (a chat
-    /// mention, a console question): same rules as a submit — empty and
-    /// busy prompts are ignored — and the view shows busy until
-    /// <paramref name="turn"/> finishes. Returns false when nothing ran.
+    /// Asks from outside the view (console command): opens the window and
+    /// runs one turn. Empty and busy prompts are ignored.
     /// </summary>
-    public async Task<bool> RunTurnAsync(string prompt, Func<string, Task> turn)
+    public Task AskAsync(string prompt)
     {
-        if (!TryBeginTurn(prompt, out prompt))
+        Show();
+        return StartTurn(prompt, clearInput: false);
+    }
+
+    /// <summary>Drops the shared conversation and reports it in the window.</summary>
+    public void ClearConversation()
+    {
+        var conversation = _conversation != null ? _conversation() : null;
+        if (conversation == null)
         {
-            return false;
+            return;
         }
 
-        Run(() => _view.SetBusy(true));
+        conversation.Clear();
+        Say($"context cleared ({conversation.Messages.Count} messages).");
+    }
+
+    /// <summary>Condenses the shared conversation, reporting progress in the window.</summary>
+    public async Task CompactConversation()
+    {
+        var conversation = _conversation != null ? _conversation() : null;
+        if (conversation == null)
+        {
+            return;
+        }
+
         try
         {
-            var task = turn != null ? turn(prompt) : null;
-            if (task != null)
+            var assistant = _assistantFactory?.Invoke(null);
+            if (assistant == null)
             {
-                await task.ConfigureAwait(false);
+                Say("game data is not loaded yet.");
+                return;
             }
-        }
-        finally
-        {
-            ClearBusy();
-        }
 
-        return true;
+            if (conversation.Messages.Count == 0)
+            {
+                Say("nothing to compact.");
+                return;
+            }
+
+            Say("compacting context...");
+            var summary = await assistant.CompactAsync(conversation).ConfigureAwait(false);
+            Say(string.IsNullOrWhiteSpace(summary)
+                ? "compaction produced no summary."
+                : "context compacted.");
+        }
+        catch (Exception ex)
+        {
+            Say($"error: {ex.Message}");
+            _log.Log(ex.ToString());
+        }
     }
 
     /// <summary>
-    /// Sink for the assistant: answers land here from any thread, join the
-    /// model, and are pushed to the view.
+    /// Sink for the mention answers: lines land here from any thread, join
+    /// the model, and are pushed to the view.
     /// </summary>
     public void Write(string line)
     {
@@ -141,35 +201,75 @@ public sealed class SagePresenter : IChatSink
 
     private void OnSubmitRequested()
     {
-        if (!TryBeginTurn(_view.Input, out var prompt))
+        _ = StartTurn(_view.Input, clearInput: true);
+    }
+
+    private Task StartTurn(string prompt, bool clearInput)
+    {
+        if (!TryBeginTurn(prompt, out var trimmed))
         {
-            return;
+            return Task.CompletedTask;
         }
 
-        Run(() =>
+        if (clearInput)
         {
-            _view.Input = string.Empty;
-            _view.SetBusy(true);
-        });
+            Run(() => _view.Input = string.Empty);
+        }
 
-        Task task = null;
+        Run(() => _view.SetBusy(true));
+        return TurnAsync(trimmed);
+    }
+
+    private async Task TurnAsync(string prompt)
+    {
         try
         {
-            task = _ask != null ? _ask(prompt) : null;
+            Echo(prompt);
+            await RunCommandAsync(prompt, _conversation != null ? _conversation() : null).ConfigureAwait(false);
         }
-        catch
+        finally
         {
             ClearBusy();
-            throw;
         }
+    }
 
-        if (task == null)
+    private async Task RunCommandAsync(string prompt, Conversation conversation)
+    {
+        var command = new RunTurnCommand(_assistantFactory, _log);
+        if (_showThinking != null && _showThinking())
         {
-            ClearBusy();
-            return;
+            command.Think += Say;
         }
 
-        task.ContinueWith(_ => ClearBusy(), TaskScheduler.Default);
+        if (_showToolCalls != null && _showToolCalls())
+        {
+            command.ToolCall += Say;
+        }
+
+        if (_showToolResults != null && _showToolResults())
+        {
+            command.ToolOutput += Say;
+        }
+
+        command.Answered += Say;
+        await command.ExecuteAsync(new RunTurnRequest(prompt), conversation, null).ConfigureAwait(false);
+    }
+
+    /// <summary>Posts an assistant line to the window history.</summary>
+    private void Say(string text)
+    {
+        Write(ChatNaming.Apply(_assistantName != null ? _assistantName() : null, text));
+    }
+
+    private void Echo(string prompt)
+    {
+        var name = _playerName?.Invoke();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            name = "You";
+        }
+
+        Write($"{name}: {prompt}");
     }
 
     /// <summary>

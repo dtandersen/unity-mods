@@ -1,3 +1,5 @@
+using System;
+using StationeersAi.Window;
 using Util.Commands;
 
 namespace StationeersAi.Mod;
@@ -5,11 +7,17 @@ namespace StationeersAi.Mod;
 /// <summary>
 /// The <c>ai</c> console command: <c>ai &lt;question&gt;</c> asks the assistant,
 /// <c>ai clear</c> drops the conversation, <c>ai compact</c> summarises it.
-/// Questions are answered asynchronously; the answer is printed to the console
-/// when the model replies.
+/// Questions are answered asynchronously; the answer streams into the Sage
+/// window when the model replies.
 /// </summary>
 public sealed class AiConsoleCommand : CommandBase
 {
+    private readonly SagePresenter _presenter;
+
+    public AiConsoleCommand(SagePresenter presenter)
+    {
+        _presenter = presenter ?? throw new ArgumentNullException(nameof(presenter));
+    }
     public override CommandScope Scope => CommandScope.InGame;
 
     public override string HelpText =>
@@ -26,16 +34,16 @@ public sealed class AiConsoleCommand : CommandBase
             switch (args[0].ToLowerInvariant())
             {
                 case "window":
-                    BepInExPlugin.context.ShowWindow();
+                    _presenter.Show();
                     return "Sage window opened.";
 
                 case "clear":
                 case "reset":
-                    BepInExPlugin.context.ClearContext();
+                    _presenter.ClearConversation();
                     return "Context cleared.";
 
                 case "compact":
-                    BepInExPlugin.context.CompactContext();
+                    _ = _presenter.CompactConversation();
                     return "Compacting context...";
             }
         }
@@ -46,7 +54,7 @@ public sealed class AiConsoleCommand : CommandBase
             return $"Usage: ai <question>  (also: ai clear, ai compact)";
         }
 
-        BepInExPlugin.context.Ask(prompt);
+        _ = _presenter.AskAsync(prompt);
         return $"Asking {BepInExPlugin.AssistantName}... (the answer follows in the Sage window)";
     }
 }
