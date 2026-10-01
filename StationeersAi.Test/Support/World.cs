@@ -80,14 +80,7 @@ public sealed class World : IDisposable
 
     public string Reply { get; set; }
 
-    public FakeOpenAiServer Server { get; set; }
-
-    public AiCompletion Completion { get; set; }
-
-    public AiClientException CompletionError { get; set; }
-
     public void Dispose()
     {
-        Server?.Dispose();
     }
 }

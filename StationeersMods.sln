@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StationeersAi.Common", "Sta
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Caev", "Caev\Caev.csproj", "{114ADCDB-7DA0-4F96-B544-FDFD3E738BF9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Caev.Test", "Caev.Test\Caev.Test.csproj", "{610E6596-B6CE-4428-A29A-88C817309A92}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,18 @@ Global
 		{114ADCDB-7DA0-4F96-B544-FDFD3E738BF9}.Release|x64.Build.0 = Release|Any CPU
 		{114ADCDB-7DA0-4F96-B544-FDFD3E738BF9}.Release|x86.ActiveCfg = Release|Any CPU
 		{114ADCDB-7DA0-4F96-B544-FDFD3E738BF9}.Release|x86.Build.0 = Release|Any CPU
+		{610E6596-B6CE-4428-A29A-88C817309A92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{610E6596-B6CE-4428-A29A-88C817309A92}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{610E6596-B6CE-4428-A29A-88C817309A92}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{610E6596-B6CE-4428-A29A-88C817309A92}.Debug|x64.Build.0 = Debug|Any CPU
+		{610E6596-B6CE-4428-A29A-88C817309A92}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{610E6596-B6CE-4428-A29A-88C817309A92}.Debug|x86.Build.0 = Debug|Any CPU
+		{610E6596-B6CE-4428-A29A-88C817309A92}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{610E6596-B6CE-4428-A29A-88C817309A92}.Release|Any CPU.Build.0 = Release|Any CPU
+		{610E6596-B6CE-4428-A29A-88C817309A92}.Release|x64.ActiveCfg = Release|Any CPU
+		{610E6596-B6CE-4428-A29A-88C817309A92}.Release|x64.Build.0 = Release|Any CPU
+		{610E6596-B6CE-4428-A29A-88C817309A92}.Release|x86.ActiveCfg = Release|Any CPU
+		{610E6596-B6CE-4428-A29A-88C817309A92}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

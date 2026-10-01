@@ -20,12 +20,12 @@ Feature: OpenAI chat client over HTTP
   Scenario: A tool-call reply is parsed and the schema is sent
     Given the server will reply 200 with:
       """
-      {"choices":[{"message":{"tool_calls":[{"id":"call_1","type":"function","function":{"name":"search_recipes","arguments":"{\"query\":\"coil\"}"}}]}}]}
+      {"choices":[{"message":{"tool_calls":[{"id":"call_1","type":"function","function":{"name":"lookup","arguments":"{\"query\":\"coil\"}"}}]}}]}
       """
-    When I complete a chat with "How do I make cable?" with the "search_recipes" tool
-    Then the completion requests the tool "search_recipes"
+    When I complete a chat with "How do I make cable?" with the "lookup" tool
+    Then the completion requests the tool "lookup"
     And the tool arguments contain "query" = "coil"
-    And the request body contains "search_recipes"
+    And the request body contains "lookup"
     And the request body contains "query"
 
   Scenario: A server error is surfaced

@@ -6,7 +6,8 @@
 StationeersAi.Common/ netstandard2.0   Shared bits used on both sides (trace log)
 StationeersAi.Core/   netstandard2.0   Unity-free game data (models, tools, commands, chat, window)
 Caev/               netstandard2.0   Generic agent engine (loop, clients, messages, tool ports)
-StationeersAi.Test/   net8.0           TUnit + Shouldly + ArchUnitNET specs
+StationeersAi.Test/   net8.0           TUnit + Shouldly + ArchUnitNET specs (game, chat, window)
+Caev.Test/          net8.0           Engine specs: loop, activity, OpenAI wire (stub tools, fake server)
 StationeersAi.Mod/    net48            BepInEx plugin: Unity/HTTP/game-data adapter
 ```
 
@@ -39,6 +40,7 @@ StationeersAi.Common/
 StationeersAi.Core/
 Caev/
 StationeersAi.Test/
+Caev.Test/
 StationeersAi.Mod/
   BepInExPlugin.cs
   AiConsoleCommand.cs  # the `ai` console command

@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace StationeersAi.Test.Fakes;
+namespace Caev.Test.Fakes;
 
 /// <summary>A request captured by <see cref="FakeOpenAiServer"/>.</summary>
 public sealed record CapturedHttpRequest(

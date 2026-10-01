@@ -13,7 +13,7 @@ using StationeersAi.Tool;
 
 namespace StationeersAi.Test;
 
-/// <summary>The model/tool loop, conversation memory, and chat presentation.</summary>
+/// <summary>Chat presentation and mention answering.</summary>
 public class AssistantTests
 {
     private static ToolHandler RecipeTools()
@@ -39,65 +39,6 @@ public class AssistantTests
             new ToolCall(id, name, new ToolArguments(
                 new System.Collections.Generic.Dictionary<string, string> { ["query"] = query })),
         });
-
-    [Test]
-    public async Task Ask_runs_tool_loop_then_answers()
-    {
-        var ai = new FakeAiClient()
-            .RespondWith(CallTool("1", "search_recipes", "cable"))
-            .RespondWith(Answer("Cable Coil needs 5 copper."));
-        var assistant = new AiAssistant(ai, RecipeTools(), systemPrompt: null, maxIterations: 5, log: new RecordingLogger(), activity: null);
-
-        var answer = await assistant.AskAsync("how do I make cable coil?", null);
-
-        answer.ShouldBe("Cable Coil needs 5 copper.");
-        ai.Transcript.Count.ShouldBe(2);
-        // The tool result was fed back to the model.
-        ai.Transcript[1][^1].Role.ShouldBe(ChatRole.Tool);
-        ai.Transcript[1][^1].Content.ShouldContain("Cable Coil");
-    }
-
-    [Test]
-    public async Task Ask_appends_turn_to_conversation()
-    {
-        var ai = new FakeAiClient().RespondWith(Answer("hi"));
-        var assistant = new AiAssistant(ai, RecipeTools(), systemPrompt: null, maxIterations: 5, log: new RecordingLogger(), activity: null);
-        var conversation = new Conversation();
-
-        await assistant.AskAsync("hello", conversation);
-
-        conversation.Messages.Count.ShouldBe(2);
-        conversation.Messages[0].Role.ShouldBe(ChatRole.User);
-        conversation.Messages[1].Role.ShouldBe(ChatRole.Assistant);
-    }
-
-    [Test]
-    public async Task Ask_gives_up_after_max_iterations()
-    {
-        var ai = new FakeAiClient { EchoLastToolResult = false }
-            .RespondWith(CallTool("1", "search_recipes", "cable"))
-            .RespondWith(CallTool("2", "search_recipes", "cable"));
-        var assistant = new AiAssistant(ai, RecipeTools(), systemPrompt: null, maxIterations: 2, log: new RecordingLogger(), activity: null);
-
-        var answer = await assistant.AskAsync("cable?", null);
-
-        answer.ShouldContain("couldn't complete");
-    }
-
-    [Test]
-    public async Task Compact_replaces_history_with_summary()
-    {
-        var ai = new FakeAiClient().RespondWith(Answer("user asked about cable"));
-        var assistant = new AiAssistant(ai, RecipeTools(), systemPrompt: null, maxIterations: 5, log: new RecordingLogger(), activity: null);
-        var conversation = new Conversation();
-        conversation.Add(new ChatMessage(ChatRole.User, "cable?"));
-        conversation.Add(new ChatMessage(ChatRole.Assistant, "5 copper"));
-
-        var summary = await assistant.CompactAsync(conversation);
-
-        summary.ShouldBe("user asked about cable");
-        conversation.Messages.Count.ShouldBe(1);
-    }
 
     [Test]
     public async Task Presenter_echoes_question_and_posts_plain_answer()

@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Newtonsoft.Json.Linq;
 
-namespace StationeersAi.Test.Integration;
+namespace Caev.Test.Integration;
 
 /// <summary>
 /// Credentials for the opt-in integration tests. Read from environment variables

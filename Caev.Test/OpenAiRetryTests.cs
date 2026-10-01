@@ -7,7 +7,7 @@ using Caev;
 using Caev.Tools;
 using Caev.OpenAi;
 
-namespace StationeersAi.Test;
+namespace Caev.Test;
 
 /// <summary>Retry after retryable HTTP failures: 408/429/5xx, transport included.</summary>
 public class OpenAiRetryTests
