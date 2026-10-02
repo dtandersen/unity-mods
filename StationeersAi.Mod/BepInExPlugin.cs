@@ -32,7 +32,7 @@ namespace StationeersAi.Mod;
 /// <c>StationeersAi.Core</c>.
 /// </summary>
 [BepInPlugin(ModGuid, ModName, ModVersion)]
-public class BepInExPlugin : BaseUnityPlugin, IMainThread
+public class BepInExPlugin : BaseUnityPlugin
 {
     public const string ModGuid = "dtandersen.sage";
     public const string ModName = "SAGE";
@@ -55,10 +55,9 @@ public class BepInExPlugin : BaseUnityPlugin, IMainThread
     private SageConfig _settings;
 
     private Conversation _conversation;
-    private SynchronizationContext _unitySynchronizationContext;
-    private int _unityThreadId;
 
     private MentionResponder _mentionResponder;
+    private MainThreadExecutor _threads;
 
     private readonly Dictionary<string, Conversation> _mentionConversations = new Dictionary<string, Conversation>();
 
@@ -81,9 +80,10 @@ public class BepInExPlugin : BaseUnityPlugin, IMainThread
         }
 
         _log = new BepinExLogger(Logger);
-        _unitySynchronizationContext = SynchronizationContext.Current;
-        _unityThreadId = Thread.CurrentThread.ManagedThreadId;
-        _log.Log($"captured Unity thread {_unityThreadId}; synchronization context available={_unitySynchronizationContext != null}");
+        var synchronizationContext = SynchronizationContext.Current;
+        var unityThreadId = Thread.CurrentThread.ManagedThreadId;
+        _threads = new MainThreadExecutor(synchronizationContext, unityThreadId, _log);
+        _log.Log($"captured Unity thread {unityThreadId}; synchronization context available={synchronizationContext != null}");
 
         _settings = new SageConfig(Config);
 
@@ -115,106 +115,13 @@ public class BepInExPlugin : BaseUnityPlugin, IMainThread
             () => _settings.ShowToolCalls.Value,
             () => _settings.ShowToolResults.Value,
             () => _settings.ContextMessages.Value > 0 ? Conversation : null,
-            Run);
+            _threads.Run);
         _log.Log($"Sage window ready ({_settings.WindowToggle.Value})");
 
         CommandLine.AddCommand("ai", new AiConsoleCommand(_sage, () => AssistantName));
         _log.Log("registered 'ai' console command");
 
         _log.Log($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");
-    }
-
-    /// <summary>Runs work on Unity's main thread, posting from async continuations.</summary>
-    public void Run(Action action)
-    {
-        if (action == null)
-        {
-            return;
-        }
-
-        if (Thread.CurrentThread.ManagedThreadId == _unityThreadId)
-        {
-            RunGuarded(action);
-            return;
-        }
-
-        var synchronizationContext = _unitySynchronizationContext;
-        if (synchronizationContext == null)
-        {
-            _log.Log("cannot dispatch to Unity main thread: synchronization context was not captured");
-            return;
-        }
-
-        synchronizationContext.Post(_ => RunGuarded(action), null);
-    }
-
-    private void RunGuarded(Action action)
-    {
-        try
-        {
-            action();
-        }
-        catch (Exception ex)
-        {
-            _log.Log(ex.ToString());
-        }
-    }
-
-    /// <summary>
-    /// Runs work on Unity's main thread and returns its result, blocking the
-    /// caller. Tools run off the main thread, but Unity objects demand it.
-    /// Throws when the context was never captured or the wait times out.
-    /// </summary>
-    public T RunSync<T>(Func<T> func, int timeoutMilliseconds = 10000)
-    {
-        if (func == null)
-        {
-            throw new ArgumentNullException(nameof(func));
-        }
-
-        if (Thread.CurrentThread.ManagedThreadId == _unityThreadId)
-        {
-            return func();
-        }
-
-        var synchronizationContext = _unitySynchronizationContext;
-        if (synchronizationContext == null)
-        {
-            throw new InvalidOperationException("Unity synchronization context was not captured.");
-        }
-
-        T result = default(T);
-        Exception error = null;
-        using (var done = new ManualResetEventSlim(false))
-        {
-            synchronizationContext.Post(_ =>
-            {
-                try
-                {
-                    result = func();
-                }
-                catch (Exception ex)
-                {
-                    error = ex;
-                }
-                finally
-                {
-                    done.Set();
-                }
-            }, null);
-
-            if (!done.Wait(timeoutMilliseconds))
-            {
-                throw new TimeoutException("Timed out waiting for Unity's main thread.");
-            }
-        }
-
-        if (error != null)
-        {
-            throw error;
-        }
-
-        return result;
     }
 
     /// <summary>
@@ -307,7 +214,7 @@ public class BepInExPlugin : BaseUnityPlugin, IMainThread
     private MentionResponder MentionResponderInstance()
     {
         return _mentionResponder ??= new MentionResponder(
-            new FanoutChatSink(_sage, new ChatMessageSink(this, _log, () => AssistantName)),
+            new FanoutChatSink(_sage, new ChatMessageSink(_threads, _log, () => AssistantName)),
             activity => BuildAssistant(activity),
             AssistantName,
             _log);
@@ -389,12 +296,12 @@ public class BepInExPlugin : BaseUnityPlugin, IMainThread
             new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(playerContext))),
             new GetStatusTool(new GetStatusCommand(playerContext)),
             new GetWorldTool(new GetWorldCommand(new StationeersWorldContext())),
-            new WriteIcTool(new WriteIcCommand(new StationeersIcEditor(this, _log))),
-            new ReadIcTool(new ReadIcCommand(new StationeersIcEditor(this, _log))),
-            new ExportIcTool(new ExportIcCommand(new StationeersIcExport(this, _log))),
+            new WriteIcTool(new WriteIcCommand(new StationeersIcEditor(_threads, _log))),
+            new ReadIcTool(new ReadIcCommand(new StationeersIcEditor(_threads, _log))),
+            new ExportIcTool(new ExportIcCommand(new StationeersIcExport(_threads, _log))),
             new MipsReferenceTool(new ReadMipsCommand(new StationeersMipsReference(_log))),
-            new SearchDevicesTool(new SearchDevicesCommand(new StationeersDeviceCatalog(this, _log))),
-            new DescribeDeviceTool(new DescribeDeviceCommand(new StationeersDeviceInspector(this, _log), new StationeersDeviceCatalog(this, _log))),
+            new SearchDevicesTool(new SearchDevicesCommand(new StationeersDeviceCatalog(_threads, _log))),
+            new DescribeDeviceTool(new DescribeDeviceCommand(new StationeersDeviceInspector(_threads, _log), new StationeersDeviceCatalog(_threads, _log))),
         });
 
         var client = new OpenAiChatClient(
