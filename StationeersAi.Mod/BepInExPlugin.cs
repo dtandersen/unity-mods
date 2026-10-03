@@ -59,7 +59,7 @@ public class BepInExPlugin : BaseUnityPlugin
     private MentionResponder _mentionResponder;
     private MainThreadExecutor _threads;
     private WindowModel _windowModel;
-    private SageWindow _window;
+    private SageImGuiWindow _window;
 
     private readonly Dictionary<string, Conversation> _mentionConversations = new Dictionary<string, Conversation>();
 
@@ -124,7 +124,7 @@ public class BepInExPlugin : BaseUnityPlugin
 
         var holder = new GameObject("SageWindow");
         UnityEngine.Object.DontDestroyOnLoad(holder);
-        _window = holder.AddComponent<SageWindow>();
+        _window = holder.AddComponent<SageImGuiWindow>();
         _window.Logger = _log;
         _window.WindowToggle = () => _settings.WindowToggle.Value;
         _sage = new SagePresenter(

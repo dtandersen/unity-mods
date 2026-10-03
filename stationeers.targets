@@ -109,6 +109,14 @@
       <HintPath>$(ManagedDataPath)\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="RG.ImGui">
+      <HintPath>$(ManagedDataPath)\RG.ImGui.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="RG.ImGui.Unity">
+      <HintPath>$(ManagedDataPath)\RG.ImGui.Unity.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
 
   <!-- Unity assemblies -->
