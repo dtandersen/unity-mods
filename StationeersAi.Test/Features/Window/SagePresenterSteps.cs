@@ -34,6 +34,9 @@ public sealed class SagePresenterSteps
         return World.WindowPresenter;
     }
 
+    private static readonly DateTimeOffset TurnStarted = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+    private bool _clockArmed = true;
+
     private SagePresenter BuildPresenter(WindowModel model)
     {
         return new SagePresenter(
@@ -46,7 +49,19 @@ public sealed class SagePresenterSteps
             () => World.ShowThinking,
             () => World.ShowToolCalls,
             () => World.ShowToolResults,
-            () => World.Conversation);
+            () => World.Conversation,
+            clock: () =>
+            {
+                // Scripted time stands still, so trip it once per turn: the
+                // start reads the base instant, progress reads it elapsed.
+                if (_clockArmed)
+                {
+                    _clockArmed = false;
+                    return TurnStarted;
+                }
+
+                return TurnStarted + World.ThinkingElapsed;
+            });
     }
 
     private string[] AskedQuestions()
@@ -87,9 +102,29 @@ public sealed class SagePresenterSteps
         await WaitUntil(() => AskedQuestions().Contains(question));
     }
 
+    [Given("{int} seconds have passed")]
+    public void GivenSecondsHavePassed(int seconds)
+    {
+        World.ThinkingElapsed = TimeSpan.FromSeconds(seconds);
+    }
+
+    [Given("the AI model will pause after {int} calls")]
+    public void GivenTheAiModelWillPauseAfterCalls(int count)
+    {
+        World.Ai ??= new FakeAiClient();
+        World.Ai.PauseAfterCalls = count;
+    }
+
+    [When("the turn pauses")]
+    public async Task WhenTheTurnPauses()
+    {
+        await WaitUntil(() => World.WindowView.Lines.Any(line => line.Contains("Thinking")));
+    }
+
     [When("the user submits")]
     public void WhenTheUserSubmits()
     {
+        _clockArmed = true;
         World.WindowView.RaiseSubmit();
     }
 
@@ -97,6 +132,7 @@ public sealed class SagePresenterSteps
     public void WhenTheConsoleAsks(string question)
     {
         EnsurePresenter().ShouldNotBeNull();
+        _clockArmed = true;
         World.AskTask = World.WindowPresenter.AskAsync(question);
     }
 
@@ -208,6 +244,12 @@ public sealed class SagePresenterSteps
     public void ThenTheInputIsFocused()
     {
         World.WindowView.FocusRequests.ShouldBeGreaterThan(0);
+    }
+
+    [Then("the input is not focused")]
+    public void ThenTheInputIsNotFocused()
+    {
+        World.WindowView.FocusRequests.ShouldBe(0);
     }
 
     private static async Task WaitUntil(Func<bool> condition)

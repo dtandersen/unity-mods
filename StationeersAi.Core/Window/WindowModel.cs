@@ -14,6 +14,7 @@ public sealed class WindowModel
 {
     private readonly List<string> _lines = new List<string>();
     private readonly object _gate = new object();
+    private int _thinkingIndex = -1;
 
     public WindowModel(int maxLines)
     {
@@ -42,7 +43,53 @@ public sealed class WindowModel
             while (_lines.Count > MaxLines)
             {
                 _lines.RemoveAt(0);
+                if (_thinkingIndex == 0)
+                {
+                    _thinkingIndex = -1;
+                }
+                else if (_thinkingIndex > 0)
+                {
+                    _thinkingIndex--;
+                }
             }
+        }
+    }
+
+    /// <summary>
+    /// Shows the thinking status, overwriting itself: the first call appends
+    /// it, later calls replace it in place. Only one turn runs at a time,
+    /// so the tracked line is always the right one.
+    /// </summary>
+    public void SetThinking(string line)
+    {
+        lock (_gate)
+        {
+            if (_thinkingIndex < 0 || _thinkingIndex >= _lines.Count)
+            {
+                _lines.Add(line ?? string.Empty);
+                _thinkingIndex = _lines.Count - 1;
+            }
+            else
+            {
+                _lines[_thinkingIndex] = line ?? string.Empty;
+            }
+        }
+    }
+
+    /// <summary>Removes the thinking status. Returns false when none is shown.</summary>
+    public bool ClearThinking()
+    {
+        lock (_gate)
+        {
+            if (_thinkingIndex < 0 || _thinkingIndex >= _lines.Count)
+            {
+                _thinkingIndex = -1;
+                return false;
+            }
+
+            _lines.RemoveAt(_thinkingIndex);
+            _thinkingIndex = -1;
+            return true;
         }
     }
 
@@ -51,6 +98,7 @@ public sealed class WindowModel
         lock (_gate)
         {
             _lines.Clear();
+            _thinkingIndex = -1;
         }
     }
 }

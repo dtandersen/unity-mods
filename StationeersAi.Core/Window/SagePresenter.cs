@@ -34,9 +34,11 @@ public sealed class SagePresenter : IChatSink
     private readonly Func<bool> _showToolResults;
     private readonly Func<Conversation> _conversation;
     private readonly Action<Action> _marshal;
+    private readonly Func<DateTimeOffset> _clock;
     private readonly object _gate = new object();
     private bool _busy;
     private bool _visible;
+    private DateTimeOffset _turnStarted;
 
     /// <param name="model">History store. Never null.</param>
     /// <param name="view">Passive view to drive. Never null.</param>
@@ -55,6 +57,7 @@ public sealed class SagePresenter : IChatSink
     /// Runs view updates where the view demands it (Unity's main thread).
     /// Defaults to running inline.
     /// </param>
+    /// <param name="clock">Supplies the current time for the thinking status. Defaults to UTC now.</param>
     public SagePresenter(
         WindowModel model,
         ISageView view,
@@ -66,7 +69,8 @@ public sealed class SagePresenter : IChatSink
         Func<bool> showToolCalls,
         Func<bool> showToolResults,
         Func<Conversation> conversation,
-        Action<Action> marshal = null)
+        Action<Action> marshal = null,
+        Func<DateTimeOffset> clock = null)
     {
         _model = model ?? throw new ArgumentNullException(nameof(model));
         _view = view ?? throw new ArgumentNullException(nameof(view));
@@ -79,6 +83,7 @@ public sealed class SagePresenter : IChatSink
         _showToolResults = showToolResults;
         _conversation = conversation;
         _marshal = marshal ?? (action => action());
+        _clock = clock ?? (() => DateTimeOffset.UtcNow);
 
         _view.SubmitRequested += OnSubmitRequested;
         _view.ToggleRequested += OnToggleRequested;
@@ -102,11 +107,14 @@ public sealed class SagePresenter : IChatSink
             _visible = true;
         }
 
-        Run(() =>
-        {
-            _view.SetVisible(true);
-            _view.RequestFocus();
-        });
+        Run(() => _view.SetVisible(true));
+    }
+
+    /// <summary>Opens the window and moves keyboard focus to its input.</summary>
+    public void ShowAndFocus()
+    {
+        Show();
+        Run(() => _view.RequestFocus());
     }
 
     public void Toggle()
@@ -195,8 +203,7 @@ public sealed class SagePresenter : IChatSink
     public void Write(string line)
     {
         _model.Append(line);
-        var snapshot = _model.Lines;
-        Run(() => _view.SetLines(snapshot));
+        PushLines();
     }
 
     private void OnSubmitRequested()
@@ -210,6 +217,8 @@ public sealed class SagePresenter : IChatSink
         {
             return Task.CompletedTask;
         }
+
+        _turnStarted = _clock();
 
         if (clearInput)
         {
@@ -236,23 +245,68 @@ public sealed class SagePresenter : IChatSink
     private async Task RunCommandAsync(string prompt, Conversation conversation)
     {
         var command = new RunTurnCommand(_assistantFactory, _log);
-        if (_showThinking != null && _showThinking())
+        command.Think += text =>
         {
-            command.Think += Say;
-        }
-
-        if (_showToolCalls != null && _showToolCalls())
+            if (_showThinking != null && _showThinking())
+            {
+                Say(text);
+            }
+            else
+            {
+                NoteProgress();
+            }
+        };
+        command.ToolCall += text =>
         {
-            command.ToolCall += Say;
-        }
-
-        if (_showToolResults != null && _showToolResults())
+            if (_showToolCalls != null && _showToolCalls())
+            {
+                Say(text);
+            }
+            else
+            {
+                NoteProgress();
+            }
+        };
+        command.ToolOutput += text =>
         {
-            command.ToolOutput += Say;
-        }
-
-        command.Answered += Say;
+            if (_showToolResults != null && _showToolResults())
+            {
+                Say(text);
+            }
+            else
+            {
+                NoteProgress();
+            }
+        };
+        command.Answered += answer =>
+        {
+            ClearThinking();
+            Say(answer);
+        };
         await command.ExecuteAsync(new RunTurnRequest(prompt), conversation, null).ConfigureAwait(false);
+    }
+
+    /// <summary>Refreshes the thinking status with the elapsed turn time.</summary>
+    private void NoteProgress()
+    {
+        var elapsed = _clock() - _turnStarted;
+        var seconds = elapsed.TotalSeconds < 0 ? 0 : (int)elapsed.TotalSeconds;
+        _model.SetThinking(ChatNaming.Apply(_assistantName != null ? _assistantName() : null, $"Thinking ({seconds}s)..."));
+        PushLines();
+    }
+
+    private void ClearThinking()
+    {
+        if (_model.ClearThinking())
+        {
+            PushLines();
+        }
+    }
+
+    private void PushLines()
+    {
+        var snapshot = _model.Lines;
+        Run(() => _view.SetLines(snapshot));
     }
 
     /// <summary>Posts an assistant line to the window history.</summary>

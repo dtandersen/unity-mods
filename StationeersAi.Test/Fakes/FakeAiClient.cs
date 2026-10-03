@@ -27,6 +27,11 @@ public sealed class FakeAiClient : IAiClient
     /// <summary>When true, calls block until <see cref="Release"/> is called.</summary>
     public bool Hold { get; set; }
 
+    /// <summary>When zero or more, calls after this many completions block until <see cref="Release"/>.</summary>
+    public int PauseAfterCalls { get; set; } = -1;
+
+    private int _completedCalls;
+
     /// <summary>Lets any held calls complete.</summary>
     public void Release()
     {
@@ -45,8 +50,9 @@ public sealed class FakeAiClient : IAiClient
         CancellationToken cancellationToken = default)
     {
         Transcript.Add(messages.ToArray());
+        _completedCalls++;
 
-        if (Hold)
+        if (Hold || (PauseAfterCalls >= 0 && _completedCalls > PauseAfterCalls))
         {
             await _gate.Task;
         }

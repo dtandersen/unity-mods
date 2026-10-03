@@ -36,7 +36,7 @@ public sealed class AiConsoleCommand : CommandBase
             switch (args[0].ToLowerInvariant())
             {
                 case "window":
-                    _presenter().Show();
+                    _presenter().ShowAndFocus();
                     return "Sage window opened.";
 
                 case "clear":

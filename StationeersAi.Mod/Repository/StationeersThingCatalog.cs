@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Assets.Scripts;
 using Assets.Scripts.Objects;
+using Assets.Scripts.Objects.Items;
 using StationeersAi.Entity;
 using StationeersAi.Mod;
 using StationeersAi.Repository;
@@ -80,6 +81,7 @@ public sealed class StationeersThingCatalog : IThingCatalog
                     name,
                     thing.PrefabName,
                     thing.ReferenceId,
+                    QuantityText(thing),
                     center.x,
                     center.y,
                     center.z,
@@ -91,6 +93,22 @@ public sealed class StationeersThingCatalog : IThingCatalog
         }
 
         return found;
+    }
+
+    private static string QuantityText(DynamicThing thing)
+    {
+        if (thing is IQuantity quantity)
+        {
+            try
+            {
+                return quantity.GetQuantityText();
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        return null;
     }
 
     private static long RoomOf(Thing thing)

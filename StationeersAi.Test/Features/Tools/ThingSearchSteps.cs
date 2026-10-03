@@ -27,6 +27,7 @@ public sealed class ThingSearchSteps
                 row["Name"],
                 row["Type"],
                 long.Parse(row["Thing"], CultureInfo.InvariantCulture),
+                row["Quantity"],
                 double.Parse(row["X"], CultureInfo.InvariantCulture),
                 double.Parse(row["Y"], CultureInfo.InvariantCulture),
                 double.Parse(row["Z"], CultureInfo.InvariantCulture),

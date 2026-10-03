@@ -8,9 +8,9 @@ Feature: Thing search tool
 
   Background:
     Given these world things exist:
-      | Name       | Type | Thing | X   | Y  | Z | Room |
-      | Iron Ore   | Ore  | 101   | 3   | 4  | 0 | 5    |
-      | Copper Ore | Ore  | 102   | -30 | 40 | 0 | 5    |
+      | Name       | Type | Thing | Quantity | X   | Y  | Z | Room |
+      | Iron Ore   | Ore  | 101   | 5        | 3   | 4  | 0 | 5    |
+      | Copper Ore | Ore  | 102   | 12       | -30 | 40 | 0 | 5    |
     And my position is "0", "0", "0" on "world"
     And I face "0"
 
@@ -19,10 +19,10 @@ Feature: Thing search tool
     Then the tool succeeds
     And the tool result is:
       """
-      | Name       | Type | Thing | Distance | Direction | Room |
-      | ---------- | ---- | ----- | -------- | --------- | ---- |
-      | Iron Ore   | Ore  |   101 | 5 m      |       +90 |    5 |
-      | Copper Ore | Ore  |   102 | 50 m     |       -90 |    5 |
+      | Name       | Type | Thing | Quantity | Distance | Direction | Room |
+      | ---------- | ---- | ----- | -------- | -------- | --------- | ---- |
+      | Iron Ore   | Ore  |   101 |        5 | 5 m      |       +90 |    5 |
+      | Copper Ore | Ore  |   102 |       12 | 50 m     |       -90 |    5 |
       Showing 2 of 2.
       """
 
@@ -34,15 +34,15 @@ Feature: Thing search tool
 
   Scenario: Things outside rooms show no room
     Given these world things exist:
-      | Name        | Type  | Thing | X | Y  | Z | Room |
-      | Steel Ingot | Ingot | 103   | 0 | 10 | 0 | 0    |
+      | Name        | Type  | Thing | Quantity | X | Y  | Z | Room |
+      | Steel Ingot | Ingot | 103   | 1        | 0 | 10 | 0 | 0    |
     When I call the "search_things" tool with query "ingot" from "0, 0, 0" within "100"
     Then the tool succeeds
     And the tool result is:
       """
-      | Name        | Type  | Thing | Distance | Direction | Room |
-      | ----------- | ----- | ----- | -------- | --------- | ---- |
-      | Steel Ingot | Ingot |   103 | 10 m     | here      | none |
+      | Name        | Type  | Thing | Quantity | Distance | Direction | Room |
+      | ----------- | ----- | ----- | -------- | -------- | --------- | ---- |
+      | Steel Ingot | Ingot |   103 |        1 | 10 m     | here      | none |
       Showing 1 of 1.
       """
 

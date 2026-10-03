@@ -54,6 +54,8 @@ public sealed class World : IDisposable
 
     public string AssistantName { get; set; } = "Sage";
 
+    public TimeSpan ThinkingElapsed { get; set; }
+
     public WindowModel Window { get; set; } = new WindowModel(200);
 
     public FakeSageView WindowView { get; set; }
