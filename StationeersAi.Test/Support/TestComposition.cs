@@ -32,6 +32,8 @@ internal static class TestComposition
             new MipsReferenceTool(new ReadMipsCommand(world.Mips)),
             new SearchDevicesTool(new SearchDevicesCommand(world.Devices)),
             new DescribeDeviceTool(new DescribeDeviceCommand(world.Inspector, world.Devices)),
+            new SearchThingsTool(new SearchThingsCommand(world.Things, world.Player)),
+            new ReadRoomTool(new ReadRoomCommand(world.RoomInspector, world.Player)),
         });
     }
 

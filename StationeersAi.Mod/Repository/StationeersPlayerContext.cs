@@ -135,7 +135,32 @@ public sealed class StationeersPlayerContext : IPlayerContext
     private static PlayerStatus PlayerStatus(Human human)
     {
         var position = SafePosition(human);
-        return new Entity.PlayerStatus(position.x, position.y, position.z, WorldName(), null, RoomOf(human));
+        return new Entity.PlayerStatus(position.x, position.y, position.z, WorldName(), null, RoomOf(human), FacingOf(human));
+    }
+
+    /// <summary>Compass heading in degrees (0 north, 90 east), or null.</summary>
+    private static double? FacingOf(Human human)
+    {
+        try
+        {
+            if (human == null)
+            {
+                return null;
+            }
+
+            var forward = human.EntityForward;
+            var degrees = System.Math.Atan2(forward.x, -forward.z) * 180.0 / System.Math.PI;
+            if (degrees < 0)
+            {
+                degrees += 360.0;
+            }
+
+            return degrees;
+        }
+        catch (System.Exception)
+        {
+            return null;
+        }
     }
 
     private static long? RoomOf(Human human)

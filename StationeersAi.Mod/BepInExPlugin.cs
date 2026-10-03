@@ -58,6 +58,8 @@ public class BepInExPlugin : BaseUnityPlugin
 
     private MentionResponder _mentionResponder;
     private MainThreadExecutor _threads;
+    private WindowModel _windowModel;
+    private SageWindow _window;
 
     private readonly Dictionary<string, Conversation> _mentionConversations = new Dictionary<string, Conversation>();
 
@@ -96,17 +98,38 @@ public class BepInExPlugin : BaseUnityPlugin
         harmony.PatchAll(typeof(ChatMessagePatch));
         _log.Log($"patched {harmony.GetPatchedMethods().Count()} method(s) for chat mentions");
 
-        // The window lives on its own persistent object: scene loads destroy
-        // the plugin's GameObject, which would silently kill Update/OnGUI.
-        // DontDestroyOnLoad keeps the holder alive, so Awake creates it once.
+        _windowModel = new WindowModel(200);
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += (_, __) => EnsureWindow();
+        EnsureWindow();
+        _log.Log($"Sage window ready ({_settings.WindowToggle.Value})");
+
+        CommandLine.AddCommand("ai", new AiConsoleCommand(() => _sage, () => AssistantName));
+        _log.Log("registered 'ai' console command");
+
+        _log.Log($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");
+    }
+
+    /// <summary>
+    /// Builds the window holder, view, and presenter, keeping the history
+    /// model across rebuilds. The holder is DontDestroyOnLoad, but scene
+    /// transitions can still drop it, so this runs in Awake, on every scene
+    /// load, and before each use. Unity's fake null counts destroyed objects.
+    /// </summary>
+    private void EnsureWindow()
+    {
+        if (_window != null)
+        {
+            return;
+        }
+
         var holder = new GameObject("SageWindow");
         UnityEngine.Object.DontDestroyOnLoad(holder);
-        var window = holder.AddComponent<SageWindow>();
-        window.Logger = _log;
-        window.WindowToggle = () => _settings.WindowToggle.Value;
+        _window = holder.AddComponent<SageWindow>();
+        _window.Logger = _log;
+        _window.WindowToggle = () => _settings.WindowToggle.Value;
         _sage = new SagePresenter(
-            new WindowModel(200),
-            window,
+            _windowModel,
+            _window,
             activity => BuildAssistant(activity),
             PlayerName,
             () => AssistantName,
@@ -116,12 +139,7 @@ public class BepInExPlugin : BaseUnityPlugin
             () => _settings.ShowToolResults.Value,
             () => _settings.ContextMessages.Value > 0 ? Conversation : null,
             _threads.Run);
-        _log.Log($"Sage window ready ({_settings.WindowToggle.Value})");
-
-        CommandLine.AddCommand("ai", new AiConsoleCommand(_sage, () => AssistantName));
-        _log.Log("registered 'ai' console command");
-
-        _log.Log($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");
+        _mentionResponder = null;
     }
 
     /// <summary>
@@ -139,6 +157,7 @@ public class BepInExPlugin : BaseUnityPlugin
 
     private void HandleChatMessage(Assets.Scripts.Networking.ChatMessage message)
     {
+        EnsureWindow();
         if (!_settings.ModEnabled.Value || !_settings.RespondToMentions.Value || message == null)
         {
             return;
@@ -302,6 +321,8 @@ public class BepInExPlugin : BaseUnityPlugin
             new MipsReferenceTool(new ReadMipsCommand(new StationeersMipsReference(_log))),
             new SearchDevicesTool(new SearchDevicesCommand(new StationeersDeviceCatalog(_threads, _log))),
             new DescribeDeviceTool(new DescribeDeviceCommand(new StationeersDeviceInspector(_threads, _log), new StationeersDeviceCatalog(_threads, _log))),
+            new SearchThingsTool(new SearchThingsCommand(new StationeersThingCatalog(_threads, _log), playerContext)),
+            new ReadRoomTool(new ReadRoomCommand(new StationeersRoomInspector(_threads, _log), playerContext)),
         });
 
         var client = new OpenAiChatClient(

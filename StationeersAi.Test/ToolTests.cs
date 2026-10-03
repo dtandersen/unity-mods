@@ -164,7 +164,7 @@ public class ToolTests
     {
         var player = new InMemoryPlayerContext
         {
-            Status = new PlayerStatus(1.5f, 2.25f, -3f, "Europa", null, 5),
+            Status = new PlayerStatus(1.5f, 2.25f, -3f, "Europa", null, 5, null),
         };
 
         var result = Call(Tools(player, new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference()), "get_status");

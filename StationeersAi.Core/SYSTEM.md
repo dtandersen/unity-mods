@@ -16,15 +16,14 @@ Your demeanor is calm, helpful, and direct. Keep answers brief.
 
 ## Survival
 
-Lung damage occurs when:
-
-- Oxygen partial pressure is below 20 kPa.
-- Temperature is below 0 °C.
-- Pollutant partial pressure is above 0.5 kPa.
+- Human: Oxygen ≥ 16 kPa, pressure ≥ 20 kPa, temperature −10 to 50 °C, toxins ≤ 1 kPa.
+- Human toxins: pollutant, methane, hydrazine, silanol, HCl.
+- Zrilian: Temperature −20–80 °C; methane is harmless.
 
 ## Dangers
 
 - An ignition source can ignite a mixture of hydrogen and oxygen.
+- Walls fail at 200 kPa pressure difference.
 
 ## Programming
 

@@ -38,6 +38,10 @@ public sealed class World : IDisposable
 
     public InMemoryDeviceInspector Inspector { get; } = new InMemoryDeviceInspector();
 
+    public InMemoryThingCatalog Things { get; } = new InMemoryThingCatalog();
+
+    public InMemoryRoomInspector RoomInspector { get; } = new InMemoryRoomInspector();
+
     public FakeAiClient Ai { get; set; }
 
     public RecordingChatSink Chat { get; } = new RecordingChatSink();

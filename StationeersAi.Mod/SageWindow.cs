@@ -27,6 +27,17 @@ public sealed class SageWindow : MonoBehaviour, ISageView
     private Texture2D _background;
     private bool _focusInput;
     private bool _probed;
+    private bool _drawn;
+    private bool _updated;
+
+    private void Update()
+    {
+        if (!_updated)
+        {
+            _updated = true;
+            Logger?.Log("TEMP Sage Update heartbeat: holder alive");
+        }
+    }
 
     public string Input
     {
@@ -112,7 +123,7 @@ public sealed class SageWindow : MonoBehaviour, ISageView
         if (!_probed)
         {
             _probed = true;
-            Logger?.Log("Sage window OnGUI live");
+            Logger?.Log($"TEMP Sage window OnGUI live, visible={_visible}");
         }
 
         if (TogglePressed())
@@ -154,6 +165,12 @@ public sealed class SageWindow : MonoBehaviour, ISageView
 
     private void DrawWindow(int id)
     {
+        if (!_drawn)
+        {
+            _drawn = true;
+            Logger?.Log("TEMP Sage DrawWindow entered");
+        }
+
         if (_autoscroll)
         {
             _scroll.y = float.MaxValue;

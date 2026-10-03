@@ -12,10 +12,10 @@ namespace StationeersAi.Mod;
 /// </summary>
 public sealed class AiConsoleCommand : CommandBase
 {
-    private readonly SagePresenter _presenter;
+    private readonly Func<SagePresenter> _presenter;
     private readonly Func<string> _assistantName;
 
-    public AiConsoleCommand(SagePresenter presenter, Func<string> assistantName)
+    public AiConsoleCommand(Func<SagePresenter> presenter, Func<string> assistantName)
     {
         _presenter = presenter ?? throw new ArgumentNullException(nameof(presenter));
         _assistantName = assistantName;
@@ -36,16 +36,16 @@ public sealed class AiConsoleCommand : CommandBase
             switch (args[0].ToLowerInvariant())
             {
                 case "window":
-                    _presenter.Show();
+                    _presenter().Show();
                     return "Sage window opened.";
 
                 case "clear":
                 case "reset":
-                    _presenter.ClearConversation();
+                    _presenter().ClearConversation();
                     return "Context cleared.";
 
                 case "compact":
-                    _ = _presenter.CompactConversation();
+                    _ = _presenter().CompactConversation();
                     return "Compacting context...";
             }
         }
@@ -56,7 +56,7 @@ public sealed class AiConsoleCommand : CommandBase
             return $"Usage: ai <question>  (also: ai clear, ai compact)";
         }
 
-        _ = _presenter.AskAsync(prompt);
+        _ = _presenter().AskAsync(prompt);
         return $"Asking {_assistantName()}... (the answer follows in the Sage window)";
     }
 }
