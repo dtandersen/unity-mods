@@ -143,16 +143,39 @@ public class BepInExPlugin : BaseUnityPlugin
     }
 
     /// <summary>
-    /// Called for every chat message displayed on this machine. If it is a
-    /// mention and mention handling is enabled, the question is echoed to
-    /// the Sage window and answered there through the window presenter.
-    /// Runs on the Unity main thread, so the game-data snapshot is safe
-    /// to build. Ignored while another turn is running.
+    /// Called for every chat message displayed on this machine. Mentions
+    /// are always answered; other messages are answered directly in local
+    /// games and empty servers. The question is echoed to the Sage window
+    /// and answered there through the window presenter. Runs on the Unity
+    /// main thread, so the game-data snapshot is safe to build. Ignored
+    /// while another turn is running.
     /// </summary>
     /// <summary>Harmony entry: chat messages displayed on this machine.</summary>
     public static void OnChatMessage(Assets.Scripts.Networking.ChatMessage message)
     {
         _instance?.HandleChatMessage(message);
+    }
+
+    /// <summary>
+    /// Whether every chat message is answered directly: local games and
+    /// empty servers have no audience to disturb, so no mention prefix is
+    /// needed. Fails closed to mentions only.
+    /// </summary>
+    private bool AnswersDirectly()
+    {
+        try
+        {
+            if (!Assets.Scripts.Networking.NetworkManager.IsClient)
+            {
+                return true;
+            }
+
+            return Assets.Scripts.Networking.NetworkManager.TotalPlayersInGame <= 1;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     private void HandleChatMessage(Assets.Scripts.Networking.ChatMessage message)
@@ -177,12 +200,21 @@ public class BepInExPlugin : BaseUnityPlugin
 
         _log.Log($"chat seen from '{message.DisplayName}': {Truncate(message.ChatText, 80)}");
 
-        if (!Mention.TryParse(_settings.MentionTrigger.Value, message.ChatText, out var prompt))
+        var mentioned = Mention.TryParse(_settings.MentionTrigger.Value, message.ChatText, out var prompt);
+        if (!mentioned)
         {
-            return;
-        }
+            if (!AnswersDirectly())
+            {
+                return;
+            }
 
-        _log.Log($"mention matched, asking: {Truncate(prompt, 80)}");
+            prompt = message.ChatText.Trim();
+            _log.Log($"direct chat asking: {Truncate(prompt, 80)}");
+        }
+        else
+        {
+            _log.Log($"mention matched, asking: {Truncate(prompt, 80)}");
+        }
         var responder = MentionResponderInstance();
         if (responder.IsBusy)
         {

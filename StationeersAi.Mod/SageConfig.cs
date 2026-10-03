@@ -52,7 +52,7 @@ public sealed class SageConfig
         ShowToolResults = config.Bind("General", "ShowToolResults", false,
             "Print each tool's raw output (CSV) to the Sage window.");
         RespondToMentions = config.Bind("General", "RespondToMentions", true,
-            "Answer chat messages that start with the mention trigger (e.g. @sage). The answer is posted to chat as the assistant.");
+            "Answer chat messages that start with the mention trigger (e.g. @sage). In a local game or an empty server every message is answered directly. The answer is posted to chat as the assistant.");
         WindowToggle = config.Bind("General", "WindowToggle", new KeyboardShortcut(KeyCode.F7),
             "Key that opens the Sage window for typing to the assistant directly.");
         MentionTrigger = config.Bind("General", "MentionTrigger", "@sage",
