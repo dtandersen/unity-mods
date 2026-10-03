@@ -60,7 +60,13 @@ public class BepInExPlugin : BaseUnityPlugin
 
     private MentionResponder _mentionResponder;
     private MainThreadExecutor _threads;
-    private SageHttpServer _httpServer;
+
+    // Process-owned: Stationeers wipes scene objects (even DontDestroyOnLoad
+    // ones) on world load, which runs OnDestroy on the plugin. A static
+    // server outlives that wipe; nothing here needs a live GameObject.
+    private static SageHttpServer _httpServer;
+
+    private static readonly object _httpLock = new object();
     private WindowModel _windowModel;
     private SageImGuiWindow _window;
 
@@ -105,56 +111,70 @@ public class BepInExPlugin : BaseUnityPlugin
         _windowModel = new WindowModel(200);
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += (_, __) => EnsureWindow();
         WorldManager.OnWorldStarted += EnsureWindow;
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += (_, __) => EnsureHttpServer();
+        WorldManager.OnWorldStarted += EnsureHttpServer;
         EnsureWindow();
         _log.Log($"Sage window ready ({_settings.WindowToggle.Value})");
 
         CommandLine.AddCommand("ai", new AiConsoleCommand(() => { EnsureWindow(); return _sage; }, () => AssistantName));
         _log.Log("registered 'ai' console command");
 
-        StartHttpServer();
+        EnsureHttpServer();
 
         _log.Log($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");
     }
 
     private void OnDestroy()
     {
-        try
-        {
-            _httpServer?.Dispose();
-        }
-        catch (Exception)
-        {
-        }
-
-        _httpServer = null;
+        // Runs when the scene wipe takes the plugin object on world load.
+        // The server is process-owned (static) and keeps serving; the
+        // process end closes its socket. Disposing here would kill Pi's
+        // access the moment a world loads.
     }
 
     /// <summary>
-    /// Starts the localhost HTTP server for outside tools such as Pi when
-    /// <c>Server/Enabled</c> is on. Each request reuses the same live
-    /// repositories the chat assistant reads.
+    /// Starts the loopback HTTP server for outside tools such as Pi when
+    /// <c>Server/Enabled</c> is on, or restarts it when the scene wipe
+    /// took it down. Safe to call on every scene load and world start.
+    /// Each request reuses the same live repositories the chat reads.
     /// </summary>
-    private void StartHttpServer()
+    private void EnsureHttpServer()
     {
-        try
+        lock (_httpLock)
         {
-            if (!_settings.ServerEnabled.Value)
+            try
             {
-                return;
-            }
+                if (!_settings.ServerEnabled.Value)
+                {
+                    return;
+                }
 
-            _httpServer = new SageHttpServer(
-                BuildSageData,
-                _threads,
-                _log,
-                () => _settings.ServerPort.Value,
-                () => _settings.ServerToken.Value);
-            _httpServer.Start();
-        }
-        catch (Exception ex)
-        {
-            _log.Log($"Sage HTTP server did not start: {ex.Message}");
-            _httpServer = null;
+                if (_httpServer != null && _httpServer.IsAlive)
+                {
+                    return;
+                }
+
+                try
+                {
+                    _httpServer?.Dispose();
+                }
+                catch (Exception)
+                {
+                }
+
+                _httpServer = new SageHttpServer(
+                    BuildSageData,
+                    _threads,
+                    _log,
+                    () => _settings.ServerPort.Value,
+                    () => _settings.ServerToken.Value);
+                _httpServer.Start();
+            }
+            catch (Exception ex)
+            {
+                _log.Log($"Sage HTTP server did not start: {ex.Message}");
+                _httpServer = null;
+            }
         }
     }
 

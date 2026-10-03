@@ -80,7 +80,7 @@ public sealed class SageConfig
         ContextMessages = config.Bind("AI", "ContextMessages", 20, "How many previous messages to send with each question. 0 disables conversation history.");
 
         ServerEnabled = config.Bind("Server", "Enabled", false, "Serve Sage game data over HTTP on localhost for outside tools such as Pi.");
-        ServerPort = config.Bind("Server", "Port", 27015, "Localhost port for the Sage HTTP server.");
+        ServerPort = config.Bind("Server", "Port", 8080, "Loopback port for the Sage HTTP server.");
         ServerToken = config.Bind("Server", "Token", "", "Bearer token the HTTP server needs. Leave blank for localhost use with no token.");
     }
 }

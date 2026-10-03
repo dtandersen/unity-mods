@@ -55,7 +55,7 @@ Log file:
 
 ## HTTP server
 
-Sage can serve game data on localhost for outside tools such as Pi. Set `Server/Enabled` to true and restart. Set `Server/Port` (default 27015) and `Server/Token` (blank means no token). Each call reuses the same readers chat uses. It never sets device values; it reads state and burns IC only through `export_ic`.
+Sage can serve game data over HTTP for outside tools such as Pi. Set `Server/Enabled` to true and restart. Set `Server/Port` (default 8080) and `Server/Token`. The server binds 127.0.0.1 only, so only this machine can call; a set token guards all calls. It never sets device values; it reads state and burns IC only through `export_ic`.
 
 ```
 GET /sage/status
