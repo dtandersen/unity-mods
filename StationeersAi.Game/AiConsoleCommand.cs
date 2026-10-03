@@ -2,28 +2,28 @@ using System;
 using StationeersAi.Window;
 using Util.Commands;
 
-namespace StationeersAi.Mod;
+namespace StationeersAi.Game;
 
 /// <summary>
 /// The <c>ai</c> console command: <c>ai &lt;question&gt;</c> asks the assistant,
 /// <c>ai clear</c> drops the conversation, <c>ai compact</c> summarises it.
 /// Questions are answered asynchronously; the answer streams into the Sage
-/// window when the model replies.
+/// window when the model replies. The mod is resolved per call because the
+/// shell rebuilds it every level.
 /// </summary>
 public sealed class AiConsoleCommand : CommandBase
 {
-    private readonly Func<SagePresenter> _presenter;
-    private readonly Func<string> _assistantName;
+    private readonly Func<SageMod> _mod;
 
-    public AiConsoleCommand(Func<SagePresenter> presenter, Func<string> assistantName)
+    public AiConsoleCommand(Func<SageMod> mod)
     {
-        _presenter = presenter ?? throw new ArgumentNullException(nameof(presenter));
-        _assistantName = assistantName;
+        _mod = mod ?? throw new ArgumentNullException(nameof(mod));
     }
+
     public override CommandScope Scope => CommandScope.InGame;
 
     public override string HelpText =>
-        $"Ask {_assistantName()}. Usage: ai <question>  (also: ai clear, ai compact)";
+        $"Ask {AssistantName()}. Usage: ai <question>  (also: ai clear, ai compact)";
 
     public override string[] Arguments => new[] { "<question> | clear | compact" };
 
@@ -31,21 +31,27 @@ public sealed class AiConsoleCommand : CommandBase
 
     public override string Execute(string[] args)
     {
+        var presenter = _mod()?.ConsolePresenter();
+        if (presenter == null)
+        {
+            return "Sage is not loaded. Load a world first.";
+        }
+
         if (args != null && args.Length > 0)
         {
             switch (args[0].ToLowerInvariant())
             {
                 case "window":
-                    _presenter().ShowAndFocus();
+                    presenter.ShowAndFocus();
                     return "Sage window opened.";
 
                 case "clear":
                 case "reset":
-                    _presenter().ClearConversation();
+                    presenter.ClearConversation();
                     return "Context cleared.";
 
                 case "compact":
-                    _ = _presenter().CompactConversation();
+                    _ = presenter.CompactConversation();
                     return "Compacting context...";
             }
         }
@@ -56,7 +62,12 @@ public sealed class AiConsoleCommand : CommandBase
             return $"Usage: ai <question>  (also: ai clear, ai compact)";
         }
 
-        _ = _presenter().AskAsync(prompt);
-        return $"Asking {_assistantName()}... (the answer follows in the Sage window)";
+        _ = presenter.AskAsync(prompt);
+        return $"Asking {AssistantName()}... (the answer follows in the Sage window)";
+    }
+
+    private string AssistantName()
+    {
+        return _mod()?.AssistantName ?? "Sage";
     }
 }

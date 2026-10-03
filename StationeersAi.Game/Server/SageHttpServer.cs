@@ -1,3 +1,4 @@
+using StationeersAi.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,7 +8,7 @@ using System.Text;
 using System.Threading;
 using StationeersAi.Server;
 
-namespace StationeersAi.Mod.Server;
+namespace StationeersAi.Game.Server;
 
 /// <summary>
 /// Loopback HTTP host for <see cref="SageRouter"/>. Mono's
@@ -21,7 +22,7 @@ public sealed class SageHttpServer : IDisposable
 {
     private readonly Func<SageData> _data;
     private readonly IMainThread _threads;
-    private readonly BepinExLogger _log;
+    private readonly Logger _log;
     private readonly Func<int> _port;
     private readonly Func<string> _token;
 
@@ -29,7 +30,7 @@ public sealed class SageHttpServer : IDisposable
     private Thread _loop;
     private volatile bool _running;
 
-    public SageHttpServer(Func<SageData> data, IMainThread threads, BepinExLogger log, Func<int> port, Func<string> token)
+    public SageHttpServer(Func<SageData> data, IMainThread threads, Logger log, Func<int> port, Func<string> token)
     {
         _data = data;
         _threads = threads;

@@ -8,17 +8,18 @@ StationeersAi.Core/   netstandard2.0   Unity-free game data (models, tools, comm
 Caev/               netstandard2.0   Generic agent engine (loop, clients, messages, tool ports)
 StationeersAi.Test/   net8.0           TUnit + Shouldly + ArchUnitNET specs (game, chat, window)
 Caev.Test/          net8.0           Engine specs: loop, activity, OpenAI wire (stub tools, fake server)
-StationeersAi.Mod/    net48            BepInEx plugin: Unity/HTTP/game-data adapter
+StationeersAi.Mod/    net48            BepInEx shell: plugin entry, patches, log (no game logic)
+StationeersAi.Game/   net48            Unity/game adapters: SageMod lifecycle, Stationeers* readers, window, HTTP server
 ```
 
 The split is deliberate: **the engine (`Caev`) sees game data
 only as per-turn arguments and references `Common` alone**; the domain
-(`Core`) may use the engine but never the game. None of the three touch
-Unity or Stationeers types, so `StationeersAi.Test` can specify and test
-them without the game running. Prefab checks stay in the plugin.
-The plugin only adapts: it reads `Prefab.AllPrefabs`, the
-`ElectronicReader` recipe tables, `Stationpedia` pages and
-`Human.LocalHuman`, calls the LLM over `UnityWebRequest`, and prints results.
+(`Core`) may use the engine but never the game. None of the three touch Unity or Stationeers types, so `StationeersAi.Test` can specify and test
+them without the game running. Game reads live in `StationeersAi.Game`:
+`SageMod` owns load/unload per level, the `Stationeers*` readers pull
+`Prefab.AllPrefabs`, the `ElectronicReader` recipe tables, `Stationpedia`
+pages and `Human.LocalHuman`, and the shell only patches, logs, and
+forwards. Prefab checks stay out of the tests.
 (You cannot construct `Thing`, `Human` and friends outside the game — they
 are `MonoBehaviour`s.)
 
@@ -42,7 +43,11 @@ Caev/
 StationeersAi.Test/
 Caev.Test/
 StationeersAi.Mod/
-  BepInExPlugin.cs
+  BepInExPlugin.cs   # thin shell: patches, config, forwards lifecycle to SageMod
+  BepinExLogger.cs   # Core.Logger over the BepInEx log
+StationeersAi.Game/
+  SageMod.cs         # owns window, server, catalogues; Load/Unload per level
+  SageConfig.cs      # BepInEx config entries
   AiConsoleCommand.cs  # the `ai` console command
 ```
 
@@ -69,7 +74,8 @@ auto-detects `GamePath` from the Steam registry if `local.props` is absent.
 dotnet build StationeersMods.sln -c Debug
 ```
 
-A successful plugin build copies `StationeersAi.Mod.dll` **and**
+A successful plugin build copies `StationeersAi.Mod.dll`,
+`StationeersAi.Game.dll`, **and**
 `StationeersAi.Core.dll` into `<PluginDeployDir>\StationeersAi.Mod\`.
 
 To create a distributable zip:

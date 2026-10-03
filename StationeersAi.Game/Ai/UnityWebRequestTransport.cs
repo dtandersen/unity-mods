@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Caev;
 using UnityEngine.Networking;
 
-namespace StationeersAi.Mod.Ai;
+namespace StationeersAi.Game.Ai;
 
 /// <summary>
 /// The Unity implementation of the HTTP boundary. This is the only part of the

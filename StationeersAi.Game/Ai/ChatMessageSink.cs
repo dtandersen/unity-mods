@@ -1,7 +1,8 @@
+using StationeersAi.Core;
 using System;
 using Caev;
 
-namespace StationeersAi.Mod.Ai;
+namespace StationeersAi.Game.Ai;
 
 /// <summary>
 /// Adapts in-game chat to <see cref="IChatSink"/>. Answers are posted as the
@@ -12,11 +13,11 @@ namespace StationeersAi.Mod.Ai;
 public sealed class ChatMessageSink : IChatSink
 {
     private readonly IMainThread _threads;
-    private readonly BepinExLogger _log;
+    private readonly Logger _log;
     private readonly Func<string> _assistantName;
     private readonly ChatSender _sender;
 
-    public ChatMessageSink(IMainThread mainThread, BepinExLogger log, Func<string> assistantName)
+    public ChatMessageSink(IMainThread mainThread, Logger log, Func<string> assistantName)
     {
         _threads = mainThread;
         _log = log;
@@ -27,7 +28,17 @@ public sealed class ChatMessageSink : IChatSink
     public void Write(string line)
     {
         var text = line ?? string.Empty;
-        _log.Log($"chat sink queued: {BepInExPlugin.Truncate(text, 80)}");
+        _log.Log($"chat sink queued: {Truncate(text, 80)}");
         _threads.Run(() => _sender.Send(_assistantName(), text));
+    }
+
+    private static string Truncate(string value, int max)
+    {
+        if (string.IsNullOrEmpty(value) || value.Length <= max)
+        {
+            return value;
+        }
+
+        return value.Substring(0, max) + "...";
     }
 }

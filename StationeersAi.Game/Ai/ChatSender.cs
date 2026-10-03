@@ -1,10 +1,11 @@
+using StationeersAi.Core;
 using System;
 using Assets.Scripts;
 using Assets.Scripts.Networking;
 using NetChatMessage = Assets.Scripts.Networking.ChatMessage;
 using Caev;
 
-namespace StationeersAi.Mod.Ai;
+namespace StationeersAi.Game.Ai;
 
 /// <summary>
 /// Sends a chat message as the assistant, mirroring how the game sends player
@@ -15,9 +16,9 @@ namespace StationeersAi.Mod.Ai;
 /// </summary>
 internal sealed class ChatSender
 {
-    private readonly BepinExLogger _log;
+    private readonly Logger _log;
 
-    public ChatSender(BepinExLogger log)
+    public ChatSender(Logger log)
     {
         _log = log;
     }

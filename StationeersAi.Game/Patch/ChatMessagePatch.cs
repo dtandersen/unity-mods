@@ -2,7 +2,7 @@ using HarmonyLib;
 using NetChatMessage = Assets.Scripts.Networking.ChatMessage;
 using Caev;
 
-namespace StationeersAi.Mod.Patch;
+namespace StationeersAi.Game.Patch;
 
 /// <summary>
 /// Watches locally displayed chat. <c>ChatMessage.PrintToConsole</c> runs for
@@ -15,6 +15,6 @@ public static class ChatMessagePatch
 {
     public static void Postfix(NetChatMessage __instance)
     {
-        BepInExPlugin.OnChatMessage(__instance);
+        PatchHooks.ChatMessage?.Invoke(__instance);
     }
 }

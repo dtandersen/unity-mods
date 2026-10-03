@@ -1,11 +1,14 @@
 using System;
+using StationeersAi.Core;
+using StationeersAi.Game;
+using Logger = StationeersAi.Core.Logger;
 using System.Collections.Generic;
 using BepInEx.Configuration;
 using ImGuiNET;
 using StationeersAi.Window;
 using UnityEngine;
 
-namespace StationeersAi.Mod;
+namespace StationeersAi.Game;
 
 /// <summary>
 /// Draggable in-game window for talking to Sage, drawn in the game's own
@@ -32,7 +35,7 @@ public sealed class SageImGuiWindow : MonoBehaviour, ISageView
     }
 
     /// <summary>Trace log. Null skips logging (set by the plugin).</summary>
-    public BepinExLogger Logger { get; set; }
+    public Logger Logger { get; set; }
 
     /// <summary>Supplies the toggle key, read live on each press. Null disables toggling.</summary>
     public Func<KeyboardShortcut> WindowToggle { get; set; }

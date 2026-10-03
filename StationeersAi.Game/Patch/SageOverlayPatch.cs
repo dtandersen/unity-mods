@@ -1,6 +1,6 @@
 using HarmonyLib;
 
-namespace StationeersAi.Mod.Patch;
+namespace StationeersAi.Game.Patch;
 
 /// <summary>
 /// Draws the Sage window inside the game's Dear ImGui frame, right after the

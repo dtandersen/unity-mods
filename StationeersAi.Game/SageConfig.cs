@@ -2,7 +2,7 @@ using BepInEx.Configuration;
 using StationeersAi.Formatting;
 using UnityEngine;
 
-namespace StationeersAi.Mod;
+namespace StationeersAi.Game;
 
 /// <summary>
 /// All Sage settings. Bound once at startup; entries stay live, so edits

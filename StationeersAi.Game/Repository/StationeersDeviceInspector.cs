@@ -1,4 +1,7 @@
 using System;
+using StationeersAi.Core;
+using StationeersAi.Game;
+using Logger = StationeersAi.Core.Logger;
 using System.Collections.Generic;
 using System.Reflection;
 using Assets.Scripts.Objects;
@@ -7,7 +10,6 @@ using Assets.Scripts.Objects.Motherboards;
 using Assets.Scripts.Objects.Pipes;
 using StationeersAi.Entity;
 using StationeersAi.Formatting;
-using StationeersAi.Mod;
 using StationeersAi.Repository;
 using UnityEngine;
 
@@ -23,9 +25,9 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
 {
     private readonly IMainThread _threads;
 
-    private readonly BepinExLogger _log;
+    private readonly Logger _log;
 
-    public StationeersDeviceInspector(IMainThread mainThread, BepinExLogger log)
+    public StationeersDeviceInspector(IMainThread mainThread, Logger log)
     {
         _threads = mainThread;
         _log = log;

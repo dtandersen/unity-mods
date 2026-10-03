@@ -1,8 +1,10 @@
 using System;
+using StationeersAi.Core;
+using StationeersAi.Game;
+using Logger = StationeersAi.Core.Logger;
 using System.Collections.Generic;
 using Assets.Scripts;
 using StationeersAi.Entity;
-using StationeersAi.Mod;
 using StationeersAi.Repository;
 
 namespace StationeersAi.Repository;
@@ -16,9 +18,9 @@ public sealed class StationeersRoomInspector : IRoomInspector
 {
     private readonly IMainThread _threads;
 
-    private readonly BepinExLogger _log;
+    private readonly Logger _log;
 
-    public StationeersRoomInspector(IMainThread mainThread, BepinExLogger log)
+    public StationeersRoomInspector(IMainThread mainThread, Logger log)
     {
         _threads = mainThread;
         _log = log;

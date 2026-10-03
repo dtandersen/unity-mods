@@ -1,8 +1,10 @@
 using System;
+using StationeersAi.Core;
+using StationeersAi.Game;
+using Logger = StationeersAi.Core.Logger;
 using Assets.Scripts.Objects.Electrical;
 using StationeersAi.Entity;
 using StationeersAi.Formatting;
-using StationeersAi.Mod;
 using StationeersAi.Repository;
 using UnityEngine;
 
@@ -17,9 +19,9 @@ public sealed class StationeersIcExport : IIcExport
 {
     private readonly IMainThread _threads;
 
-    private readonly BepinExLogger _log;
+    private readonly Logger _log;
 
-    public StationeersIcExport(IMainThread mainThread, BepinExLogger log)
+    public StationeersIcExport(IMainThread mainThread, Logger log)
     {
         _threads = mainThread;
         _log = log;

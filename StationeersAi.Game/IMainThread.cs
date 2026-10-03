@@ -1,6 +1,6 @@
 using System;
 
-namespace StationeersAi.Mod;
+namespace StationeersAi.Game;
 
 /// <summary>
 /// Runs work on Unity's main thread. The plugin implements this and hands it

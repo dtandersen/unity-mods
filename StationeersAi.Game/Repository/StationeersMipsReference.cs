@@ -1,9 +1,11 @@
 using System;
+using StationeersAi.Core;
+using StationeersAi.Game;
+using Logger = StationeersAi.Core.Logger;
 using System.Collections.Generic;
 using Assets.Scripts.Objects.Electrical;
 using Assets.Scripts.Objects.Motherboards;
 using StationeersAi.Entity;
-using StationeersAi.Mod;
 using StationeersAi.Repository;
 
 namespace StationeersAi.Repository;
@@ -15,9 +17,9 @@ namespace StationeersAi.Repository;
 /// </summary>
 public sealed class StationeersMipsReference : IMipsReference
 {
-    private readonly BepinExLogger _log;
+    private readonly Logger _log;
 
-    public StationeersMipsReference(BepinExLogger log)
+    public StationeersMipsReference(Logger log)
     {
         _log = log;
     }

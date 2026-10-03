@@ -1,7 +1,8 @@
+using StationeersAi.Core;
 using System;
 using System.Threading;
 
-namespace StationeersAi.Mod;
+namespace StationeersAi.Game;
 
 /// <summary>
 /// Runs work on Unity's main thread. Built once in <c>Awake</c> from the
@@ -12,9 +13,9 @@ public sealed class MainThreadExecutor : IMainThread
 {
     private readonly SynchronizationContext _synchronizationContext;
     private readonly int _unityThreadId;
-    private readonly BepinExLogger _log;
+    private readonly Logger _log;
 
-    public MainThreadExecutor(SynchronizationContext synchronizationContext, int unityThreadId, BepinExLogger log)
+    public MainThreadExecutor(SynchronizationContext synchronizationContext, int unityThreadId, Logger log)
     {
         _synchronizationContext = synchronizationContext;
         _unityThreadId = unityThreadId;
