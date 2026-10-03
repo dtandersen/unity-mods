@@ -167,13 +167,12 @@ public sealed class StationeersPlayerContext : IPlayerContext
     {
         try
         {
-            var controller = RoomController.World;
-            if (controller == null || human == null)
+            if (human == null)
             {
                 return null;
             }
 
-            var room = controller.GetRoom(human.Position);
+            var room = human.Room;
             return room != null ? (long?)room.RoomId : null;
         }
         catch (System.Exception)

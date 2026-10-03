@@ -97,13 +97,13 @@ public sealed class StationeersThingCatalog : IThingCatalog
     {
         try
         {
-            var controller = RoomController.World;
-            if (controller == null || thing == null)
+            var dynamicThing = thing as DynamicThing;
+            if (dynamicThing == null)
             {
                 return 0;
             }
 
-            var room = controller.GetRoom(thing.GridPosition);
+            var room = dynamicThing.Room;
             return room != null ? room.RoomId : 0;
         }
         catch (Exception)
