@@ -53,9 +53,24 @@ Log file:
 
 `steamapps/common/Stationeers/BepInEx/LogOutput.log`
 
+## HTTP server
+
+Sage can serve game data on localhost for outside tools such as Pi. Set `Server/Enabled` to true and restart. Set `Server/Port` (default 27015) and `Server/Token` (blank means no token). Each call reuses the same readers chat uses. It never sets device values; it reads state and burns IC only through `export_ic`.
+
+```
+GET /sage/status
+GET /sage/devices?q=vent
+```
+
+Each answer is full JSON. Specs live in `StationeersAi.Test/Features/Server/SageServer.feature`.
+
 ## Development
 
 Building, testing, and architecture notes live in [development.md](development.md).
+
+## Credits
+
+StationeersWebApi showed that a live game can serve HTTP. sunsetfi and robophred built it; dtandersen keeps a fork. It maps devices, logic, things, and air to REST routes and moves game reads to the main thread. Sage reuses these ideas, not its code.
 
 ## License
 

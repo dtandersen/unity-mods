@@ -42,6 +42,12 @@ public sealed class SageConfig
 
     public ConfigEntry<int> ContextMessages { get; }
 
+    public ConfigEntry<bool> ServerEnabled { get; }
+
+    public ConfigEntry<int> ServerPort { get; }
+
+    public ConfigEntry<string> ServerToken { get; }
+
     public SageConfig(ConfigFile config)
     {
         ModEnabled = config.Bind("General", "Enabled", true, "Enable Sage.");
@@ -72,5 +78,9 @@ public sealed class SageConfig
         MaxIterations = config.Bind("AI", "MaxToolIterations", 5, "Maximum tool round-trips per question.");
         TimeoutSeconds = config.Bind("AI", "TimeoutSeconds", 120, "HTTP timeout for model requests, in seconds. Raise it if the model is slow with a large conversation.");
         ContextMessages = config.Bind("AI", "ContextMessages", 20, "How many previous messages to send with each question. 0 disables conversation history.");
+
+        ServerEnabled = config.Bind("Server", "Enabled", false, "Serve Sage game data over HTTP on localhost for outside tools such as Pi.");
+        ServerPort = config.Bind("Server", "Port", 27015, "Localhost port for the Sage HTTP server.");
+        ServerToken = config.Bind("Server", "Token", "", "Bearer token the HTTP server needs. Leave blank for localhost use with no token.");
     }
 }

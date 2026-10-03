@@ -22,6 +22,8 @@ using StationeersAi.Window;
 using Util.Commands;
 using Caev.OpenAi;
 using StationeersAi.Ai;
+using StationeersAi.Mod.Server;
+using StationeersAi.Server;
 using StationeersAi.Tool;
 
 namespace StationeersAi.Mod;
@@ -58,6 +60,7 @@ public class BepInExPlugin : BaseUnityPlugin
 
     private MentionResponder _mentionResponder;
     private MainThreadExecutor _threads;
+    private SageHttpServer _httpServer;
     private WindowModel _windowModel;
     private SageImGuiWindow _window;
 
@@ -108,7 +111,83 @@ public class BepInExPlugin : BaseUnityPlugin
         CommandLine.AddCommand("ai", new AiConsoleCommand(() => { EnsureWindow(); return _sage; }, () => AssistantName));
         _log.Log("registered 'ai' console command");
 
+        StartHttpServer();
+
         _log.Log($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");
+    }
+
+    private void OnDestroy()
+    {
+        try
+        {
+            _httpServer?.Dispose();
+        }
+        catch (Exception)
+        {
+        }
+
+        _httpServer = null;
+    }
+
+    /// <summary>
+    /// Starts the localhost HTTP server for outside tools such as Pi when
+    /// <c>Server/Enabled</c> is on. Each request reuses the same live
+    /// repositories the chat assistant reads.
+    /// </summary>
+    private void StartHttpServer()
+    {
+        try
+        {
+            if (!_settings.ServerEnabled.Value)
+            {
+                return;
+            }
+
+            _httpServer = new SageHttpServer(
+                BuildSageData,
+                _threads,
+                _log,
+                () => _settings.ServerPort.Value,
+                () => _settings.ServerToken.Value);
+            _httpServer.Start();
+        }
+        catch (Exception ex)
+        {
+            _log.Log($"Sage HTTP server did not start: {ex.Message}");
+            _httpServer = null;
+        }
+    }
+
+    private SageData BuildSageData()
+    {
+        EnsureCatalogues();
+
+        Human human = null;
+        try
+        {
+            human = Human.LocalHuman;
+        }
+        catch (Exception)
+        {
+        }
+
+        var player = new StationeersPlayerContext(human);
+        return new SageData
+        {
+            Items = _catalogueItems,
+            Structures = _catalogueStructures,
+            Recipes = _catalogueRecipes,
+            Stationpedia = _catalogueStationpedia,
+            Player = player,
+            Worlds = new StationeersWorldContext(),
+            Ic = new StationeersIcEditor(_threads, _log),
+            Export = new StationeersIcExport(_threads, _log),
+            Mips = new StationeersMipsReference(_log),
+            Devices = new StationeersDeviceCatalog(_threads, _log),
+            Inspector = new StationeersDeviceInspector(_threads, _log),
+            Things = new StationeersThingCatalog(_threads, _log),
+            Rooms = new StationeersRoomInspector(_threads, _log),
+        };
     }
 
     /// <summary>
