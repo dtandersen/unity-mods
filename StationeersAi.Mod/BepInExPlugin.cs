@@ -96,14 +96,16 @@ public class BepInExPlugin : BaseUnityPlugin
 
         var harmony = new Harmony(ModGuid);
         harmony.PatchAll(typeof(ChatMessagePatch));
+        harmony.PatchAll(typeof(SageOverlayPatch));
         _log.Log($"patched {harmony.GetPatchedMethods().Count()} method(s) for chat mentions");
 
         _windowModel = new WindowModel(200);
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += (_, __) => EnsureWindow();
+        WorldManager.OnWorldStarted += EnsureWindow;
         EnsureWindow();
         _log.Log($"Sage window ready ({_settings.WindowToggle.Value})");
 
-        CommandLine.AddCommand("ai", new AiConsoleCommand(() => _sage, () => AssistantName));
+        CommandLine.AddCommand("ai", new AiConsoleCommand(() => { EnsureWindow(); return _sage; }, () => AssistantName));
         _log.Log("registered 'ai' console command");
 
         _log.Log($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");
@@ -112,8 +114,9 @@ public class BepInExPlugin : BaseUnityPlugin
     /// <summary>
     /// Builds the window holder, view, and presenter, keeping the history
     /// model across rebuilds. The holder is DontDestroyOnLoad, but scene
-    /// transitions can still drop it, so this runs in Awake, on every scene
-    /// load, and before each use. Unity's fake null counts destroyed objects.
+    /// transitions can still drop it, so this runs in Awake, when the world
+    /// starts, on every scene load, and before each use. Unity's fake null
+    /// counts destroyed objects.
     /// </summary>
     private void EnsureWindow()
     {

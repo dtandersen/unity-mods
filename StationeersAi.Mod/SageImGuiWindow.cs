@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using BepInEx.Configuration;
 using ImGuiNET;
-using ImGuiNET.Unity;
 using StationeersAi.Window;
 using UnityEngine;
 
@@ -24,8 +23,7 @@ public sealed class SageImGuiWindow : MonoBehaviour, ISageView
     private bool _autoscroll;
     private bool _sized;
     private bool _focusInput;
-    private DearImGui _dearImGui;
-    private float _findAfter;
+    private static readonly List<SageImGuiWindow> _windows = new List<SageImGuiWindow>();
 
     public string Input
     {
@@ -66,28 +64,35 @@ public sealed class SageImGuiWindow : MonoBehaviour, ISageView
 
     private void Update()
     {
-        if (_dearImGui == null && Time.time >= _findAfter)
-        {
-            _findAfter = Time.time + 1f;
-            _dearImGui = FindFirstObjectByType<DearImGui>();
-            if (_dearImGui != null)
-            {
-                _dearImGui.Layout += Draw;
-            }
-        }
-
         if (TogglePressed())
         {
             ToggleRequested?.Invoke();
         }
     }
 
-    private void OnDestroy()
+    /// <summary>Draws every live window. Called from the overlay patch.</summary>
+    public static void DrawAll()
     {
-        if (_dearImGui != null)
+        foreach (var window in _windows.ToArray())
         {
-            _dearImGui.Layout -= Draw;
+            if (window != null)
+            {
+                window.Draw();
+            }
         }
+    }
+
+    private void OnEnable()
+    {
+        if (!_windows.Contains(this))
+        {
+            _windows.Add(this);
+        }
+    }
+
+    private void OnDisable()
+    {
+        _windows.Remove(this);
     }
 
     private bool TogglePressed()
