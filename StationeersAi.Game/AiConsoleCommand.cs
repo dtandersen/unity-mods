@@ -1,4 +1,5 @@
 using System;
+using StationeersAi.Window;
 using Util.Commands;
 
 namespace StationeersAi.Game;
@@ -7,16 +8,18 @@ namespace StationeersAi.Game;
 /// The <c>ai</c> console command: <c>ai &lt;question&gt;</c> asks the assistant,
 /// <c>ai clear</c> drops the conversation, <c>ai compact</c> summarises it.
 /// Questions are answered asynchronously; the answer streams into the Sage
-/// window when the model replies. The mod is resolved per call because the
-/// presenter only exists while the mod is loaded.
+/// window when the model replies. Builds the console router from the
+/// command factory for each line it receives.
 /// </summary>
 public sealed class AiConsoleCommand : CommandBase
 {
-    private readonly CommandFactory _commandFactory;
+    private readonly CommandFactory _commands;
+    private readonly SagePresenter _presenter;
 
-    public AiConsoleCommand(CommandFactory commandFactory)
+    public AiConsoleCommand(CommandFactory commands, SagePresenter presenter)
     {
-        _commandFactory = commandFactory;
+        _commands = commands;
+        _presenter = presenter;
     }
 
     public override CommandScope Scope => CommandScope.InGame;
@@ -32,8 +35,6 @@ public sealed class AiConsoleCommand : CommandBase
 
     public override string Execute(string[] args)
     {
-        var command = _commandFactory.AiConsoleRouter();
-
-        return command.Execute(args);
+        return _commands.AiConsoleRouter(_presenter).Execute(args);
     }
 }

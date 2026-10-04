@@ -2,16 +2,11 @@ using System;
 using System.Collections.Generic;
 using Assets.Scripts.Objects;
 using Assets.Scripts.Objects.Entities;
-using Assets.Scripts.Objects.Items;
-using Assets.Scripts.UI;
 using Caev;
 using Caev.OpenAi;
 using Caev.Tools;
-using StationeersAi.Command;
 using StationeersAi.Formatting;
 using StationeersAi.Game.Ai;
-using StationeersAi.Query;
-using StationeersAi.Repository;
 using StationeersAi.Server;
 using StationeersAi.Tool;
 using Logger = StationeersAi.Core.Logger;
@@ -19,7 +14,7 @@ using Logger = StationeersAi.Core.Logger;
 namespace StationeersAi.Game;
 
 /// <summary>
-/// Builds the assistant from live game data and owns the shared
+/// Builds the assistant from the factory's commands and owns the shared
 /// conversations. The shell keeps one for the session; the presenter asks
 /// it for an assistant each turn and the mod asks it for server data.
 /// </summary>
@@ -27,21 +22,19 @@ public sealed class SageAssistantFactory
 {
     private readonly SageConfig _settings;
     private readonly string _configPath;
+    private readonly CommandFactory _commands;
     private readonly MainThreadExecutor _threads;
     private readonly Logger _log;
 
     private readonly Dictionary<string, Conversation> _mentionConversations = new Dictionary<string, Conversation>();
-    private readonly IPrefabProvider _prefabs = new LivePrefabs();
-    private readonly IHumanProvider _humans = new LiveHumans();
-    private readonly IRecipeProvider _recipes = new LiveRecipes();
-    private readonly IStationpediaProvider _stationpedia = new LiveStationpedia();
 
     private Conversation? _conversation;
 
-    public SageAssistantFactory(SageConfig settings, string configPath, MainThreadExecutor threads, Logger log)
+    public SageAssistantFactory(SageConfig settings, string configPath, CommandFactory commands, MainThreadExecutor threads, Logger log)
     {
         _settings = settings;
         _configPath = configPath;
+        _commands = commands ?? throw new ArgumentNullException(nameof(commands));
         _threads = threads;
         _log = log;
     }
@@ -98,23 +91,22 @@ public sealed class SageAssistantFactory
 
     public SageData BuildSageData()
     {
-        var player = new StationeersPlayerContext(_humans, _threads, _log);
         return new SageData
         {
-            Items = new StationeersItemRepository(_prefabs, _threads, _log),
-            Structures = new StationeersStructureRepository(_prefabs, _threads, _log),
-            Recipes = new StationeersRecipeRepository(_recipes, _threads, _log),
-            Stationpedia = new StationeersStationpediaRepository(_stationpedia, _threads, _log),
-            Player = player,
-            Worlds = new StationeersWorldContext(_threads, _log),
-            Ic = new StationeersIcEditor(_threads, _log),
-            Export = new StationeersIcExport(_threads, _log),
-            Mips = new StationeersMipsReference(_log),
-            Devices = new StationeersDeviceCatalog(_threads, _log),
-            Inspector = new StationeersDeviceInspector(_threads, _log),
-            Things = new StationeersThingCatalog(_threads, _log),
-            ThingContents = new StationeersThingContents(_threads, _log),
-            Rooms = new StationeersRoomInspector(_threads, _log),
+            Items = _commands.Items(),
+            Structures = _commands.Structures(),
+            Recipes = _commands.Recipes(),
+            Stationpedia = _commands.Stationpedia(),
+            Player = _commands.Player(),
+            Worlds = _commands.Worlds(),
+            Ic = _commands.IcEditor(),
+            Export = _commands.IcExport(),
+            Mips = _commands.Mips(),
+            Devices = _commands.Devices(),
+            Inspector = _commands.Inspector(),
+            Things = _commands.Things(),
+            ThingContents = _commands.Contents(),
+            Rooms = _commands.Rooms(),
         };
     }
 
@@ -126,31 +118,24 @@ public sealed class SageAssistantFactory
             return null;
         }
 
-        var playerContext = new StationeersPlayerContext(_humans, _threads, _log);
-
-        var items = new StationeersItemRepository(_prefabs, _threads, _log);
-        var structures = new StationeersStructureRepository(_prefabs, _threads, _log);
-        var recipes = new StationeersRecipeRepository(_recipes, _threads, _log);
-        var stationpedia = new StationeersStationpediaRepository(_stationpedia, _threads, _log);
-
         var tools = new ToolHandler(new ITool[]
         {
-            new SearchItemsTool(new SearchItemsCommand(new ItemIndex(items))),
-            new SearchStructuresTool(new SearchStructuresCommand(new StructureIndex(structures))),
-            new SearchRecipesTool(new SearchRecipesCommand(new RecipeIndex(recipes))),
-            new SearchStationpediaTool(new SearchStationpediaCommand(new StationpediaIndex(stationpedia))),
-            new ReadStationpediaTool(new ReadStationpediaCommand(stationpedia)),
-            new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(playerContext))),
-            new GetStatusTool(new GetStatusCommand(playerContext)),
-            new GetWorldTool(new GetWorldCommand(new StationeersWorldContext(_threads, _log))),
-            new WriteIcTool(new WriteIcCommand(new StationeersIcEditor(_threads, _log))),
-            new ReadIcTool(new ReadIcCommand(new StationeersIcEditor(_threads, _log))),
-            new ExportIcTool(new ExportIcCommand(new StationeersIcExport(_threads, _log))),
-            new MipsReferenceTool(new ReadMipsCommand(new StationeersMipsReference(_log))),
-            new SearchDevicesTool(new SearchDevicesCommand(new StationeersDeviceCatalog(_threads, _log))),
-            new DescribeDeviceTool(new DescribeDeviceCommand(new StationeersDeviceInspector(_threads, _log), new StationeersDeviceCatalog(_threads, _log))),
-            new SearchThingsTool(new SearchThingsCommand(new StationeersThingCatalog(_threads, _log), playerContext)),
-            new ReadRoomTool(new ReadRoomCommand(new StationeersRoomInspector(_threads, _log), playerContext)),
+            new SearchItemsTool(_commands.SearchItems()),
+            new SearchStructuresTool(_commands.SearchStructures()),
+            new SearchRecipesTool(_commands.SearchRecipes()),
+            new SearchStationpediaTool(_commands.SearchStationpedia()),
+            new ReadStationpediaTool(_commands.ReadStationpedia()),
+            new SearchInventoryTool(_commands.SearchInventory()),
+            new GetStatusTool(_commands.GetStatus()),
+            new GetWorldTool(_commands.GetWorld()),
+            new WriteIcTool(_commands.WriteIc()),
+            new ReadIcTool(_commands.ReadIc()),
+            new ExportIcTool(_commands.ExportIc()),
+            new MipsReferenceTool(_commands.ReadMips()),
+            new SearchDevicesTool(_commands.SearchDevices()),
+            new DescribeDeviceTool(_commands.DescribeDevice()),
+            new SearchThingsTool(_commands.SearchThings()),
+            new ReadRoomTool(_commands.ReadRoom()),
         });
 
         var client = new OpenAiChatClient(
@@ -158,49 +143,6 @@ public sealed class SageAssistantFactory
             new OpenAiOptions(_settings.Endpoint.Value, _settings.ApiKey.Value, _settings.Model.Value, _settings.ReasoningEffort.Value));
 
         return new AiAssistant(client, tools, SystemPromptText(), _settings.MaxIterations.Value, _log, activity);
-    }
-
-    /// <summary>Reads the live prefab catalogue straight from the game.</summary>
-    private sealed class LivePrefabs : IPrefabProvider
-    {
-        public IEnumerable<Thing>? GetPrefabs()
-        {
-            return Prefab.AllPrefabs;
-        }
-    }
-
-    /// <summary>Reads the local player straight from the game.</summary>
-    private sealed class LiveHumans : IHumanProvider
-    {
-        public Human? GetHuman()
-        {
-            try
-            {
-                return Human.LocalHuman;
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-    }
-
-    /// <summary>Reads the recipe tables straight from the game.</summary>
-    private sealed class LiveRecipes : IRecipeProvider
-    {
-        public IEnumerable<RecipeReference> GetRecipes()
-        {
-            return StationeersRecipeRepository.RecipeTables();
-        }
-    }
-
-    /// <summary>Reads the encyclopedia pages straight from the game.</summary>
-    private sealed class LiveStationpedia : IStationpediaProvider
-    {
-        public IEnumerable<StationpediaPage>? GetPages()
-        {
-            return Stationpedia.StationpediaPages;
-        }
     }
 
     /// <summary>

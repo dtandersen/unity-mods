@@ -28,7 +28,7 @@ public class BepInExPlugin : BaseUnityPlugin
     private static BepInExPlugin? _instance;
 
     private SageConfig? _settings;
-    private MainThreadExecutor? _threads;
+    private MainThreadExecutor? _executor;
     private BepinExLogger? _log;
     private SageMod? _mod;
 
@@ -43,7 +43,7 @@ public class BepInExPlugin : BaseUnityPlugin
         _log = new BepinExLogger(Logger);
         var synchronizationContext = SynchronizationContext.Current;
         var unityThreadId = Thread.CurrentThread.ManagedThreadId;
-        _threads = new MainThreadExecutor(synchronizationContext, unityThreadId, _log);
+        _executor = new MainThreadExecutor(synchronizationContext, unityThreadId, _log);
         _log.Log($"captured Unity thread {unityThreadId}; synchronization context available={synchronizationContext != null}");
 
         _settings = new SageConfig(Config);
@@ -61,12 +61,13 @@ public class BepInExPlugin : BaseUnityPlugin
         PatchHooks.ChatMessage = message => _mod?.HandleChatMessage(message);
         PatchHooks.LeaveGame = () => UnloadMod();
 
-        var assistants = new SageAssistantFactory(_settings, BepInEx.Paths.ConfigPath, _threads, _log);
+        var commands = new CommandFactory(_executor, _log);
+        var assistants = new SageAssistantFactory(_settings, Paths.ConfigPath, commands, _executor, _log);
         var view = new SwitchingSageView();
         var presenter = new SagePresenter(
             new WindowModel(200),
             view,
-            activity => assistants.BuildAssistant(activity),
+            assistants.BuildAssistant,
             assistants.PlayerName,
             () => assistants.AssistantName,
             _log,
@@ -74,9 +75,9 @@ public class BepInExPlugin : BaseUnityPlugin
             () => _settings.ShowToolCalls.Value,
             () => _settings.ShowToolResults.Value,
             () => assistants.ConsoleConversation,
-            _threads.Run);
-        _mod = new SageMod(_settings, assistants, view, presenter, _threads, _log);
-        CommandLine.AddCommand("ai", new AiConsoleCommand(new CommandFactory(presenter)));
+            _executor.Run);
+        _mod = new SageMod(_settings, assistants, view, presenter, _executor, _log);
+        CommandLine.AddCommand("ai", new AiConsoleCommand(commands, presenter));
         _log.Log("registered 'ai' console command");
 
         _log.Log($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");
@@ -90,7 +91,7 @@ public class BepInExPlugin : BaseUnityPlugin
     /// <summary>Loads the permanent mod for the level. No-op when down.</summary>
     private void LoadMod()
     {
-        if (_settings is null || _threads is null || _log is null)
+        if (_settings is null || _executor is null || _log is null)
         {
             return;
         }
