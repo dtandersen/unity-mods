@@ -1,23 +1,23 @@
 using System;
 using StationeersAi.Command;
+using StationeersAi.Window;
 
 namespace StationeersAi.Game;
 
 /// <summary>
-/// Builds the console commands. The mod func is resolved per call because
-/// the shell rebuilds the mod every level.
+/// Builds the console commands from the permanent window presenter.
 /// </summary>
 public sealed class CommandFactory
 {
-    private readonly Func<SageMod?> _mod;
+    private readonly SagePresenter _presenter;
 
-    public CommandFactory(Func<SageMod?> mod)
+    public CommandFactory(SagePresenter presenter)
     {
-        _mod = mod ?? throw new ArgumentNullException(nameof(mod));
+        _presenter = presenter ?? throw new ArgumentNullException(nameof(presenter));
     }
 
     public AiConsoleRouter AiConsoleRouter()
     {
-        return new AiConsoleRouter(() => _mod()?.ConsolePresenter());
+        return new AiConsoleRouter(_presenter);
     }
 }

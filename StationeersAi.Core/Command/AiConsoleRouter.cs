@@ -7,26 +7,21 @@ namespace StationeersAi.Command;
 /// The <c>ai</c> console line, minus the shell: <c>ai &lt;question&gt;</c> asks
 /// the assistant, <c>ai clear</c> drops the conversation, <c>ai compact</c>
 /// summarises it. Lives in core so tests can drive the true parsing without
-/// the game assemblies; the game-side command only resolves its presenter
-/// and hands over.
+/// the game assemblies; the game-side command hands it the presenter.
 /// </summary>
 public sealed class AiConsoleRouter
 {
-    private readonly Func<SagePresenter?> _presenter;
+    private readonly SagePresenter _presenter;
 
-    public AiConsoleRouter(Func<SagePresenter?> presenter)
+    public AiConsoleRouter(SagePresenter presenter)
     {
-        _presenter = presenter;
+        _presenter = presenter ?? throw new ArgumentNullException(nameof(presenter));
     }
 
     /// <summary>Runs one console line split into words. Never throws.</summary>
     public string Execute(string[] args)
     {
-        var presenter = _presenter != null ? _presenter() : null;
-        if (presenter == null)
-        {
-            return "Sage is not loaded. Load a world first.";
-        }
+        var presenter = _presenter;
 
         if (args != null && args.Length > 0)
         {

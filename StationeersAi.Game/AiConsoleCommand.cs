@@ -8,7 +8,7 @@ namespace StationeersAi.Game;
 /// <c>ai clear</c> drops the conversation, <c>ai compact</c> summarises it.
 /// Questions are answered asynchronously; the answer streams into the Sage
 /// window when the model replies. The mod is resolved per call because the
-/// shell rebuilds it every level.
+/// presenter only exists while the mod is loaded.
 /// </summary>
 public sealed class AiConsoleCommand : CommandBase
 {

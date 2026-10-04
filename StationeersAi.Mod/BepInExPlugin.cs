@@ -6,14 +6,15 @@ using HarmonyLib;
 using StationeersAi.Core;
 using StationeersAi.Game;
 using StationeersAi.Game.Patch;
+using StationeersAi.Window;
 using Util.Commands;
 
 namespace StationeersAi.Mod;
 
 /// <summary>
-/// Sage BepInEx shell. Patches, builds the threading and config primitives,
-/// watches level load/unload, and creates/disposes <see cref="SageMod"/>
-/// per level. The mod owns every runtime object; the shell owns none.
+/// Sage BepInEx shell. Patches, composes the session objects (assistant
+/// factory, view, presenter, mod), and loads/unloads the mod per level.
+/// The mod only plugs those objects into the loaded level.
 /// </summary>
 [BepInPlugin(ModGuid, ModName, ModVersion)]
 public class BepInExPlugin : BaseUnityPlugin
@@ -60,7 +61,22 @@ public class BepInExPlugin : BaseUnityPlugin
         PatchHooks.ChatMessage = message => _mod?.HandleChatMessage(message);
         PatchHooks.LeaveGame = () => UnloadMod();
 
-        CommandLine.AddCommand("ai", new AiConsoleCommand(new CommandFactory(() => _mod)));
+        var assistants = new SageAssistantFactory(_settings, BepInEx.Paths.ConfigPath, _threads, _log);
+        var view = new SwitchingSageView();
+        var presenter = new SagePresenter(
+            new WindowModel(200),
+            view,
+            activity => assistants.BuildAssistant(activity),
+            assistants.PlayerName,
+            () => assistants.AssistantName,
+            _log,
+            () => _settings.ShowThinking.Value,
+            () => _settings.ShowToolCalls.Value,
+            () => _settings.ShowToolResults.Value,
+            () => assistants.ConsoleConversation,
+            _threads.Run);
+        _mod = new SageMod(_settings, assistants, view, presenter, _threads, _log);
+        CommandLine.AddCommand("ai", new AiConsoleCommand(new CommandFactory(presenter)));
         _log.Log("registered 'ai' console command");
 
         _log.Log($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");
@@ -71,21 +87,15 @@ public class BepInExPlugin : BaseUnityPlugin
         UnloadMod();
     }
 
-    /// <summary>Builds the mod for the loaded level. No-op when built.</summary>
+    /// <summary>Loads the permanent mod for the level. No-op when down.</summary>
     private void LoadMod()
     {
-        if (_mod != null)
-        {
-            return;
-        }
-
         if (_settings is null || _threads is null || _log is null)
         {
             return;
         }
 
-        _mod = new SageMod(_settings, BepInEx.Paths.ConfigPath, _threads, _log);
-        _mod.Load();
+        _mod?.Load();
     }
 
     /// <summary>Tears down the mod for the unloading level. No-op when down.</summary>
@@ -99,8 +109,6 @@ public class BepInExPlugin : BaseUnityPlugin
         {
             _log?.Log(ex.ToString());
         }
-
-        _mod = null;
     }
 
     private void Patch(Harmony harmony, Type patch)

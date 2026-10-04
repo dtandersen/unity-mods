@@ -90,6 +90,12 @@ public sealed class SagePresenter : IChatSink
         PushAll();
     }
 
+    /// <summary>Pushes full state to the view. Call after the view swaps.</summary>
+    public void Refresh()
+    {
+        PushAll();
+    }
+
     public bool Busy
     {
         get { lock (_gate) return _busy; }

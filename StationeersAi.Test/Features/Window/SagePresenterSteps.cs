@@ -84,7 +84,7 @@ public sealed class SagePresenterSteps
     /// </summary>
     private AiConsoleRouter ConsoleRouter()
     {
-        return new AiConsoleRouter(() => World.WindowPresenter);
+        return new AiConsoleRouter(World.WindowPresenter);
     }
 
     private static string[] SplitConsoleLine(string command)
