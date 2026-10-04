@@ -125,6 +125,7 @@ public sealed class SageServerSteps
             Devices = world.Devices,
             Inspector = world.Inspector,
             Things = world.Things,
+            ThingContents = world.ThingContents,
             Rooms = world.RoomInspector,
         };
     }

@@ -34,5 +34,7 @@ public sealed class SageData
 
     public IThingCatalog Things { get; set; }
 
+    public IThingContents ThingContents { get; set; }
+
     public IRoomInspector Rooms { get; set; }
 }

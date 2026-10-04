@@ -14,11 +14,15 @@ public sealed record ChipState(string ErrorType, string ErrorLine, double? Displ
 /// <summary>One device on a housing: its d-index, label, and thing id (0 when the screw is empty).</summary>
 public sealed record HousingDeviceEntry(string Index, string Label, long Thing);
 
+/// <summary>One reagent inside a machine: its display name and stored quantity.</summary>
+public sealed record ReagentAmount(string Reagent, double Quantity);
+
 /// <summary>
 /// One device in full: identity, on/off state (null when it has no switch),
 /// readable logic settings, slots, and, for housings, the devices on its
-/// screws (null for anything else). Live readings are absent when the game
-/// does not expose them.
+/// screws (null for anything else). Storage holds internal reagents for
+/// fabricators and furnaces (null when the device stores none). Live readings
+/// are absent when the game does not expose them.
 /// </summary>
 public sealed record DeviceDetails(
     string Name,
@@ -29,4 +33,5 @@ public sealed record DeviceDetails(
     IReadOnlyList<DeviceLogicValue> Logic,
     IReadOnlyList<DeviceSlotInfo> Slots,
     IReadOnlyList<HousingDeviceEntry> Devices,
-    ChipState Chip);
+    ChipState Chip,
+    IReadOnlyList<ReagentAmount> Storage);

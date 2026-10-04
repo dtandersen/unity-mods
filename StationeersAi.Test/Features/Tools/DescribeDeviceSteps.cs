@@ -2,6 +2,9 @@ using Reqnroll;
 using StationeersAi.Entity;
 using StationeersAi.Test.Support;
 using Caev.Tools;
+using System;
+using System.Globalization;
+using System.Linq;
 
 namespace StationeersAi.Test.Features.Tools;
 
@@ -29,7 +32,30 @@ public sealed class DescribeDeviceSteps
             new[] { new DeviceLogicValue("Pressure", 101.3, false), new DeviceLogicValue("On", 1, true) },
             new[] { new DeviceSlotInfo(0, "Filter", "empty") },
             null,
+            null,
             null);
+    }
+
+    [Given("the device {string} holds:")]
+    public void GivenTheDeviceHolds(string name, Table table)
+    {
+        World.Inspector.Details = new DeviceDetails(
+            name,
+            "StructureAutolathe",
+            1456,
+            0,
+            false,
+            new DeviceLogicValue[0],
+            new[]
+            {
+                new DeviceSlotInfo(0, "Import", "empty"),
+                new DeviceSlotInfo(1, "Export", "empty"),
+            },
+            null,
+            null,
+            table.Rows.Select(row => new ReagentAmount(
+                row["Reagent"],
+                double.Parse(row["Quantity"], CultureInfo.InvariantCulture))).ToArray());
     }
 
     [Given("the housing {string} exists")]
@@ -49,6 +75,7 @@ public sealed class DescribeDeviceSteps
                 new HousingDeviceEntry("d0", "Heater", 101),
                 new HousingDeviceEntry("d1", "empty", 0),
             },
+            null,
             null);
     }
 
@@ -66,7 +93,8 @@ public sealed class DescribeDeviceSteps
             details.Logic,
             details.Slots,
             details.Devices,
-            new ChipState("IncorrectVariable", "12", 294, "6c96f2ae"));
+            new ChipState("IncorrectVariable", "12", 294, "6c96f2ae"),
+            details.Storage);
     }
 
     [Given("no device matches")]
@@ -95,6 +123,7 @@ public sealed class DescribeDeviceSteps
                 new DeviceLogicValue("RatioNitrogen", 0.0241535, false),
             },
             new DeviceSlotInfo[0],
+            null,
             null,
             null);
     }

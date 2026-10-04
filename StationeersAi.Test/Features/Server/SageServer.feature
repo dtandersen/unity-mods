@@ -98,6 +98,16 @@ Feature: Sage HTTP API
       [{"Id":"Air Vent","Name":"Air Vent","Description":"Moves air."}]
       """
 
+  Scenario: Structure names ship without rich text
+    Given the structure database contains:
+      | Name                          | Description |
+      | <color=green>Autolathe</color> | Prints.     |
+    When I GET /sage/structures?q=autolathe
+    Then the response is:
+      """
+      [{"Id":"Autolathe","Name":"Autolathe","Description":"Prints."}]
+      """
+
   Scenario: Stationpedia read
     Given the stationpedia contains:
       | Key       | Title      | Description   | Text                      |
@@ -108,12 +118,33 @@ Feature: Sage HTTP API
       {"Key":"ItemCable","Title":"Cable Coil","Description":"Spooled wire.","Text":"Cable Coil carries power."}
       """
 
+  Scenario: Stationpedia text ships without rich text
+    Given the stationpedia contains:
+      | Key     | Title                 | Description                 | Text   |
+      | ItemFan | <color=red>Fan</color> | Moves <link=Air>air</link>. | Plain. |
+    When I GET /sage/stationpedia/read?key=ItemFan
+    Then the response is:
+      """
+      {"Key":"ItemFan","Title":"Fan","Description":"Moves air.","Text":"Plain."}
+      """
+
   Scenario: Device describe
     Given the device "Air Vent" exists
     When I GET /sage/devices/describe?device=Air Vent
     Then the response is:
       """
-      {"Name":"Air Vent","Type":"StructureAirVent","Thing":101,"NetworkId":7,"IsOn":true,"Logic":[{"Name":"Pressure","Value":101.3,"Writable":false},{"Name":"On","Value":1.0,"Writable":true}],"Slots":[{"Index":0,"Slot":"Filter","Occupant":"empty"}],"Devices":null,"Chip":null}
+      {"Name":"Air Vent","Type":"StructureAirVent","Thing":101,"NetworkId":7,"IsOn":true,"Logic":[{"Name":"Pressure","Value":101.3,"Writable":false},{"Name":"On","Value":1.0,"Writable":true}],"Slots":[{"Index":0,"Slot":"Filter","Occupant":"empty"}],"Devices":null,"Chip":null,"Storage":null}
+      """
+
+  Scenario: Device describe includes fabricator storage
+    Given the device "Autolathe" holds:
+      | Reagent | Quantity |
+      | Iron    | 60       |
+      | Copper  | 12.5     |
+    When I GET /sage/devices/describe?device=1456
+    Then the response is:
+      """
+      {"Name":"Autolathe","Type":"StructureAutolathe","Thing":1456,"NetworkId":0,"IsOn":false,"Logic":[],"Slots":[{"Index":0,"Slot":"Import","Occupant":"empty"},{"Index":1,"Slot":"Export","Occupant":"empty"}],"Devices":null,"Chip":null,"Storage":[{"Reagent":"Iron","Quantity":60.0},{"Reagent":"Copper","Quantity":12.5}]}
       """
 
   Scenario: Thing search
@@ -124,6 +155,27 @@ Feature: Sage HTTP API
     Then the response is:
       """
       {"things":[{"Name":"Iron Ingot","Type":"Ingot","Thing":501,"Quantity":"x5","X":1.0,"Y":2.0,"Z":4.0,"RoomId":0}],"origin":{"X":1.0,"Y":2.0,"Z":3.0},"facing":null}
+      """
+
+  Scenario: Thing contents lists container slots
+    Given the "Mining Belt" holds:
+      | Slot   | Item       | Quantity |
+      | Slot 1 | Iron Ore   | x12      |
+      | Slot 2 | Copper Ore | x4       |
+    When I GET /sage/things/contents?thing=301
+    Then the response is:
+      """
+      [{"Slot":"Slot 1","Name":"Iron Ore","Quantity":"x12"},{"Slot":"Slot 2","Name":"Copper Ore","Quantity":"x4"}]
+      """
+
+  Scenario: Thing quantity ships without rich text
+    Given these world things exist:
+      | Name           | Type   | Thing | Quantity              | X   | Y   | Z   | Room |
+      | Methane Filter | Filter | 502   | 100<size=75%>%</size> | 1   | 2   | 4   | 0    |
+    When I GET /sage/things?q=methane
+    Then the response is:
+      """
+      {"things":[{"Name":"Methane Filter","Type":"Filter","Thing":502,"Quantity":"100%","X":1.0,"Y":2.0,"Z":4.0,"RoomId":0}],"origin":{"X":1.0,"Y":2.0,"Z":3.0},"facing":null}
       """
 
   Scenario: Room read

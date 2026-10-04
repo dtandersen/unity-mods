@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Reqnroll;
 using StationeersAi.Entity;
 using StationeersAi.Test.Support;
@@ -17,6 +18,16 @@ public sealed class ThingSearchSteps
     }
 
     private World World => Hooks.GetWorld(_context);
+
+    [Given("the {string} holds:")]
+    public void GivenTheThingHolds(string name, Table table)
+    {
+        World.ThingContents.HasMatch = true;
+        World.ThingContents.Contents.AddRange(table.Rows.Select(row => new ThingContent(
+            row["Slot"],
+            row["Item"],
+            row["Quantity"])));
+    }
 
     [Given("these world things exist:")]
     public void GivenTheseWorldThingsExist(Table table)

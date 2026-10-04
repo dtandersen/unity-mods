@@ -40,6 +40,8 @@ public sealed class World : IDisposable
 
     public InMemoryThingCatalog Things { get; } = new InMemoryThingCatalog();
 
+    public InMemoryThingContents ThingContents { get; } = new InMemoryThingContents();
+
     public InMemoryRoomInspector RoomInspector { get; } = new InMemoryRoomInspector();
 
     public FakeAiClient Ai { get; set; }

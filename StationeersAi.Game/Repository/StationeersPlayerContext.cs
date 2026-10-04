@@ -58,11 +58,67 @@ public sealed class StationeersPlayerContext : IPlayerContext
         }
 
         var name = StationeersItemRepository.SafeDisplayName(occupant);
+        var label = SlotName(slot, fallbackName);
         _inventory.Add(new ItemStack(
             Id: occupant.PrefabName,
             Name: name,
             Quantity: QuantityText(occupant),
-            Slot: SlotName(slot, fallbackName)));
+            Slot: label));
+        AddNested(label, occupant);
+    }
+
+    /// <summary>
+    /// Into worn/carried containers (belt, backpack) at any depth: ore and
+    /// tools inside them list under the parent slot. Depth-capped and
+    /// skips empties, never fatal.
+    /// </summary>
+    private void AddNested(string parentSlot, DynamicThing holder)
+    {
+        AddNested(parentSlot, holder, 0);
+    }
+
+    private void AddNested(string parentSlot, DynamicThing holder, int depth)
+    {
+        if (depth > 4)
+        {
+            return;
+        }
+
+        List<Slot> slots = null;
+        try
+        {
+            slots = holder.Slots;
+        }
+        catch (System.Exception)
+        {
+            return;
+        }
+
+        if (slots == null)
+        {
+            return;
+        }
+
+        foreach (var slot in slots)
+        {
+            if (slot == null)
+            {
+                continue;
+            }
+
+            var nested = SafeOccupant(slot);
+            if (nested == null)
+            {
+                continue;
+            }
+
+            _inventory.Add(new ItemStack(
+                Id: nested.PrefabName,
+                Name: StationeersItemRepository.SafeDisplayName(nested),
+                Quantity: QuantityText(nested),
+                Slot: parentSlot));
+            AddNested(parentSlot, nested, depth + 1);
+        }
     }
 
     private static DynamicThing SafeOccupant(Slot slot)

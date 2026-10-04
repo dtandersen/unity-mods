@@ -111,6 +111,22 @@ public sealed class DescribeDeviceTool : ITool
                 slots.Select(slot => new[] { slot.Index.ToString(), slot.Slot, slot.Occupant })));
         }
 
+        if (details.Storage != null)
+        {
+            var stored = details.Storage;
+            if (stored.Count == 0)
+            {
+                lines.Add("Storage: empty.");
+            }
+            else
+            {
+                lines.Add("Storage:");
+                lines.Add(Markdown.Build(
+                    new[] { "Reagent", "Quantity" },
+                    stored.Select(entry => new[] { entry.Reagent, Format(entry.Quantity) })));
+            }
+        }
+
         if (details.Devices != null)
         {
             lines.Add("Devices:");

@@ -277,6 +277,7 @@ public sealed class SageMod
             Devices = new StationeersDeviceCatalog(_threads, _log),
             Inspector = new StationeersDeviceInspector(_threads, _log),
             Things = new StationeersThingCatalog(_threads, _log),
+            ThingContents = new StationeersThingContents(_threads, _log),
             Rooms = new StationeersRoomInspector(_threads, _log),
         };
     }

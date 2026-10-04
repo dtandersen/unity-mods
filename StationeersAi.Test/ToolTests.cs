@@ -454,6 +454,7 @@ public class ToolTests
                 new[] { new DeviceLogicValue("Pressure", 101.3, false), new DeviceLogicValue("On", 1, true) },
                 new[] { new DeviceSlotInfo(0, "Filter", "empty") },
                 null,
+                null,
                 null),
         };
         var tools = new ToolHandler(new ITool[]
@@ -489,7 +490,8 @@ public class ToolTests
                     new HousingDeviceEntry("d0", "Heater", 101),
                     new HousingDeviceEntry("d1", "empty", 0),
                 },
-                new ChipState("IncorrectVariable", "12", 294, "6c96f2ae")),
+                new ChipState("IncorrectVariable", "12", 294, "6c96f2ae"),
+                null),
         };
         var tools = new ToolHandler(new ITool[]
         {

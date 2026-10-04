@@ -8,6 +8,7 @@ using Assets.Scripts.Objects;
 using Assets.Scripts.Objects.Electrical;
 using Assets.Scripts.Objects.Motherboards;
 using Assets.Scripts.Objects.Pipes;
+using Reagents;
 using StationeersAi.Entity;
 using StationeersAi.Formatting;
 using StationeersAi.Repository;
@@ -89,7 +90,8 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
             ReadLogic(target as ILogicable),
             ReadSlots(target as ILogicable),
             ReadHousingDevices(target),
-            ReadChip(target));
+            ReadChip(target),
+            ReadStorage(target));
     }
 
     /// <summary>
@@ -344,6 +346,67 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
         }
 
         return slots;
+    }
+
+    /// <summary>
+    /// Internal reagents of fabricators (autolathe, electronics printer),
+    /// furnaces, and anything else holding a mixture: the hopper contents
+    /// stockpile tallies need. Every <c>Thing</c> carries a mixture, so this
+    /// reads it straight off the device. Null when the mixture itself is
+    /// missing; empty when it exists but is unfilled.
+    /// </summary>
+    private static IReadOnlyList<ReagentAmount> ReadStorage(Device target)
+    {
+        try
+        {
+            var thing = target as Thing;
+            var mixture = thing != null ? thing.ReagentMixture : null;
+            if (mixture == null)
+            {
+                return null;
+            }
+
+            var amounts = new List<ReagentAmount>();
+            foreach (var reagent in Reagent.AllReagentsSorted)
+            {
+                if (reagent == null)
+                {
+                    continue;
+                }
+
+                double quantity;
+                try
+                {
+                    quantity = mixture.Get(reagent);
+                }
+                catch (Exception)
+                {
+                    continue;
+                }
+
+                if (quantity <= 0)
+                {
+                    continue;
+                }
+
+                string name = null;
+                try
+                {
+                    name = reagent.DisplayName;
+                }
+                catch (Exception)
+                {
+                }
+
+                amounts.Add(new ReagentAmount(name ?? reagent.TypeName ?? "unknown", quantity));
+            }
+
+            return amounts;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 
     /// <summary>The thing screwed into a housing screw, even when the chip cannot see it.</summary>

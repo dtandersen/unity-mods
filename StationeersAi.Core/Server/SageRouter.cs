@@ -74,6 +74,8 @@ public sealed class SageRouter
                 return Describe(Q(query, "device"));
             case "/things":
                 return Things(Q(query, "q"), Q(query, "maxDistance"));
+            case "/things/contents":
+                return Contents(Q(query, "thing"));
             case "/room":
                 return Room(Q(query, "id"));
             case "/items":
@@ -118,6 +120,17 @@ public sealed class SageRouter
         }
 
         return SageResponse.Ok(details);
+    }
+
+    private SageResponse Contents(string thing)
+    {
+        var contents = new ReadThingContentsCommand(_data.ThingContents).Execute(thing);
+        if (contents == null)
+        {
+            return SageResponse.Error(404, "Thing '" + thing + "' not found.");
+        }
+
+        return SageResponse.Ok(contents);
     }
 
     private SageResponse Things(string query, string maxDistance)
