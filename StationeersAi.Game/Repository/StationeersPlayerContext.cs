@@ -1,50 +1,75 @@
+using System;
 using System.Collections.Generic;
 using Assets.Scripts;
 using Assets.Scripts.Objects;
 using Assets.Scripts.Objects.Entities;
 using Assets.Scripts.Objects.Items;
 using StationeersAi.Entity;
+using StationeersAi.Game;
+using Logger = StationeersAi.Core.Logger;
 
 namespace StationeersAi.Repository;
 
 /// <summary>
-/// Reads the local player's state: name, position, world, and the contents of
-/// their worn/carried slots (hands, suit, helmet, backpack, uniform,
-/// toolbelt...). Tolerates a missing player (dedicated server, main menu):
-/// everything is then empty/unknown. Snapshotted on the calling (main) thread.
+/// Reads the local player's state live on every access: name, position,
+/// world, and the contents of their worn/carried slots (hands, suit,
+/// helmet, backpack, uniform, toolbelt...). Tolerates a missing player
+/// (dedicated server, main menu): everything is then empty/unknown. Reads
+/// run on Unity's main thread through the executor.
 /// </summary>
 public sealed class StationeersPlayerContext : IPlayerContext
 {
-    private readonly List<ItemStack> _inventory = new List<ItemStack>();
+    private readonly IHumanProvider _humans;
+    private readonly IMainThread _executor;
+    private readonly Logger _log;
 
-    public StationeersPlayerContext(Human? human)
+    public StationeersPlayerContext(IHumanProvider humans, IMainThread executor, Logger log)
     {
-        if (human == null)
-        {
-            return;
-        }
-
-        Name = PlayerName(human);
-        Status = PlayerStatus(human);
-
-        AddSlot("Left hand", human.LeftHandSlot);
-        AddSlot("Right hand", human.RightHandSlot);
-        AddSlot("Uniform", human.UniformSlot);
-        AddSlot("Suit", human.SuitSlot);
-        AddSlot("Helmet", human.HelmetSlot);
-        AddSlot("Glasses", human.GlassesSlot);
-        AddSlot("Backpack", human.BackpackSlot);
-        AddSlot("Toolbelt", human.ToolbeltSlot);
-        AddSlot("Stomach", human.StomachSlot);
+        _humans = humans ?? throw new ArgumentNullException(nameof(humans));
+        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
+        _log = log ?? throw new ArgumentNullException(nameof(log));
     }
 
-    public string? Name { get; }
+    public string? Name => Read(h => h == null ? null : PlayerName(h), (string?)null);
 
-    public PlayerStatus? Status { get; }
+    public PlayerStatus? Status => Read(h => h == null ? null : PlayerStatus(h), (PlayerStatus?)null);
 
-    public IReadOnlyList<ItemStack> Inventory => _inventory;
+    public IReadOnlyList<ItemStack> Inventory => Read(ReadInventory, new ItemStack[0]);
 
-    private void AddSlot(string fallbackName, Slot slot)
+    private T Read<T>(Func<Human?, T> map, T empty)
+    {
+        try
+        {
+            return _executor.RunSync(() => map(_humans.GetHuman()));
+        }
+        catch (Exception ex)
+        {
+            _log.Log(ex.ToString());
+            return empty;
+        }
+    }
+
+    private static IReadOnlyList<ItemStack> ReadInventory(Human? human)
+    {
+        var inventory = new List<ItemStack>();
+        if (human == null)
+        {
+            return inventory;
+        }
+
+        AddSlot(inventory, "Left hand", human.LeftHandSlot);
+        AddSlot(inventory, "Right hand", human.RightHandSlot);
+        AddSlot(inventory, "Uniform", human.UniformSlot);
+        AddSlot(inventory, "Suit", human.SuitSlot);
+        AddSlot(inventory, "Helmet", human.HelmetSlot);
+        AddSlot(inventory, "Glasses", human.GlassesSlot);
+        AddSlot(inventory, "Backpack", human.BackpackSlot);
+        AddSlot(inventory, "Toolbelt", human.ToolbeltSlot);
+        AddSlot(inventory, "Stomach", human.StomachSlot);
+        return inventory;
+    }
+
+    private static void AddSlot(List<ItemStack> inventory, string fallbackName, Slot slot)
     {
         if (slot == null)
         {
@@ -59,12 +84,12 @@ public sealed class StationeersPlayerContext : IPlayerContext
 
         var name = StationeersItemRepository.SafeDisplayName(occupant);
         var label = SlotName(slot, fallbackName);
-        _inventory.Add(new ItemStack(
+        inventory.Add(new ItemStack(
             Id: occupant.PrefabName,
             Name: name,
             Quantity: QuantityText(occupant),
             Slot: label));
-        AddNested(label, occupant);
+        AddNested(inventory, label, occupant);
     }
 
     /// <summary>
@@ -72,12 +97,12 @@ public sealed class StationeersPlayerContext : IPlayerContext
     /// tools inside them list under the parent slot. Depth-capped and
     /// skips empties, never fatal.
     /// </summary>
-    private void AddNested(string parentSlot, DynamicThing holder)
+    private static void AddNested(List<ItemStack> inventory, string parentSlot, DynamicThing holder)
     {
-        AddNested(parentSlot, holder, 0);
+        AddNested(inventory, parentSlot, holder, 0);
     }
 
-    private void AddNested(string parentSlot, DynamicThing holder, int depth)
+    private static void AddNested(List<ItemStack> inventory, string parentSlot, DynamicThing holder, int depth)
     {
         if (depth > 4)
         {
@@ -112,12 +137,12 @@ public sealed class StationeersPlayerContext : IPlayerContext
                 continue;
             }
 
-            _inventory.Add(new ItemStack(
+            inventory.Add(new ItemStack(
                 Id: nested.PrefabName,
                 Name: StationeersItemRepository.SafeDisplayName(nested),
                 Quantity: QuantityText(nested),
                 Slot: parentSlot));
-            AddNested(parentSlot, nested, depth + 1);
+            AddNested(inventory, parentSlot, nested, depth + 1);
         }
     }
 

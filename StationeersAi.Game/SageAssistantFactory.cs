@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Assets.Scripts.Objects;
 using Assets.Scripts.Objects.Entities;
+using Assets.Scripts.Objects.Items;
 using Assets.Scripts.UI;
 using Caev;
 using Caev.OpenAi;
@@ -30,15 +31,10 @@ public sealed class SageAssistantFactory
     private readonly Logger _log;
 
     private readonly Dictionary<string, Conversation> _mentionConversations = new Dictionary<string, Conversation>();
-
-    // World data does not depend on the player, so it is built once and
-    // reused until the prefab catalogue changes size. Set by
-    // EnsureCatalogues before any read.
-    private IItemRepository _catalogueItems = null!;
-    private IStructureRepository _catalogueStructures = null!;
-    private IRecipeRepository _catalogueRecipes = null!;
-    private IStationpediaRepository _catalogueStationpedia = null!;
-    private int _cataloguePrefabCount = -1;
+    private readonly IPrefabProvider _prefabs = new LivePrefabs();
+    private readonly IHumanProvider _humans = new LiveHumans();
+    private readonly IRecipeProvider _recipes = new LiveRecipes();
+    private readonly IStationpediaProvider _stationpedia = new LiveStationpedia();
 
     private Conversation? _conversation;
 
@@ -102,26 +98,15 @@ public sealed class SageAssistantFactory
 
     public SageData BuildSageData()
     {
-        EnsureCatalogues();
-
-        Human? human = null;
-        try
-        {
-            human = Human.LocalHuman;
-        }
-        catch (Exception)
-        {
-        }
-
-        var player = new StationeersPlayerContext(human);
+        var player = new StationeersPlayerContext(_humans, _threads, _log);
         return new SageData
         {
-            Items = _catalogueItems,
-            Structures = _catalogueStructures,
-            Recipes = _catalogueRecipes,
-            Stationpedia = _catalogueStationpedia,
+            Items = new StationeersItemRepository(_prefabs, _threads, _log),
+            Structures = new StationeersStructureRepository(_prefabs, _threads, _log),
+            Recipes = new StationeersRecipeRepository(_recipes, _threads, _log),
+            Stationpedia = new StationeersStationpediaRepository(_stationpedia, _threads, _log),
             Player = player,
-            Worlds = new StationeersWorldContext(),
+            Worlds = new StationeersWorldContext(_threads, _log),
             Ic = new StationeersIcEditor(_threads, _log),
             Export = new StationeersIcExport(_threads, _log),
             Mips = new StationeersMipsReference(_log),
@@ -141,29 +126,23 @@ public sealed class SageAssistantFactory
             return null;
         }
 
-        EnsureCatalogues();
+        var playerContext = new StationeersPlayerContext(_humans, _threads, _log);
 
-        Human? human = null;
-        try
-        {
-            human = Human.LocalHuman;
-        }
-        catch (Exception)
-        {
-        }
-
-        var playerContext = new StationeersPlayerContext(human);
+        var items = new StationeersItemRepository(_prefabs, _threads, _log);
+        var structures = new StationeersStructureRepository(_prefabs, _threads, _log);
+        var recipes = new StationeersRecipeRepository(_recipes, _threads, _log);
+        var stationpedia = new StationeersStationpediaRepository(_stationpedia, _threads, _log);
 
         var tools = new ToolHandler(new ITool[]
         {
-            new SearchItemsTool(new SearchItemsCommand(new ItemIndex(_catalogueItems))),
-            new SearchStructuresTool(new SearchStructuresCommand(new StructureIndex(_catalogueStructures))),
-            new SearchRecipesTool(new SearchRecipesCommand(new RecipeIndex(_catalogueRecipes))),
-            new SearchStationpediaTool(new SearchStationpediaCommand(new StationpediaIndex(_catalogueStationpedia))),
-            new ReadStationpediaTool(new ReadStationpediaCommand(_catalogueStationpedia)),
+            new SearchItemsTool(new SearchItemsCommand(new ItemIndex(items))),
+            new SearchStructuresTool(new SearchStructuresCommand(new StructureIndex(structures))),
+            new SearchRecipesTool(new SearchRecipesCommand(new RecipeIndex(recipes))),
+            new SearchStationpediaTool(new SearchStationpediaCommand(new StationpediaIndex(stationpedia))),
+            new ReadStationpediaTool(new ReadStationpediaCommand(stationpedia)),
             new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(playerContext))),
             new GetStatusTool(new GetStatusCommand(playerContext)),
-            new GetWorldTool(new GetWorldCommand(new StationeersWorldContext())),
+            new GetWorldTool(new GetWorldCommand(new StationeersWorldContext(_threads, _log))),
             new WriteIcTool(new WriteIcCommand(new StationeersIcEditor(_threads, _log))),
             new ReadIcTool(new ReadIcCommand(new StationeersIcEditor(_threads, _log))),
             new ExportIcTool(new ExportIcCommand(new StationeersIcExport(_threads, _log))),
@@ -181,26 +160,47 @@ public sealed class SageAssistantFactory
         return new AiAssistant(client, tools, SystemPromptText(), _settings.MaxIterations.Value, _log, activity);
     }
 
-    /// <summary>
-    /// World data (items, structures, recipes, Stationpedia) does not depend on
-    /// the player, so it is built once and reused until the prefab catalogue
-    /// changes (game load, mods adding prefabs).
-    /// </summary>
-    private void EnsureCatalogues()
+    /// <summary>Reads the live prefab catalogue straight from the game.</summary>
+    private sealed class LivePrefabs : IPrefabProvider
     {
-        var prefabs = Prefab.AllPrefabs;
-        var count = prefabs != null ? prefabs.Count : 0;
-        if (_catalogueItems != null && _cataloguePrefabCount == count && count > 0)
+        public IEnumerable<Thing>? GetPrefabs()
         {
-            return;
+            return Prefab.AllPrefabs;
         }
+    }
 
-        _catalogueItems = new StationeersItemRepository(prefabs);
-        _catalogueStructures = new StationeersStructureRepository(prefabs);
-        _catalogueRecipes = new StationeersRecipeRepository();
-        _catalogueStationpedia = new StationeersStationpediaRepository(Stationpedia.StationpediaPages);
-        _cataloguePrefabCount = count;
-        _log.Log($"rebuilt world catalogues ({count} prefabs)");
+    /// <summary>Reads the local player straight from the game.</summary>
+    private sealed class LiveHumans : IHumanProvider
+    {
+        public Human? GetHuman()
+        {
+            try
+            {
+                return Human.LocalHuman;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+    }
+
+    /// <summary>Reads the recipe tables straight from the game.</summary>
+    private sealed class LiveRecipes : IRecipeProvider
+    {
+        public IEnumerable<RecipeReference> GetRecipes()
+        {
+            return StationeersRecipeRepository.RecipeTables();
+        }
+    }
+
+    /// <summary>Reads the encyclopedia pages straight from the game.</summary>
+    private sealed class LiveStationpedia : IStationpediaProvider
+    {
+        public IEnumerable<StationpediaPage>? GetPages()
+        {
+            return Stationpedia.StationpediaPages;
+        }
     }
 
     /// <summary>

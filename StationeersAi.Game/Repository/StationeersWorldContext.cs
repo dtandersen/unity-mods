@@ -2,24 +2,45 @@ using System;
 using System.Collections.Generic;
 using Assets.Scripts;
 using StationeersAi.Entity;
+using StationeersAi.Game;
 using StationeersAi.Repository;
+using Logger = StationeersAi.Core.Logger;
 
 namespace StationeersAi.Repository;
 
 /// <summary>
-/// Reads the world, orbit, sunlight, and outside air from game statics.
-/// Snapshotted on the calling (main) thread. Tolerates a missing world
-/// (main menu, loading): the info is then null, and single missing
-/// readings stay null rather than failing the whole snapshot.
+/// Reads the world, orbit, sunlight, and outside air live from game
+/// statics on every access. Reads run on Unity's main thread through the
+/// executor. Tolerates a missing world (main menu, loading): the info is
+/// then null, and single missing readings stay null rather than failing
+/// the whole read.
 /// </summary>
 public sealed class StationeersWorldContext : IWorldContext
 {
-    public StationeersWorldContext()
+    private readonly IMainThread _executor;
+    private readonly Logger _log;
+
+    public StationeersWorldContext(IMainThread executor, Logger log)
     {
-        Info = Read();
+        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
+        _log = log ?? throw new ArgumentNullException(nameof(log));
     }
 
-    public WorldInfo? Info { get; }
+    public WorldInfo? Info
+    {
+        get
+        {
+            try
+            {
+                return _executor.RunSync(Read);
+            }
+            catch (Exception ex)
+            {
+                _log.Log(ex.ToString());
+                return null;
+            }
+        }
+    }
 
     private static WorldInfo? Read()
     {

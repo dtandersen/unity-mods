@@ -4,8 +4,10 @@ using System.Linq;
 using System.Reflection;
 using Assets.Scripts.Objects.Items;
 using StationeersAi.Entity;
+using StationeersAi.Game;
 using IngredientEntity = StationeersAi.Entity.Ingredient;
 using RecipeEntity = StationeersAi.Entity.Recipe;
+using Logger = StationeersAi.Core.Logger;
 
 namespace StationeersAi.Repository;
 
@@ -15,22 +17,47 @@ namespace StationeersAi.Repository;
 /// catalogue plus the per-machine lists). Reflecting over the fields instead
 /// of naming them keeps this working when the game adds machines.
 /// Reagent quantities become ingredients; the creator thing names the station.
-/// Snapshotted on the calling (main) thread.
+/// Asks the provider for the current tables on every read and maps them on
+/// Unity's main thread, so it holds no snapshot and never goes stale.
 /// </summary>
 public sealed class StationeersRecipeRepository : IRecipeRepository
 {
-    private readonly List<RecipeEntity> _recipes = new List<RecipeEntity>();
+    private readonly IRecipeProvider _tables;
+    private readonly IMainThread _executor;
+    private readonly Logger _log;
 
-    public StationeersRecipeRepository()
-        : this(RecipeTables())
+    public StationeersRecipeRepository(IRecipeProvider tables, IMainThread executor, Logger log)
     {
+        _tables = tables ?? throw new ArgumentNullException(nameof(tables));
+        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
+        _log = log ?? throw new ArgumentNullException(nameof(log));
     }
 
-    internal StationeersRecipeRepository(IEnumerable<RecipeReference> references)
+    public IReadOnlyList<RecipeEntity> GetAll()
     {
+        try
+        {
+            return _executor.RunSync(ReadAll);
+        }
+        catch (Exception ex)
+        {
+            _log.Log(ex.ToString());
+            return new RecipeEntity[0];
+        }
+    }
+
+    public RecipeEntity GetById(string id)
+    {
+        return GetAll().FirstOrDefault(recipe => recipe.Id == id);
+    }
+
+    private IReadOnlyList<RecipeEntity> ReadAll()
+    {
+        var recipes = new List<RecipeEntity>();
+        var references = _tables.GetRecipes();
         if (references == null)
         {
-            return;
+            return recipes;
         }
 
         var seen = new HashSet<string>(StringComparer.Ordinal);
@@ -49,7 +76,7 @@ public sealed class StationeersRecipeRepository : IRecipeRepository
                 continue;
             }
 
-            _recipes.Add(new RecipeEntity(
+            recipes.Add(new RecipeEntity(
                 Id: output.PrefabName,
                 ResultItemId: output.PrefabName,
                 Name: DisplayName(output),
@@ -57,19 +84,11 @@ public sealed class StationeersRecipeRepository : IRecipeRepository
                 Station: station,
                 Ingredients: Ingredients(reference.Recipe)));
         }
+
+        return recipes;
     }
 
-    public IReadOnlyList<RecipeEntity> GetAll()
-    {
-        return _recipes;
-    }
-
-    public RecipeEntity GetById(string id)
-    {
-        return _recipes.FirstOrDefault(recipe => recipe.Id == id);
-    }
-
-    private static IEnumerable<RecipeReference> RecipeTables()
+    internal static IEnumerable<RecipeReference> RecipeTables()
     {
         var tables = new List<RecipeReference>();
         foreach (var field in typeof(ElectronicReader).GetFields(BindingFlags.Public | BindingFlags.Static))

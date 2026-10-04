@@ -1,25 +1,57 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Objects;
 using StationeersAi.Entity;
+using StationeersAi.Game;
 using ItemEntity = StationeersAi.Entity.Item;
+using Logger = StationeersAi.Core.Logger;
 
 namespace StationeersAi.Repository;
 
 /// <summary>
-/// Reads items from the game's prefab catalogue (<c>Prefab.AllPrefabs</c>).
-/// This is world data, so the snapshot is materialised on the calling (main)
-/// thread and cached until the catalogue changes.
+/// Reads items from the game's prefab catalogue. Asks the provider for the
+/// current prefabs on every read and maps them on Unity's main thread, so
+/// it holds no snapshot and never goes stale.
 /// </summary>
 public sealed class StationeersItemRepository : IItemRepository
 {
-    private readonly List<ItemEntity> _items = new List<ItemEntity>();
+    private readonly IPrefabProvider _prefabs;
+    private readonly IMainThread _executor;
+    private readonly Logger _log;
 
-    public StationeersItemRepository(IEnumerable<Thing>? prefabs)
+    public StationeersItemRepository(IPrefabProvider prefabs, IMainThread executor, Logger log)
     {
+        _prefabs = prefabs ?? throw new ArgumentNullException(nameof(prefabs));
+        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
+        _log = log ?? throw new ArgumentNullException(nameof(log));
+    }
+
+    public IReadOnlyList<ItemEntity> GetAll()
+    {
+        try
+        {
+            return _executor.RunSync(ReadAll);
+        }
+        catch (Exception ex)
+        {
+            _log.Log(ex.ToString());
+            return new ItemEntity[0];
+        }
+    }
+
+    public ItemEntity GetById(string id)
+    {
+        return GetAll().FirstOrDefault(item => item.Id == id);
+    }
+
+    private IReadOnlyList<ItemEntity> ReadAll()
+    {
+        var items = new List<ItemEntity>();
+        var prefabs = _prefabs.GetPrefabs();
         if (prefabs == null)
         {
-            return;
+            return items;
         }
 
         foreach (var prefab in prefabs)
@@ -30,21 +62,13 @@ public sealed class StationeersItemRepository : IItemRepository
             }
 
             var name = SafeDisplayName(prefab);
-            _items.Add(new ItemEntity(
+            items.Add(new ItemEntity(
                 Id: prefab.PrefabName,
                 Name: name,
                 Type: prefab.GetType().Name));
         }
-    }
 
-    public IReadOnlyList<ItemEntity> GetAll()
-    {
-        return _items;
-    }
-
-    public ItemEntity GetById(string id)
-    {
-        return _items.FirstOrDefault(item => item.Id == id);
+        return items;
     }
 
     internal static string SafeDisplayName(Thing prefab)

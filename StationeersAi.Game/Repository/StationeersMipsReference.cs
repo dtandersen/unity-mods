@@ -12,23 +12,20 @@ namespace StationeersAi.Repository;
 
 /// <summary>
 /// Reads the IC10 instruction reference from the game's editor help (usage
-/// examples and localized descriptions per instruction). Snapshotted on the
-/// calling (main) thread; a failed entry is skipped, never fatal.
+/// examples and localized descriptions per instruction). Read live on every
+/// access; the tables are static game data, so no snapshot is needed.
+/// A failed entry is skipped, never fatal.
 /// </summary>
 public sealed class StationeersMipsReference : IMipsReference
 {
-    private readonly Logger? _log;
+    private readonly Logger _log;
 
     public StationeersMipsReference(Logger log)
     {
-        _log = log;
-    }
-    public StationeersMipsReference()
-    {
-        Instructions = Read();
+        _log = log ?? throw new ArgumentNullException(nameof(log));
     }
 
-    public IReadOnlyList<MipsInstruction>? Instructions { get; }
+    public IReadOnlyList<MipsInstruction>? Instructions => Read();
 
     private IReadOnlyList<MipsInstruction> Read()
     {
@@ -49,7 +46,7 @@ public sealed class StationeersMipsReference : IMipsReference
             }
             catch (Exception ex)
             {
-                _log?.Log($"mips reference skipped {command}: {ex.Message}");
+                _log.Log($"mips reference skipped {command}: {ex.Message}");
             }
         }
 
