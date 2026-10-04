@@ -11,11 +11,11 @@ namespace StationeersAi.Game;
 /// </summary>
 public sealed class MainThreadExecutor : IMainThread
 {
-    private readonly SynchronizationContext _synchronizationContext;
+    private readonly SynchronizationContext? _synchronizationContext;
     private readonly int _unityThreadId;
     private readonly Logger _log;
 
-    public MainThreadExecutor(SynchronizationContext synchronizationContext, int unityThreadId, Logger log)
+    public MainThreadExecutor(SynchronizationContext? synchronizationContext, int unityThreadId, Logger log)
     {
         _synchronizationContext = synchronizationContext;
         _unityThreadId = unityThreadId;
@@ -69,8 +69,8 @@ public sealed class MainThreadExecutor : IMainThread
             throw new InvalidOperationException("Unity synchronization context was not captured.");
         }
 
-        T result = default(T);
-        Exception error = null;
+        T result = default!;
+        Exception? error = null;
         using (var done = new ManualResetEventSlim(false))
         {
             synchronizationContext.Post(_ =>

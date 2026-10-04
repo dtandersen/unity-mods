@@ -40,7 +40,7 @@ public sealed class SearchRecipesTool : ITool
             FormatContent(query, recipes));
     }
 
-    private static string FormatContent(string query, IReadOnlyList<Recipe> recipes)
+    private static string FormatContent(string? query, IReadOnlyList<Recipe> recipes)
     {
         if (recipes.Count == 0)
         {

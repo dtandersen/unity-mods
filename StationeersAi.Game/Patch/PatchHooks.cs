@@ -10,7 +10,7 @@ namespace StationeersAi.Game.Patch;
 /// </summary>
 public static class PatchHooks
 {
-    public static Action<NetChatMessage> ChatMessage { get; set; }
+    public static Action<NetChatMessage>? ChatMessage { get; set; }
 
-    public static Action LeaveGame { get; set; }
+    public static Action? LeaveGame { get; set; }
 }

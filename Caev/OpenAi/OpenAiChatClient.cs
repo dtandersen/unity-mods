@@ -205,7 +205,7 @@ public sealed class OpenAiChatClient : IAiClient
 
     private static AiCompletion Parse(string json)
     {
-        ChatResponse response;
+        ChatResponse? response;
         try
         {
             response = JsonConvert.DeserializeObject<ChatResponse>(json);
@@ -227,7 +227,7 @@ public sealed class OpenAiChatClient : IAiClient
         return new AiCompletion(message.Content, ParseToolCalls(message.ToolCalls), Reasoning(message));
     }
 
-    private static string Reasoning(ResponseMessage message)
+    private static string? Reasoning(ResponseMessage message)
     {
         // Providers vary: DeepSeek/OpenRouter use reasoning_content, some use reasoning.
         return !string.IsNullOrWhiteSpace(message.ReasoningContent)
@@ -235,7 +235,7 @@ public sealed class OpenAiChatClient : IAiClient
             : message.Reasoning;
     }
 
-    private static IReadOnlyList<ToolCall> ParseToolCalls(List<ResponseToolCall> calls)
+    private static IReadOnlyList<ToolCall> ParseToolCalls(List<ResponseToolCall>? calls)
     {
         if (calls == null || calls.Count == 0)
         {
@@ -247,16 +247,16 @@ public sealed class OpenAiChatClient : IAiClient
         {
             var call = calls[i];
             var id = string.IsNullOrEmpty(call.Id) ? $"call_{i + 1}" : call.Id;
-            result.Add(new ToolCall(id, call.Function?.Name, ParseArguments(call.Function?.Arguments)));
+            result.Add(new ToolCall(id!, call.Function?.Name!, ParseArguments(call.Function?.Arguments)));
         }
 
         return result;
     }
 
-    private static ToolArguments ParseArguments(string json)
+    private static ToolArguments ParseArguments(string? json)
     {
         var values = new Dictionary<string, string>();
-        if (string.IsNullOrWhiteSpace(json))
+        if (string.IsNullOrWhiteSpace(json) || json is null)
         {
             return new ToolArguments(values);
         }
@@ -268,7 +268,7 @@ public sealed class OpenAiChatClient : IAiClient
             {
                 foreach (var pair in parsed)
                 {
-                    values[pair.Key] = pair.Value?.ToString();
+                    values[pair.Key] = pair.Value?.ToString()!;
                 }
             }
         }
@@ -283,45 +283,45 @@ public sealed class OpenAiChatClient : IAiClient
     private sealed class ChatResponse
     {
         [JsonProperty("choices")]
-        public List<ChatChoice> Choices { get; set; }
+        public List<ChatChoice>? Choices { get; set; }
     }
 
     private sealed class ChatChoice
     {
         [JsonProperty("message")]
-        public ResponseMessage Message { get; set; }
+        public ResponseMessage? Message { get; set; }
     }
 
     private sealed class ResponseMessage
     {
         [JsonProperty("content")]
-        public string Content { get; set; }
+        public string? Content { get; set; }
 
         [JsonProperty("reasoning_content")]
-        public string ReasoningContent { get; set; }
+        public string? ReasoningContent { get; set; }
 
         [JsonProperty("reasoning")]
-        public string Reasoning { get; set; }
+        public string? Reasoning { get; set; }
 
         [JsonProperty("tool_calls")]
-        public List<ResponseToolCall> ToolCalls { get; set; }
+        public List<ResponseToolCall>? ToolCalls { get; set; }
     }
 
     private sealed class ResponseToolCall
     {
         [JsonProperty("id")]
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         [JsonProperty("function")]
-        public ResponseFunction Function { get; set; }
+        public ResponseFunction? Function { get; set; }
     }
 
     private sealed class ResponseFunction
     {
         [JsonProperty("name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [JsonProperty("arguments")]
-        public string Arguments { get; set; }
+        public string? Arguments { get; set; }
     }
 }

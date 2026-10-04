@@ -17,7 +17,7 @@ public sealed class ReadRoomCommand
 
     /// <param name="roomId">The room to read. Null reads the room the player stands in.</param>
     /// <returns>The room's atmospherics, or null when it cannot be read.</returns>
-    public RoomAtmosphere Execute(long? roomId)
+    public RoomAtmosphere? Execute(long? roomId)
     {
         var id = roomId ?? _player.Status?.RoomId;
         if (!id.HasValue)

@@ -76,6 +76,8 @@ public sealed class World : IDisposable
 
     public Task AskTask { get; set; }
 
+    public string ConsoleOutput { get; set; }
+
     public Conversation Conversation { get; set; } = new Conversation();
 
     public RecordingActivity Activity { get; set; } = new RecordingActivity();

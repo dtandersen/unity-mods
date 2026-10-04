@@ -19,7 +19,7 @@ public sealed class StructureIndex
         _structures = structures;
     }
 
-    public IReadOnlyList<Structure> Search(string query)
+    public IReadOnlyList<Structure> Search(string? query)
     {
         if (string.IsNullOrWhiteSpace(query))
         {

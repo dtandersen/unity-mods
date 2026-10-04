@@ -26,7 +26,7 @@ public sealed class StationeersIcExport : IIcExport
         _threads = mainThread;
         _log = log;
     }
-    public IcWriteResult Export(string computer, string device)
+    public IcWriteResult Export(string? computer, string? device)
     {
         try
         {
@@ -39,7 +39,7 @@ public sealed class StationeersIcExport : IIcExport
         }
     }
 
-    private IcWriteResult ExportInner(string computer, string device)
+    private IcWriteResult ExportInner(string? computer, string? device)
     {
         var boards = ComputerBoards.Match(computer);
         if (boards.Count == 0)
@@ -103,7 +103,7 @@ public sealed class StationeersIcExport : IIcExport
             return new IcWriteResult(false, null, 0, $"Chip reports {type}" + (line == null ? "." : $" at line {line}."));
         }
 
-        string burned = null;
+        string? burned = null;
         try
         {
             if (chip != null)
@@ -124,7 +124,7 @@ public sealed class StationeersIcExport : IIcExport
         return new IcWriteResult(true, SafeName(housing) ?? "housing", text.Split('\n').Length, null);
     }
 
-    private static ProgrammableChip HousingChip(CircuitHousing housing)
+    private static ProgrammableChip? HousingChip(CircuitHousing housing)
     {
         try
         {
@@ -136,7 +136,7 @@ public sealed class StationeersIcExport : IIcExport
         }
     }
 
-    private static string SafeName(CircuitHousing housing)
+    private static string? SafeName(CircuitHousing housing)
     {
         try
         {

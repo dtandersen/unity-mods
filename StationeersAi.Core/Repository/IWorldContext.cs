@@ -6,5 +6,5 @@ namespace StationeersAi.Repository;
 public interface IWorldContext
 {
     /// <summary>The world info, or null when unavailable.</summary>
-    WorldInfo Info { get; }
+    WorldInfo? Info { get; }
 }

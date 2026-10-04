@@ -12,5 +12,5 @@ public interface IDeviceCatalog
     /// logic when <paramref name="logic"/> is true, dumb ones when false, all
     /// when null, and in room <paramref name="room"/> (null searches everywhere).
     /// </summary>
-    IReadOnlyList<DeviceInfo> Search(string query, long? network, bool? logic, long? room);
+    IReadOnlyList<DeviceInfo> Search(string? query, long? network, bool? logic, long? room);
 }

@@ -67,9 +67,9 @@ public sealed class SearchDevicesTool : ITool
             FormatContent(arguments.Get("query"), matches.Length, page));
     }
 
-    private static (bool Parsed, bool? Value) ParseLogic(string value)
+    private static (bool Parsed, bool? Value) ParseLogic(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (value is null || string.IsNullOrWhiteSpace(value))
         {
             return (true, null);
         }
@@ -90,9 +90,9 @@ public sealed class SearchDevicesTool : ITool
         return (false, null);
     }
 
-    private static (bool Parsed, int Value) ParseOffset(string value)
+    private static (bool Parsed, int Value) ParseOffset(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (value is null || string.IsNullOrWhiteSpace(value))
         {
             return (true, 0);
         }
@@ -106,9 +106,9 @@ public sealed class SearchDevicesTool : ITool
         return (false, 0);
     }
 
-    private static (bool Parsed, long? Value) ParseLong(string value)
+    private static (bool Parsed, long? Value) ParseLong(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (value is null || string.IsNullOrWhiteSpace(value))
         {
             return (true, null);
         }
@@ -122,7 +122,7 @@ public sealed class SearchDevicesTool : ITool
         return (false, null);
     }
 
-    private static string FormatContent(string query, int total, IReadOnlyList<DeviceInfo> devices)
+    private static string FormatContent(string? query, int total, IReadOnlyList<DeviceInfo> devices)
     {
         if (total == 0)
         {

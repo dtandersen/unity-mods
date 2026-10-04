@@ -6,10 +6,10 @@ namespace StationeersAi.Repository;
 /// <summary>Matches one named thing by reference id, exact label, or partial label.</summary>
 public static class ThingMatching
 {
-    public static IReadOnlyList<T> Match<T>(IEnumerable<T> things, Func<T, string> name, Func<T, long> id, string device)
+    public static IReadOnlyList<T> Match<T>(IEnumerable<T> things, Func<T, string?> name, Func<T, long> id, string? device)
     {
         var matches = new List<T>();
-        if (string.IsNullOrWhiteSpace(device))
+        if (device is null || string.IsNullOrWhiteSpace(device))
         {
             return matches;
         }

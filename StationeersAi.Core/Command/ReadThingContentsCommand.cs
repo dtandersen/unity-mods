@@ -14,7 +14,7 @@ public sealed class ReadThingContentsCommand
         _contents = contents;
     }
 
-    public IReadOnlyList<ThingContent> Execute(string thing)
+    public IReadOnlyList<ThingContent>? Execute(string? thing)
     {
         return _contents.Read(thing);
     }

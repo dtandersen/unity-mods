@@ -1,5 +1,4 @@
 using System;
-using StationeersAi.Window;
 using Util.Commands;
 
 namespace StationeersAi.Game;
@@ -13,61 +12,28 @@ namespace StationeersAi.Game;
 /// </summary>
 public sealed class AiConsoleCommand : CommandBase
 {
-    private readonly Func<SageMod> _mod;
+    private readonly CommandFactory _commandFactory;
 
-    public AiConsoleCommand(Func<SageMod> mod)
+    public AiConsoleCommand(CommandFactory commandFactory)
     {
-        _mod = mod ?? throw new ArgumentNullException(nameof(mod));
+        _commandFactory = commandFactory;
     }
 
     public override CommandScope Scope => CommandScope.InGame;
 
-    public override string HelpText =>
-        $"Ask {AssistantName()}. Usage: ai <question>  (also: ai clear, ai compact)";
+    static string subcommands="clear | compact | <question>";
 
-    public override string[] Arguments => new[] { "<question> | clear | compact" };
+    public override string HelpText =>
+        $"Usage: ai {subcommands}";
+
+    public override string[] Arguments => new[] { subcommands };
 
     public override bool IsLaunchCmd => false;
 
     public override string Execute(string[] args)
     {
-        var presenter = _mod()?.ConsolePresenter();
-        if (presenter == null)
-        {
-            return "Sage is not loaded. Load a world first.";
-        }
+        var command = _commandFactory.AiConsoleRouter();
 
-        if (args != null && args.Length > 0)
-        {
-            switch (args[0].ToLowerInvariant())
-            {
-                case "window":
-                    presenter.ShowAndFocus();
-                    return "Sage window opened.";
-
-                case "clear":
-                case "reset":
-                    presenter.ClearConversation();
-                    return "Context cleared.";
-
-                case "compact":
-                    _ = presenter.CompactConversation();
-                    return "Compacting context...";
-            }
-        }
-
-        var prompt = args != null ? string.Join(" ", args).Trim() : string.Empty;
-        if (prompt.Length == 0)
-        {
-            return $"Usage: ai <question>  (also: ai clear, ai compact)";
-        }
-
-        _ = presenter.AskAsync(prompt);
-        return $"Asking {AssistantName()}... (the answer follows in the Sage window)";
-    }
-
-    private string AssistantName()
-    {
-        return _mod()?.AssistantName ?? "Sage";
+        return command.Execute(args);
     }
 }

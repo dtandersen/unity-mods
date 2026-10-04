@@ -16,7 +16,7 @@ public sealed class SearchItemsCommand
         _items = items;
     }
 
-    public IReadOnlyList<Item> Execute(string query)
+    public IReadOnlyList<Item> Execute(string? query)
     {
         return _items.Search(query);
     }

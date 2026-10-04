@@ -16,7 +16,7 @@ namespace StationeersAi.Ai;
 public sealed class MentionResponder
 {
     private readonly IChatSink _chat;
-    private readonly Func<IAssistantActivity, AiAssistant> _assistantFactory;
+    private readonly Func<IAssistantActivity?, AiAssistant?> _assistantFactory;
     private readonly string _assistantName;
     private readonly Logger _log;
     private bool _busy;
@@ -31,7 +31,7 @@ public sealed class MentionResponder
     /// <param name="log">Receives exception details.</param>
     public MentionResponder(
         IChatSink chat,
-        Func<IAssistantActivity, AiAssistant> assistantFactory,
+        Func<IAssistantActivity?, AiAssistant?> assistantFactory,
         string assistantName,
         Logger log)
     {
@@ -49,7 +49,7 @@ public sealed class MentionResponder
     /// history with the request (null sends none). Returns false (and does
     /// nothing) when a question is already being answered.
     /// </summary>
-    public async Task<bool> HandleAsync(string prompt, Conversation conversation, CancellationToken cancellationToken = default)
+    public async Task<bool> HandleAsync(string prompt, Conversation? conversation, CancellationToken cancellationToken = default)
     {
         if (_busy)
         {

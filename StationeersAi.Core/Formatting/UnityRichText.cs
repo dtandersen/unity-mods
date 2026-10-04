@@ -12,7 +12,7 @@ public static class UnityRichText
 {
     private static readonly Regex Tag = new Regex(@"<[^<>]*>", RegexOptions.Compiled);
 
-    public static string Strip(string text)
+    public static string? Strip(string? text)
     {
         if (string.IsNullOrEmpty(text))
         {

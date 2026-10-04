@@ -17,7 +17,7 @@ namespace StationeersAi.Repository;
 /// </summary>
 public sealed class StationeersMipsReference : IMipsReference
 {
-    private readonly Logger _log;
+    private readonly Logger? _log;
 
     public StationeersMipsReference(Logger log)
     {
@@ -28,7 +28,7 @@ public sealed class StationeersMipsReference : IMipsReference
         Instructions = Read();
     }
 
-    public IReadOnlyList<MipsInstruction> Instructions { get; }
+    public IReadOnlyList<MipsInstruction>? Instructions { get; }
 
     private IReadOnlyList<MipsInstruction> Read()
     {
@@ -49,7 +49,7 @@ public sealed class StationeersMipsReference : IMipsReference
             }
             catch (Exception ex)
             {
-                _log.Log($"mips reference skipped {command}: {ex.Message}");
+                _log?.Log($"mips reference skipped {command}: {ex.Message}");
             }
         }
 

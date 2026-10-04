@@ -14,7 +14,7 @@ public sealed class SearchDevicesCommand
         _devices = devices;
     }
 
-    public IReadOnlyList<DeviceInfo> Execute(string query, long? network, bool? logic, long? room)
+    public IReadOnlyList<DeviceInfo> Execute(string? query, long? network, bool? logic, long? room)
     {
         return _devices.Search(query, network, logic, room);
     }

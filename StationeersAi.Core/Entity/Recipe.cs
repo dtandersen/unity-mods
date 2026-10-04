@@ -14,5 +14,5 @@ public sealed record Recipe(
     string ResultItemId,
     string Name,
     int Amount,
-    string Station,
+    string? Station,
     IReadOnlyList<Ingredient> Ingredients);

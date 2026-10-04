@@ -16,7 +16,7 @@ public sealed class InMemoryDeviceCatalog : IDeviceCatalog
 
     public long? LastRoom { get; private set; }
 
-    public IReadOnlyList<DeviceInfo> Search(string query, long? network, bool? logic, long? room)
+    public IReadOnlyList<DeviceInfo> Search(string? query, long? network, bool? logic, long? room)
     {
         LastNetwork = network;
         LastLogic = logic;

@@ -24,18 +24,18 @@ public sealed class AiAssistant
 {
     private readonly IAiClient _client;
     private readonly ToolHandler _tools;
-    private readonly string _systemPrompt;
+    private readonly string? _systemPrompt;
     private readonly int _maxIterations;
     private readonly Logger _log;
-    private readonly IAssistantActivity _activity;
+    private readonly IAssistantActivity? _activity;
 
     public AiAssistant(
         IAiClient client,
         ToolHandler tools,
-        string systemPrompt,
+        string? systemPrompt,
         int maxIterations,
         Logger log,
-        IAssistantActivity activity)
+        IAssistantActivity? activity)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _tools = tools ?? throw new ArgumentNullException(nameof(tools));
@@ -52,7 +52,7 @@ public sealed class AiAssistant
     /// </summary>
     public async Task<string> AskAsync(
         string prompt,
-        Conversation conversation,
+        Conversation? conversation,
         CancellationToken cancellationToken = default)
     {
         var messages = new List<ChatMessage>();
@@ -76,16 +76,18 @@ public sealed class AiAssistant
 
             if (!string.IsNullOrEmpty(completion?.Content))
             {
-                Log($"Sage thinking: {completion.Content}");
+                Log($"Sage thinking: {completion?.Content}");
             }
 
-            if (!string.IsNullOrEmpty(completion?.Reasoning))
+            // IsNullOrEmpty has no null annotation on netstandard2.0, so the null check is said out loud.
+            var reasoning = completion?.Reasoning;
+            if (!string.IsNullOrEmpty(reasoning) && reasoning is not null)
             {
-                Log($"Sage thinking: {Readable(completion.Reasoning)}");
-                _activity?.OnReasoning(completion.Reasoning);
+                Log($"Sage thinking: {Readable(reasoning)}");
+                _activity?.OnReasoning(reasoning);
             }
 
-            if (completion == null || !completion.HasToolCalls)
+            if (completion == null || completion.ToolCalls == null || completion.ToolCalls.Count == 0)
             {
                 var answer = completion?.Content ?? string.Empty;
                 messages.Add(new ChatMessage(ChatRole.Assistant, answer));
@@ -99,7 +101,7 @@ public sealed class AiAssistant
                 return answer;
             }
 
-            if (!string.IsNullOrEmpty(completion.Content))
+            if (!string.IsNullOrEmpty(completion.Content) && completion.Content is not null)
             {
                 _activity?.OnReasoning(completion.Content);
             }
@@ -125,7 +127,7 @@ public sealed class AiAssistant
     }
 
     /// <summary>Keeps the whole turn — user, assistant, and tool traffic — for next time.</summary>
-    private static void Persist(Conversation conversation, List<ChatMessage> messages)
+    private static void Persist(Conversation? conversation, List<ChatMessage> messages)
     {
         if (conversation == null)
         {
@@ -139,7 +141,7 @@ public sealed class AiAssistant
     /// Condenses the conversation into a single summary message, using the model,
     /// so older context can be dropped without losing the important facts.
     /// </summary>
-    public async Task<string> CompactAsync(Conversation conversation, CancellationToken cancellationToken = default)
+    public async Task<string?> CompactAsync(Conversation? conversation, CancellationToken cancellationToken = default)
     {
         if (conversation == null || conversation.Messages.Count == 0)
         {
@@ -198,7 +200,7 @@ public sealed class AiAssistant
     }
 
     /// <summary>Reasoning as one thought per line, for the log only.</summary>
-    private static string Readable(string text)
+    private static string Readable(string? text)
     {
         var spaced = System.Text.RegularExpressions.Regex.Replace(text ?? string.Empty, @"\.(?=[A-Z])", ". ");
         return System.Text.RegularExpressions.Regex.Replace(spaced, @"\. (?=[A-Z])", ".\n");

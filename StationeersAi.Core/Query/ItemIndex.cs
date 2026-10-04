@@ -21,7 +21,7 @@ public sealed class ItemIndex
         _items = items;
     }
 
-    public IReadOnlyList<Item> Search(string query)
+    public IReadOnlyList<Item> Search(string? query)
     {
         if (string.IsNullOrWhiteSpace(query))
         {

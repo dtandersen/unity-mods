@@ -7,5 +7,5 @@ namespace StationeersAi.Repository;
 public interface IThingContents
 {
     /// <summary>Slot contents for the named thing or id, or null when no single thing matches.</summary>
-    IReadOnlyList<ThingContent> Read(string thing);
+    IReadOnlyList<ThingContent>? Read(string? thing);
 }

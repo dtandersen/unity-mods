@@ -9,22 +9,22 @@ namespace StationeersAi.Server;
 /// </summary>
 public sealed class RawHttpRequest
 {
-    public string Method { get; set; }
+    public string Method { get; set; } = null!;
 
-    public string Path { get; set; }
+    public string Path { get; set; } = null!;
 
-    public IDictionary<string, string> Query { get; set; }
+    public IDictionary<string, string> Query { get; set; } = null!;
 
-    public IDictionary<string, string> Headers { get; set; }
+    public IDictionary<string, string> Headers { get; set; } = null!;
 
-    public string Body { get; set; }
+    public string? Body { get; set; }
 
     /// <summary>
     /// Parses the head (<c>METHOD target HTTP/x</c> plus <c>Name: value</c>
     /// lines) and pairs it with an already-read body. Returns null when the
     /// head is not a request we serve.
     /// </summary>
-    public static RawHttpRequest TryParse(string head, string body)
+    public static RawHttpRequest? TryParse(string head, string? body)
     {
         if (string.IsNullOrWhiteSpace(head))
         {

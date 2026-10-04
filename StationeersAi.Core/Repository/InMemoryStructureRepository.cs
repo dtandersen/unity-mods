@@ -25,7 +25,7 @@ public sealed class InMemoryStructureRepository : IStructureRepository
         return _structures;
     }
 
-    public Structure GetById(string id)
+    public Structure? GetById(string id)
     {
         return _structures.FirstOrDefault(structure => structure.Id == id);
     }

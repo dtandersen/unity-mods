@@ -10,31 +10,31 @@ namespace StationeersAi.Server;
 /// </summary>
 public sealed class SageData
 {
-    public IItemRepository Items { get; set; }
+    public IItemRepository Items { get; set; } = null!;
 
-    public IStructureRepository Structures { get; set; }
+    public IStructureRepository Structures { get; set; } = null!;
 
-    public IRecipeRepository Recipes { get; set; }
+    public IRecipeRepository Recipes { get; set; } = null!;
 
-    public IStationpediaRepository Stationpedia { get; set; }
+    public IStationpediaRepository Stationpedia { get; set; } = null!;
 
-    public IPlayerContext Player { get; set; }
+    public IPlayerContext Player { get; set; } = null!;
 
-    public IWorldContext Worlds { get; set; }
+    public IWorldContext Worlds { get; set; } = null!;
 
-    public IIcEditor Ic { get; set; }
+    public IIcEditor Ic { get; set; } = null!;
 
-    public IIcExport Export { get; set; }
+    public IIcExport Export { get; set; } = null!;
 
-    public IMipsReference Mips { get; set; }
+    public IMipsReference Mips { get; set; } = null!;
 
-    public IDeviceCatalog Devices { get; set; }
+    public IDeviceCatalog Devices { get; set; } = null!;
 
-    public IDeviceInspector Inspector { get; set; }
+    public IDeviceInspector Inspector { get; set; } = null!;
 
-    public IThingCatalog Things { get; set; }
+    public IThingCatalog Things { get; set; } = null!;
 
-    public IThingContents ThingContents { get; set; }
+    public IThingContents ThingContents { get; set; } = null!;
 
-    public IRoomInspector Rooms { get; set; }
+    public IRoomInspector Rooms { get; set; } = null!;
 }

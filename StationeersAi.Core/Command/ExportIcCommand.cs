@@ -13,7 +13,7 @@ public sealed class ExportIcCommand
         _export = export;
     }
 
-    public IcWriteResult Execute(string computer, string device)
+    public IcWriteResult Execute(string? computer, string? device)
     {
         return _export.Export(computer, device);
     }

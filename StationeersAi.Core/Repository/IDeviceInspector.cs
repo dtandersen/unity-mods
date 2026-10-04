@@ -6,5 +6,5 @@ namespace StationeersAi.Repository;
 public interface IDeviceInspector
 {
     /// <summary>Details for the named device, or null when no single device matches.</summary>
-    DeviceDetails Describe(string device);
+    DeviceDetails? Describe(string? device);
 }

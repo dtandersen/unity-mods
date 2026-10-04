@@ -24,7 +24,7 @@ public sealed class StationeersIcEditor : IIcEditor
         _threads = mainThread;
         _log = log;
     }
-    public IcWriteResult Write(string computer, string code)
+    public IcWriteResult Write(string? computer, string code)
     {
         try
         {
@@ -37,7 +37,7 @@ public sealed class StationeersIcEditor : IIcEditor
         }
     }
 
-    private IcWriteResult WriteInner(string computer, string code)
+    private IcWriteResult WriteInner(string? computer, string code)
     {
         var matches = ComputerBoards.Match(computer);
         if (matches.Count == 0)
@@ -62,7 +62,7 @@ public sealed class StationeersIcEditor : IIcEditor
 
         return new IcWriteResult(true, matches[0].Name, code.Split('\n').Length, null);
     }
-    public IcReadResult Read(string computer)
+    public IcReadResult Read(string? computer)
     {
         try
         {
@@ -75,7 +75,7 @@ public sealed class StationeersIcEditor : IIcEditor
         }
     }
 
-    private IcReadResult ReadInner(string computer)
+    private IcReadResult ReadInner(string? computer)
     {
         var matches = ComputerBoards.Match(computer);
         if (matches.Count == 0)

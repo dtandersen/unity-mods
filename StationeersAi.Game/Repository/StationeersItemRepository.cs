@@ -15,7 +15,7 @@ public sealed class StationeersItemRepository : IItemRepository
 {
     private readonly List<ItemEntity> _items = new List<ItemEntity>();
 
-    public StationeersItemRepository(IEnumerable<Thing> prefabs)
+    public StationeersItemRepository(IEnumerable<Thing>? prefabs)
     {
         if (prefabs == null)
         {

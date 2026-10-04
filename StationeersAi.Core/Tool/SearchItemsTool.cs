@@ -40,7 +40,7 @@ public sealed class SearchItemsTool : ITool
             FormatContent(query, items));
     }
 
-    private static string FormatContent(string query, IReadOnlyList<Item> items)
+    private static string FormatContent(string? query, IReadOnlyList<Item> items)
     {
         if (items.Count == 0)
         {

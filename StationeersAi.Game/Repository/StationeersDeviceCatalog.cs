@@ -28,7 +28,7 @@ public sealed class StationeersDeviceCatalog : IDeviceCatalog
         _threads = mainThread;
         _log = log;
     }
-    public IReadOnlyList<DeviceInfo> Search(string query, long? network, bool? logic, long? room)
+    public IReadOnlyList<DeviceInfo> Search(string? query, long? network, bool? logic, long? room)
     {
         try
         {
@@ -41,7 +41,7 @@ public sealed class StationeersDeviceCatalog : IDeviceCatalog
         }
     }
 
-    private IReadOnlyList<DeviceInfo> SearchInner(string query, long? network, bool? logic, long? room)
+    private IReadOnlyList<DeviceInfo> SearchInner(string? query, long? network, bool? logic, long? room)
     {
         var devices = new List<DeviceInfo>();
         foreach (var structure in UnityEngine.Object.FindObjectsOfType<Assets.Scripts.Objects.Structure>())
@@ -60,7 +60,7 @@ public sealed class StationeersDeviceCatalog : IDeviceCatalog
         return devices;
     }
 
-    private static DeviceInfo Describe(Assets.Scripts.Objects.Structure structure)
+    private static DeviceInfo? Describe(Assets.Scripts.Objects.Structure structure)
     {
         try
         {
@@ -107,7 +107,7 @@ public sealed class StationeersDeviceCatalog : IDeviceCatalog
         }
     }
 
-    private static DeviceInfo DescribeThing(Thing thing, long network, bool logic, long room)
+    private static DeviceInfo? DescribeThing(Thing thing, long network, bool logic, long room)
     {
         try
         {
@@ -119,7 +119,7 @@ public sealed class StationeersDeviceCatalog : IDeviceCatalog
         }
     }
 
-    private static bool Matches(DeviceInfo info, string query)
+    private static bool Matches(DeviceInfo info, string? query)
     {
         if (string.IsNullOrWhiteSpace(query))
         {

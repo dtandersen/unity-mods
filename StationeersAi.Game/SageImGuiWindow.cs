@@ -35,14 +35,14 @@ public sealed class SageImGuiWindow : MonoBehaviour, ISageView
     }
 
     /// <summary>Trace log. Null skips logging (set by the plugin).</summary>
-    public Logger Logger { get; set; }
+    public Logger? Logger { get; set; }
 
     /// <summary>Supplies the toggle key, read live on each press. Null disables toggling.</summary>
-    public Func<KeyboardShortcut> WindowToggle { get; set; }
+    public Func<KeyboardShortcut>? WindowToggle { get; set; }
 
-    public event Action SubmitRequested;
+    public event Action? SubmitRequested;
 
-    public event Action ToggleRequested;
+    public event Action? ToggleRequested;
 
     public void SetLines(IReadOnlyList<string> lines)
     {

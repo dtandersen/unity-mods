@@ -30,7 +30,7 @@ public sealed class StationeersThingCatalog : IThingCatalog
         _log = log;
     }
 
-    public IReadOnlyList<ThingInfo> Search(string query, OriginPoint origin, double? maxDistanceM)
+    public IReadOnlyList<ThingInfo> Search(string? query, OriginPoint? origin, double? maxDistanceM)
     {
         try
         {
@@ -43,7 +43,7 @@ public sealed class StationeersThingCatalog : IThingCatalog
         }
     }
 
-    private static IReadOnlyList<ThingInfo> SearchInner(string query, OriginPoint origin, double? maxDistanceM)
+    private static IReadOnlyList<ThingInfo> SearchInner(string? query, OriginPoint? origin, double? maxDistanceM)
     {
         var originVector = origin != null
             ? new Vector3((float)origin.X, (float)origin.Y, (float)origin.Z)
@@ -65,7 +65,7 @@ public sealed class StationeersThingCatalog : IThingCatalog
                     continue;
                 }
 
-                if (!string.IsNullOrWhiteSpace(query) &&
+                if (query is not null && !string.IsNullOrWhiteSpace(query) &&
                     (name.IndexOf(query, StringComparison.OrdinalIgnoreCase) < 0 &&
                     (thing.PrefabName == null || thing.PrefabName.IndexOf(query, StringComparison.OrdinalIgnoreCase) < 0)))
                 {
@@ -97,7 +97,7 @@ public sealed class StationeersThingCatalog : IThingCatalog
         return found;
     }
 
-    private static string QuantityText(DynamicThing thing)
+    private static string? QuantityText(DynamicThing thing)
     {
         if (thing is IQuantity quantity)
         {

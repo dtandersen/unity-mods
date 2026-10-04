@@ -35,7 +35,7 @@ public sealed class WindowModel
         }
     }
 
-    public void Append(string line)
+    public void Append(string? line)
     {
         lock (_gate)
         {

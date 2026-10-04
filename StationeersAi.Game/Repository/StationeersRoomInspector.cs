@@ -26,7 +26,7 @@ public sealed class StationeersRoomInspector : IRoomInspector
         _log = log;
     }
 
-    public RoomAtmosphere Describe(long roomId)
+    public RoomAtmosphere? Describe(long roomId)
     {
         try
         {
@@ -39,7 +39,7 @@ public sealed class StationeersRoomInspector : IRoomInspector
         }
     }
 
-    private static RoomAtmosphere DescribeInner(long roomId)
+    private static RoomAtmosphere? DescribeInner(long roomId)
     {
         if (RoomController.World == null)
         {

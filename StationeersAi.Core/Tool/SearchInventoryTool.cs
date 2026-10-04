@@ -35,7 +35,7 @@ public sealed class SearchInventoryTool : ITool
             FormatContent(query, stacks));
     }
 
-    private static string FormatContent(string query, IReadOnlyList<ItemStack> stacks)
+    private static string FormatContent(string? query, IReadOnlyList<ItemStack> stacks)
     {
         if (stacks.Count == 0)
         {

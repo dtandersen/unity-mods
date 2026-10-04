@@ -89,7 +89,7 @@ public sealed class StationeersRecipeRepository : IRecipeRepository
         return tables;
     }
 
-    private static string StationName(RecipeReference reference)
+    private static string? StationName(RecipeReference reference)
     {
         if (reference.Creator == null)
         {

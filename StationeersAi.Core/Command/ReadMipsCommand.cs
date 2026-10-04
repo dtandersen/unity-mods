@@ -20,10 +20,10 @@ public sealed class ReadMipsCommand
     /// All instructions when <paramref name="instruction"/> is blank, else
     /// the one matching mnemonic (empty when unknown).
     /// </summary>
-    public IReadOnlyList<MipsInstruction> Execute(string instruction)
+    public IReadOnlyList<MipsInstruction> Execute(string? instruction)
     {
         var instructions = _reference.Instructions ?? Array.Empty<MipsInstruction>();
-        if (string.IsNullOrWhiteSpace(instruction))
+        if (instruction is null || string.IsNullOrWhiteSpace(instruction))
         {
             return instructions;
         }

@@ -14,7 +14,7 @@ public sealed class SearchInventoryCommand
         _inventory = inventory;
     }
 
-    public IReadOnlyList<ItemStack> Execute(string query)
+    public IReadOnlyList<ItemStack> Execute(string? query)
     {
         return _inventory.Search(query);
     }

@@ -22,7 +22,7 @@ public sealed class SageResponse
 
     public string Body { get; }
 
-    public static SageResponse Ok(object payload)
+    public static SageResponse Ok(object? payload)
     {
         return new SageResponse(200, Serialize(payload));
     }
@@ -32,16 +32,16 @@ public sealed class SageResponse
         return new SageResponse(status, Serialize(new ErrorBody(message)));
     }
 
-    private static string Serialize(object payload)
+    private static string Serialize(object? payload)
     {
         // NB: JToken.ToString(Formatting) is missing from the Newtonsoft copy
         // the game loads, so round-trip through the oldest stable call.
-        var token = JToken.FromObject(payload);
+        var token = payload is null ? null : JToken.FromObject(payload);
         StripTags(token);
         return JsonConvert.SerializeObject(token);
     }
 
-    private static void StripTags(JToken token)
+    private static void StripTags(JToken? token)
     {
         if (token is JObject obj)
         {
@@ -65,7 +65,7 @@ public sealed class SageResponse
 
         if (token is JValue value && value.Type == JTokenType.String)
         {
-            var text = (string)value.Value;
+            var text = (string?)value.Value;
             var plain = UnityRichText.Strip(text);
             if (!ReferenceEquals(plain, text))
             {

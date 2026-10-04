@@ -24,12 +24,12 @@ public class BepInExPlugin : BaseUnityPlugin
 
     // Roots the shell (and through it, the mod) so the scene wipe cannot
     // collect them mid-level. Harmony patches call back through this.
-    private static BepInExPlugin _instance;
+    private static BepInExPlugin? _instance;
 
-    private SageConfig _settings;
-    private MainThreadExecutor _threads;
-    private BepinExLogger _log;
-    private SageMod _mod;
+    private SageConfig? _settings;
+    private MainThreadExecutor? _threads;
+    private BepinExLogger? _log;
+    private SageMod? _mod;
 
     public void Awake()
     {
@@ -60,7 +60,7 @@ public class BepInExPlugin : BaseUnityPlugin
         PatchHooks.ChatMessage = message => _mod?.HandleChatMessage(message);
         PatchHooks.LeaveGame = () => UnloadMod();
 
-        CommandLine.AddCommand("ai", new AiConsoleCommand(() => _mod));
+        CommandLine.AddCommand("ai", new AiConsoleCommand(new CommandFactory(() => _mod)));
         _log.Log("registered 'ai' console command");
 
         _log.Log($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");
@@ -75,6 +75,11 @@ public class BepInExPlugin : BaseUnityPlugin
     private void LoadMod()
     {
         if (_mod != null)
+        {
+            return;
+        }
+
+        if (_settings is null || _threads is null || _log is null)
         {
             return;
         }

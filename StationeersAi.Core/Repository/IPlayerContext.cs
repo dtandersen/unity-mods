@@ -10,10 +10,10 @@ namespace StationeersAi.Repository;
 public interface IPlayerContext
 {
     /// <summary>The player's name, or null when unavailable.</summary>
-    string Name { get; }
+    string? Name { get; }
 
     /// <summary>The player's status, or null when unavailable.</summary>
-    PlayerStatus Status { get; }
+    PlayerStatus? Status { get; }
 
     /// <summary>The items the player is carrying (hands, suit, backpack...).</summary>
     IReadOnlyList<ItemStack> Inventory { get; }

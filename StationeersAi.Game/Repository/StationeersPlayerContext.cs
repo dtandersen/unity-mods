@@ -17,7 +17,7 @@ public sealed class StationeersPlayerContext : IPlayerContext
 {
     private readonly List<ItemStack> _inventory = new List<ItemStack>();
 
-    public StationeersPlayerContext(Human human)
+    public StationeersPlayerContext(Human? human)
     {
         if (human == null)
         {
@@ -38,9 +38,9 @@ public sealed class StationeersPlayerContext : IPlayerContext
         AddSlot("Stomach", human.StomachSlot);
     }
 
-    public string Name { get; }
+    public string? Name { get; }
 
-    public PlayerStatus Status { get; }
+    public PlayerStatus? Status { get; }
 
     public IReadOnlyList<ItemStack> Inventory => _inventory;
 
@@ -84,7 +84,7 @@ public sealed class StationeersPlayerContext : IPlayerContext
             return;
         }
 
-        List<Slot> slots = null;
+        List<Slot>? slots = null;
         try
         {
             slots = holder.Slots;
@@ -121,7 +121,7 @@ public sealed class StationeersPlayerContext : IPlayerContext
         }
     }
 
-    private static DynamicThing SafeOccupant(Slot slot)
+    private static DynamicThing? SafeOccupant(Slot slot)
     {
         try
         {
@@ -150,7 +150,7 @@ public sealed class StationeersPlayerContext : IPlayerContext
         return fallback;
     }
 
-    private static string QuantityText(DynamicThing thing)
+    private static string? QuantityText(DynamicThing thing)
     {
         if (thing is IQuantity quantity)
         {
@@ -249,7 +249,7 @@ public sealed class StationeersPlayerContext : IPlayerContext
         }
     }
 
-    private static string WorldName()
+    private static string? WorldName()
     {
         try
         {

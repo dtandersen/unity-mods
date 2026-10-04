@@ -19,7 +19,7 @@ public sealed class InventoryIndex
         _player = player;
     }
 
-    public IReadOnlyList<ItemStack> Search(string query)
+    public IReadOnlyList<ItemStack> Search(string? query)
     {
         if (string.IsNullOrWhiteSpace(query))
         {

@@ -9,5 +9,5 @@ namespace StationeersAi.Repository;
 public interface IIcExport
 {
     /// <summary>Exports editor text to the chip. Never returns null.</summary>
-    IcWriteResult Export(string computer, string device);
+    IcWriteResult Export(string? computer, string? device);
 }

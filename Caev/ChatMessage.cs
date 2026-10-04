@@ -8,6 +8,6 @@ namespace Caev;
 /// <param name="ToolCallId">Set on tool messages to correlate with a request.</param>
 public sealed record ChatMessage(
     ChatRole Role,
-    string Content = null,
-    IReadOnlyList<ToolCall> ToolCalls = null,
-    string ToolCallId = null);
+    string? Content = null,
+    IReadOnlyList<ToolCall>? ToolCalls = null,
+    string? ToolCallId = null);

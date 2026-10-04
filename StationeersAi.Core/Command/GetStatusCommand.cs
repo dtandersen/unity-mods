@@ -13,7 +13,7 @@ public sealed class GetStatusCommand
         _player = player;
     }
 
-    public PlayerStatus Execute()
+    public PlayerStatus? Execute()
     {
         return _player.Status;
     }

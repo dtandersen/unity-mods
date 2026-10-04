@@ -11,14 +11,14 @@ public sealed record GasMixEntry(string Gas, double Percent);
 /// game does not expose it.
 /// </summary>
 public sealed record WorldInfo(
-    string WorldName,
-    string WorldId,
+    string? WorldName,
+    string? WorldId,
     float Gravity,
     uint DaysPast,
     bool HasLava,
     bool IsCreative,
-    string DayLength,
-    string YearLength,
+    string? DayLength,
+    string? YearLength,
     double DaysPerYear,
     float Eccentricity,
     double SemiMajorAxisAu,
@@ -30,4 +30,4 @@ public sealed record WorldInfo(
     bool IsEclipse,
     double? OutsideTemperatureC,
     double? OutsidePressureKpa,
-    IReadOnlyList<GasMixEntry> OutsideAir);
+    IReadOnlyList<GasMixEntry>? OutsideAir);

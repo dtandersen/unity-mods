@@ -16,4 +16,9 @@
 
   <Import Project="$(MSBuildThisFileDirectory)..\stationeers.targets" />
 
+  <!-- Null checks on: overrides the disable in stationeers.targets. -->
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
 </Project>

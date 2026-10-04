@@ -19,7 +19,7 @@ public sealed class RecipeIndex
         _recipes = recipes;
     }
 
-    public IReadOnlyList<Recipe> Search(string query)
+    public IReadOnlyList<Recipe> Search(string? query)
     {
         if (string.IsNullOrWhiteSpace(query))
         {

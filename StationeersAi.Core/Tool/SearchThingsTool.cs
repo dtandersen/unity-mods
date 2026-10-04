@@ -39,7 +39,7 @@ public sealed class SearchThingsTool : ITool
         var distance = ParseDistance(arguments.Get("distance"));
         if (!distance.Parsed)
         {
-            return new ToolFailure(distance.Error);
+            return new ToolFailure(distance.Error ?? "Unknown error");
         }
 
         var search = _command.Search(arguments.Get("query"), origin.Value, distance.Value);
@@ -77,7 +77,7 @@ public sealed class SearchThingsTool : ITool
             $"\nShowing {page.Length} of {total}.");
     }
 
-    private static string Bearing(ThingInfo thing, OriginPoint origin, double? facing)
+    private static string Bearing(ThingInfo thing, OriginPoint? origin, double? facing)
     {
         if (origin == null || !facing.HasValue)
         {
@@ -106,7 +106,7 @@ public sealed class SearchThingsTool : ITool
         return rounded == 0 ? "0" : (rounded > 0 ? "+" : string.Empty) + rounded;
     }
 
-    private static double? Distance(ThingInfo thing, OriginPoint origin)
+    private static double? Distance(ThingInfo thing, OriginPoint? origin)
     {
         if (origin == null)
         {
@@ -119,9 +119,9 @@ public sealed class SearchThingsTool : ITool
         return Math.Sqrt(dx * dx + dy * dy + dz * dz);
     }
 
-    private static (bool Parsed, OriginPoint Value) ParseOrigin(string value)
+    private static (bool Parsed, OriginPoint? Value) ParseOrigin(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (value is null || string.IsNullOrWhiteSpace(value))
         {
             return (true, null);
         }
@@ -144,9 +144,9 @@ public sealed class SearchThingsTool : ITool
         return (true, new OriginPoint(numbers[0], numbers[1], numbers[2]));
     }
 
-    private static (bool Parsed, double? Value, string Error) ParseDistance(string value)
+    private static (bool Parsed, double? Value, string? Error) ParseDistance(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (value is null || string.IsNullOrWhiteSpace(value))
         {
             return (true, null, null);
         }

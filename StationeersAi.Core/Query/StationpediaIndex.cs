@@ -19,9 +19,9 @@ public sealed class StationpediaIndex
         _pages = pages;
     }
 
-    public IReadOnlyList<StationpediaEntry> Search(string query)
+    public IReadOnlyList<StationpediaEntry> Search(string? query)
     {
-        if (string.IsNullOrWhiteSpace(query))
+        if (query is null || string.IsNullOrWhiteSpace(query))
         {
             return Array.Empty<StationpediaEntry>();
         }

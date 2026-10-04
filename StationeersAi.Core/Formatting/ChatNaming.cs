@@ -10,13 +10,13 @@ public static class ChatNaming
     public const string DefaultName = "Sage";
 
     /// <summary>The display name for a configured value (trimmed, or the default).</summary>
-    public static string Resolve(string configured)
+    public static string Resolve(string? configured)
     {
-        return string.IsNullOrWhiteSpace(configured) ? DefaultName : configured.Trim();
+        return configured is null || string.IsNullOrWhiteSpace(configured) ? DefaultName : configured.Trim();
     }
 
     /// <summary>A chat line: <c>{name}: {text}</c>.</summary>
-    public static string Apply(string configured, string text)
+    public static string Apply(string? configured, string? text)
     {
         return $"{Resolve(configured)}: {text}";
     }

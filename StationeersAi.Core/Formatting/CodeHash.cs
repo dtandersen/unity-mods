@@ -9,7 +9,7 @@ namespace StationeersAi.Formatting;
 /// </summary>
 public static class CodeHash
 {
-    public static string Hash(string code)
+    public static string Hash(string? code)
     {
         unchecked
         {

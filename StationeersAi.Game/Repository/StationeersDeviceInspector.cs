@@ -33,7 +33,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
         _threads = mainThread;
         _log = log;
     }
-    public DeviceDetails Describe(string device)
+    public DeviceDetails? Describe(string? device)
     {
         try
         {
@@ -46,7 +46,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
         }
     }
 
-    private DeviceDetails DescribeInner(string device)
+    private DeviceDetails? DescribeInner(string? device)
     {
         var matches = ThingMatching.Match(
             UnityEngine.Object.FindObjectsOfType<Device>(),
@@ -99,7 +99,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
     /// display value, and a hash of its code (never the code itself).
     /// Null unless a chip is slotted.
     /// </summary>
-    private static ChipState ReadChip(Device target)
+    private static ChipState? ReadChip(Device target)
     {
         try
         {
@@ -110,8 +110,8 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
                 return null;
             }
 
-            string errorType = null;
-            string errorLine = null;
+            string? errorType = null;
+            string? errorLine = null;
             try
             {
                 if (chip.CompilationError)
@@ -143,7 +143,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
             {
             }
 
-            string hash = null;
+            string? hash = null;
             try
             {
                 var source = chip.GetSourceCode();
@@ -161,7 +161,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
         }
     }
 
-    private static IReadOnlyList<HousingDeviceEntry> ReadHousingDevices(Device target)
+    private static IReadOnlyList<HousingDeviceEntry>? ReadHousingDevices(Device target)
     {
         var holder = target as ICircuitHolder;
         if (holder == null)
@@ -204,7 +204,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
                 continue;
             }
 
-            Thing thing = null;
+            Thing? thing = null;
             try
             {
                 var logicable = holder.GetLogicableFromIndex(index);
@@ -229,7 +229,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
                 continue;
             }
 
-            string label = null;
+            string? label = null;
             try
             {
                 label = thing.DisplayName;
@@ -315,7 +315,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
                 continue;
             }
 
-            string name = null;
+            string? name = null;
             try
             {
                 name = slot.DisplayName;
@@ -355,7 +355,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
     /// reads it straight off the device. Null when the mixture itself is
     /// missing; empty when it exists but is unfilled.
     /// </summary>
-    private static IReadOnlyList<ReagentAmount> ReadStorage(Device target)
+    private static IReadOnlyList<ReagentAmount>? ReadStorage(Device target)
     {
         try
         {
@@ -389,7 +389,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
                     continue;
                 }
 
-                string name = null;
+                string? name = null;
                 try
                 {
                     name = reagent.DisplayName;
@@ -410,7 +410,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
     }
 
     /// <summary>The thing screwed into a housing screw, even when the chip cannot see it.</summary>
-    private static Tuple<string, long> ScrewedIn(Device target, int index)
+    private static Tuple<string, long>? ScrewedIn(Device target, int index)
     {
         try
         {
@@ -434,7 +434,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
         }
     }
 
-    private static string SafeName(Device device)
+    private static string? SafeName(Device device)
     {
         try
         {
@@ -446,7 +446,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
         }
     }
 
-    private static string SafeType(Device device)
+    private static string? SafeType(Device device)
     {
         try
         {

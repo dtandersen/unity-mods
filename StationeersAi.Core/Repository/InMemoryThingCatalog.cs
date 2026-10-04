@@ -10,7 +10,7 @@ public sealed class InMemoryThingCatalog : IThingCatalog
 {
     public List<ThingInfo> Things { get; } = new List<ThingInfo>();
 
-    public IReadOnlyList<ThingInfo> Search(string query, OriginPoint origin, double? maxDistanceM)
+    public IReadOnlyList<ThingInfo> Search(string? query, OriginPoint? origin, double? maxDistanceM)
     {
         return Things
             .Where(thing =>

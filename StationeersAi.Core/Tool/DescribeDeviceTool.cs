@@ -62,9 +62,9 @@ public sealed class DescribeDeviceTool : ITool
             Describe(details, full));
     }
 
-    private static bool IsTrue(string value)
+    private static bool IsTrue(string? value)
     {
-        return !string.IsNullOrWhiteSpace(value) &&
+        return value is not null && !string.IsNullOrWhiteSpace(value) &&
             (value.Trim().Equals("true", StringComparison.OrdinalIgnoreCase) ||
             value.Trim().Equals("yes", StringComparison.OrdinalIgnoreCase));
     }

@@ -7,7 +7,7 @@ namespace StationeersAi.Repository;
 /// <summary>Reads a burned chip's compile error, which the game keeps private.</summary>
 internal static class ChipErrorReading
 {
-    internal static string CompileErrorType(ProgrammableChip chip)
+    internal static string? CompileErrorType(ProgrammableChip chip)
     {
         try
         {
@@ -25,7 +25,7 @@ internal static class ChipErrorReading
         }
     }
 
-    internal static string CompileErrorLine(ProgrammableChip chip)
+    internal static string? CompileErrorLine(ProgrammableChip chip)
     {
         try
         {

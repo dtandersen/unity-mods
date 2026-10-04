@@ -14,7 +14,7 @@ public sealed class SearchRecipesCommand
         _recipes = recipes;
     }
 
-    public IReadOnlyList<Recipe> Execute(string query)
+    public IReadOnlyList<Recipe> Execute(string? query)
     {
         return _recipes.Search(query);
     }

@@ -30,8 +30,8 @@ public interface ISageView
     void RequestFocus();
 
     /// <summary>Raised when the user presses Send or Enter in the input.</summary>
-    event Action SubmitRequested;
+    event Action? SubmitRequested;
 
     /// <summary>Raised when the user presses the window toggle key.</summary>
-    event Action ToggleRequested;
+    event Action? ToggleRequested;
 }

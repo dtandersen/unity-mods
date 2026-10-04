@@ -8,5 +8,5 @@ public sealed class InMemoryMipsReference : IMipsReference
 {
     public List<MipsInstruction> Instructions { get; } = new List<MipsInstruction>();
 
-    IReadOnlyList<MipsInstruction> IMipsReference.Instructions => Instructions;
+    IReadOnlyList<MipsInstruction>? IMipsReference.Instructions => Instructions;
 }

@@ -14,7 +14,7 @@ public sealed class SearchStructuresCommand
         _structures = structures;
     }
 
-    public IReadOnlyList<Structure> Execute(string query)
+    public IReadOnlyList<Structure> Execute(string? query)
     {
         return _structures.Search(query);
     }

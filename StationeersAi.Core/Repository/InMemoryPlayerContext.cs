@@ -8,9 +8,9 @@ public sealed class InMemoryPlayerContext : IPlayerContext
 {
     private readonly List<ItemStack> _inventory = new List<ItemStack>();
 
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
-    public PlayerStatus Status { get; set; }
+    public PlayerStatus? Status { get; set; }
 
     public IReadOnlyList<ItemStack> Inventory => _inventory;
 

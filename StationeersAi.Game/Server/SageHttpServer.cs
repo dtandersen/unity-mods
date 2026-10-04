@@ -26,8 +26,8 @@ public sealed class SageHttpServer : IDisposable
     private readonly Func<int> _port;
     private readonly Func<string> _token;
 
-    private TcpListener _listener;
-    private Thread _loop;
+    private TcpListener? _listener;
+    private Thread? _loop;
     private volatile bool _running;
 
     public SageHttpServer(Func<SageData> data, IMainThread threads, Logger log, Func<int> port, Func<string> token)
@@ -121,12 +121,19 @@ public sealed class SageHttpServer : IDisposable
     }
 
     private void Loop()
-    {        while (_running)
+    {
+        while (_running)
         {
-            TcpClient client = null;
+            var listener = _listener;
+            if (listener == null)
+            {
+                return;
+            }
+
+            TcpClient? client = null;
             try
             {
-                client = _listener.AcceptTcpClient();
+                client = listener.AcceptTcpClient();
             }
             catch (Exception ex)
             {
@@ -135,6 +142,11 @@ public sealed class SageHttpServer : IDisposable
                     _log.Log("Sage HTTP listener fell through: " + ex);
                 }
 
+                return;
+            }
+
+            if (client is null)
+            {
                 return;
             }
 
@@ -226,7 +238,7 @@ public sealed class SageHttpServer : IDisposable
         return string.Equals(header, "Bearer " + want, StringComparison.Ordinal);
     }
 
-    private static string ReadHead(NetworkStream stream)
+    private static string? ReadHead(NetworkStream stream)
     {
         var bytes = new List<byte>(4096);
         var buffer = new byte[1024];
@@ -269,7 +281,7 @@ public sealed class SageHttpServer : IDisposable
             bytes[n - 2] == '\r' && bytes[n - 1] == '\n';
     }
 
-    private static string ReadBody(NetworkStream stream, int length)
+    private static string? ReadBody(NetworkStream stream, int length)
     {
         if (length <= 0 || length > 1048576)
         {

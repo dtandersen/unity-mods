@@ -14,7 +14,7 @@ public sealed class StationeersStructureRepository : IStructureRepository
 {
     private readonly List<StructureEntity> _structures = new List<StructureEntity>();
 
-    public StationeersStructureRepository(IEnumerable<Thing> prefabs)
+    public StationeersStructureRepository(IEnumerable<Thing>? prefabs)
     {
         if (prefabs == null)
         {
@@ -40,12 +40,12 @@ public sealed class StationeersStructureRepository : IStructureRepository
         return _structures;
     }
 
-    public StructureEntity GetById(string id)
+    public StructureEntity? GetById(string id)
     {
         return _structures.FirstOrDefault(structure => structure.Id == id);
     }
 
-    private static string SafeTooltip(Thing prefab)
+    private static string? SafeTooltip(Thing prefab)
     {
         try
         {

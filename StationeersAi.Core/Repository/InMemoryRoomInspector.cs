@@ -13,9 +13,9 @@ public sealed class InMemoryRoomInspector : IRoomInspector
         _rooms[room.RoomId] = room;
     }
 
-    public RoomAtmosphere Describe(long roomId)
+    public RoomAtmosphere? Describe(long roomId)
     {
-        RoomAtmosphere room;
+        RoomAtmosphere? room;
         return _rooms.TryGetValue(roomId, out room) ? room : null;
     }
 }

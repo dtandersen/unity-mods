@@ -13,7 +13,7 @@ public sealed class ReadStationpediaCommand
         _pages = pages;
     }
 
-    public StationpediaEntry Execute(string key)
+    public StationpediaEntry? Execute(string? key)
     {
         if (string.IsNullOrWhiteSpace(key))
         {

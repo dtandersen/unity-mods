@@ -24,10 +24,10 @@ internal static class ComputerBoards
         public long ComputerId { get; }
     }
 
-    internal static IReadOnlyList<Board> Match(string computer)
+    internal static IReadOnlyList<Board> Match(string? computer)
     {
         long thing;
-        if (!string.IsNullOrWhiteSpace(computer) && long.TryParse(computer.Trim(), out thing))
+        if (computer is not null && !string.IsNullOrWhiteSpace(computer) && long.TryParse(computer.Trim(), out thing))
         {
             var matches = new List<Board>();
             foreach (var board in All())
@@ -88,7 +88,7 @@ internal static class ComputerBoards
                 continue;
             }
 
-            string computer = null;
+            string? computer = null;
             long computerId = 0;
             try
             {
@@ -100,7 +100,7 @@ internal static class ComputerBoards
             {
             }
 
-            string own = null;
+            string? own = null;
             try
             {
                 own = motherboard.DisplayName;

@@ -40,7 +40,7 @@ public sealed class StationeersStationpediaRepository : IStationpediaRepository
         return _entries;
     }
 
-    public StationpediaEntry GetByKey(string key)
+    public StationpediaEntry? GetByKey(string? key)
     {
         return _entries.FirstOrDefault(entry => entry.Key == key);
     }

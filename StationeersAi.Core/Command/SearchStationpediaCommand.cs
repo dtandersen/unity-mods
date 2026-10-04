@@ -14,7 +14,7 @@ public sealed class SearchStationpediaCommand
         _pages = pages;
     }
 
-    public IReadOnlyList<StationpediaEntry> Execute(string query)
+    public IReadOnlyList<StationpediaEntry> Execute(string? query)
     {
         return _pages.Search(query);
     }

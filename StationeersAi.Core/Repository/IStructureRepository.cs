@@ -10,5 +10,5 @@ public interface IStructureRepository
     IReadOnlyList<Structure> GetAll();
 
     /// <summary>The structure with the given id, or null if none exists.</summary>
-    Structure GetById(string id);
+    Structure? GetById(string id);
 }

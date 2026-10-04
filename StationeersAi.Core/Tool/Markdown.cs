@@ -6,7 +6,7 @@ namespace StationeersAi.Tool;
 /// <summary>Minimal Markdown table writer for tool output handed to the model.</summary>
 internal static class Markdown
 {
-    public static string Build(string[] header, IEnumerable<string[]> rows)
+    public static string Build(string[] header, IEnumerable<string?[]> rows)
     {
         var body = rows.Select(row => row.ToArray()).ToArray();
         var widths = header
@@ -26,14 +26,14 @@ internal static class Markdown
         return string.Join("\n", lines);
     }
 
-    private static string Header(string[] cells, int[] widths)
+    private static string Header(string?[] cells, int[] widths)
     {
         var padded = widths.Select((width, index) =>
             (index < cells.Length ? cells[index] ?? string.Empty : string.Empty).PadRight(width));
         return "| " + string.Join(" | ", padded) + " |";
     }
 
-    private static string Row(string[] cells, int[] widths)
+    private static string Row(string?[] cells, int[] widths)
     {
         var padded = widths.Select((width, index) =>
         {

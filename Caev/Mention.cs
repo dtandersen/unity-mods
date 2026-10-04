@@ -12,7 +12,7 @@ public static class Mention
     /// </summary>
     public static bool TryParse(string trigger, string text, out string prompt)
     {
-        prompt = null;
+        prompt = string.Empty;
 
         if (string.IsNullOrWhiteSpace(trigger) || string.IsNullOrWhiteSpace(text))
         {

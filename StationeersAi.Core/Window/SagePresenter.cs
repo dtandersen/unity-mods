@@ -25,14 +25,14 @@ public sealed class SagePresenter : IChatSink
 {
     private readonly WindowModel _model;
     private readonly ISageView _view;
-    private readonly Func<IAssistantActivity, AiAssistant> _assistantFactory;
-    private readonly Func<string> _playerName;
-    private readonly Func<string> _assistantName;
+    private readonly Func<IAssistantActivity?, AiAssistant?> _assistantFactory;
+    private readonly Func<string?> _playerName;
+    private readonly Func<string?> _assistantName;
     private readonly Logger _log;
     private readonly Func<bool> _showThinking;
     private readonly Func<bool> _showToolCalls;
     private readonly Func<bool> _showToolResults;
-    private readonly Func<Conversation> _conversation;
+    private readonly Func<Conversation?> _conversation;
     private readonly Action<Action> _marshal;
     private readonly Func<DateTimeOffset> _clock;
     private readonly object _gate = new object();
@@ -61,16 +61,16 @@ public sealed class SagePresenter : IChatSink
     public SagePresenter(
         WindowModel model,
         ISageView view,
-        Func<IAssistantActivity, AiAssistant> assistantFactory,
-        Func<string> playerName,
-        Func<string> assistantName,
+        Func<IAssistantActivity?, AiAssistant?> assistantFactory,
+        Func<string?> playerName,
+        Func<string?> assistantName,
         Logger log,
         Func<bool> showThinking,
         Func<bool> showToolCalls,
         Func<bool> showToolResults,
-        Func<Conversation> conversation,
-        Action<Action> marshal = null,
-        Func<DateTimeOffset> clock = null)
+        Func<Conversation?> conversation,
+        Action<Action>? marshal = null,
+        Func<DateTimeOffset>? clock = null)
     {
         _model = model ?? throw new ArgumentNullException(nameof(model));
         _view = view ?? throw new ArgumentNullException(nameof(view));
@@ -200,7 +200,7 @@ public sealed class SagePresenter : IChatSink
     /// Sink for the mention answers: lines land here from any thread, join
     /// the model, and are pushed to the view.
     /// </summary>
-    public void Write(string line)
+    public void Write(string? line)
     {
         _model.Append(line);
         PushLines();
@@ -242,7 +242,7 @@ public sealed class SagePresenter : IChatSink
         }
     }
 
-    private async Task RunCommandAsync(string prompt, Conversation conversation)
+    private async Task RunCommandAsync(string prompt, Conversation? conversation)
     {
         var command = new RunTurnCommand(_assistantFactory, _log);
         command.Think += text =>
@@ -310,7 +310,7 @@ public sealed class SagePresenter : IChatSink
     }
 
     /// <summary>Posts an assistant line to the window history.</summary>
-    private void Say(string text)
+    private void Say(string? text)
     {
         Write(ChatNaming.Apply(_assistantName != null ? _assistantName() : null, text));
     }

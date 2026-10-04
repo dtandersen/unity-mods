@@ -39,24 +39,25 @@ public sealed class SageMod
     private readonly Logger _log;
 
     private bool _loaded;
-    private SagePresenter _sage;
-    private MentionResponder _mentionResponder;
+    private SagePresenter? _sage;
+    private MentionResponder? _mentionResponder;
     private WindowModel _windowModel = new WindowModel(200);
-    private GameObject _holder;
-    private SageImGuiWindow _window;
-    private SageHttpServer _httpServer;
+    private GameObject? _holder;
+    private SageImGuiWindow? _window;
+    private SageHttpServer? _httpServer;
 
     private readonly Dictionary<string, Conversation> _mentionConversations = new Dictionary<string, Conversation>();
 
     // World data does not depend on the player, so it is built once and
-    // reused until the prefab catalogue changes size.
-    private IItemRepository _catalogueItems;
-    private IStructureRepository _catalogueStructures;
-    private IRecipeRepository _catalogueRecipes;
-    private IStationpediaRepository _catalogueStationpedia;
+    // reused until the prefab catalogue changes size. Set by
+    // EnsureCatalogues before any read.
+    private IItemRepository _catalogueItems = null!;
+    private IStructureRepository _catalogueStructures = null!;
+    private IRecipeRepository _catalogueRecipes = null!;
+    private IStationpediaRepository _catalogueStationpedia = null!;
     private int _cataloguePrefabCount = -1;
 
-    private Conversation _conversation;
+    private Conversation? _conversation;
 
     public SageMod(SageConfig settings, string configPath, MainThreadExecutor threads, Logger log)
     {
@@ -130,7 +131,7 @@ public sealed class SageMod
     }
 
     /// <summary>The presenter for the <c>ai</c> console command.</summary>
-    public SagePresenter ConsolePresenter()
+    public SagePresenter? ConsolePresenter()
     {
         return _sage;
     }
@@ -192,6 +193,12 @@ public sealed class SageMod
         }
 
         EnsureWindow();
+        var sage = _sage;
+        if (sage is null)
+        {
+            return;
+        }
+
         var responder = MentionResponderInstance();
         if (responder.IsBusy)
         {
@@ -199,11 +206,11 @@ public sealed class SageMod
             return;
         }
 
-        _sage.Show();
+        sage.Show();
         var speaker = string.IsNullOrWhiteSpace(message.DisplayName)
             ? "player"
             : message.DisplayName;
-        _sage.Write($"{speaker}: {prompt}");
+        sage.Write($"{speaker}: {prompt}");
         _ = responder.HandleAsync(prompt, MentionConversation(message.DisplayName));
     }
 
@@ -253,7 +260,7 @@ public sealed class SageMod
     {
         EnsureCatalogues();
 
-        Human human = null;
+        Human? human = null;
         try
         {
             human = Human.LocalHuman;
@@ -337,14 +344,14 @@ public sealed class SageMod
     }
 
     /// <summary>One chat session per player, capped like the console history.</summary>
-    private Conversation MentionConversation(string player)
+    private Conversation? MentionConversation(string? player)
     {
         if (_settings.ContextMessages.Value <= 0)
         {
             return null;
         }
 
-        if (string.IsNullOrWhiteSpace(player))
+        if (player is null || string.IsNullOrWhiteSpace(player))
         {
             player = "player";
         }
@@ -370,14 +377,21 @@ public sealed class SageMod
 
     private MentionResponder MentionResponderInstance()
     {
+        EnsureWindow();
+        var sage = _sage;
+        if (sage is null)
+        {
+            throw new InvalidOperationException("Sage window did not build.");
+        }
+
         return _mentionResponder ??= new MentionResponder(
-            new FanoutChatSink(_sage, new ChatMessageSink(_threads, _log, () => AssistantName)),
+            new FanoutChatSink(sage, new ChatMessageSink(_threads, _log, () => AssistantName)),
             activity => BuildAssistant(activity),
             AssistantName,
             _log);
     }
 
-    private string PlayerName()
+    private string? PlayerName()
     {
         try
         {
@@ -416,7 +430,7 @@ public sealed class SageMod
         _log.Log($"rebuilt world catalogues ({count} prefabs)");
     }
 
-    private AiAssistant BuildAssistant(IAssistantActivity activity)
+    private AiAssistant? BuildAssistant(IAssistantActivity? activity)
     {
         var prefabs = Prefab.AllPrefabs;
         if (prefabs == null || prefabs.Count == 0)
@@ -426,7 +440,7 @@ public sealed class SageMod
 
         EnsureCatalogues();
 
-        Human human = null;
+        Human? human = null;
         try
         {
             human = Human.LocalHuman;

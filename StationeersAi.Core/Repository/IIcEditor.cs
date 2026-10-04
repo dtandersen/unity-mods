@@ -9,8 +9,8 @@ namespace StationeersAi.Repository;
 public interface IIcEditor
 {
     /// <summary>Writes code to the computer's editor. Never returns null.</summary>
-    IcWriteResult Write(string computer, string code);
+    IcWriteResult Write(string? computer, string code);
 
     /// <summary>Reads the computer's editor text. Never returns null.</summary>
-    IcReadResult Read(string computer);
+    IcReadResult Read(string? computer);
 }

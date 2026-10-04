@@ -13,7 +13,7 @@ public sealed class WriteIcCommand
         _editor = editor;
     }
 
-    public IcWriteResult Execute(string computer, string code)
+    public IcWriteResult Execute(string? computer, string code)
     {
         return _editor.Write(computer, code);
     }

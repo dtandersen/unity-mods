@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Caev;
 using Reqnroll;
 using Shouldly;
+using StationeersAi.Command;
 using StationeersAi.Test.Fakes;
 using StationeersAi.Test.Support;
 using StationeersAi.Window;
@@ -75,6 +76,32 @@ public sealed class SagePresenterSteps
                 .ToArray();
     }
 
+    /// <summary>
+    /// The true console parsing (<see cref="AiConsoleRouter"/>, the same
+    /// object the game's <c>ai</c> command hands off to), wired to the
+    /// scenario presenter. The shell splits the raw line on spaces, so
+    /// the step does the same after stripping the <c>ai</c> prefix.
+    /// </summary>
+    private AiConsoleRouter ConsoleRouter()
+    {
+        return new AiConsoleRouter(() => World.WindowPresenter);
+    }
+
+    private static string[] SplitConsoleLine(string command)
+    {
+        var line = (command ?? string.Empty).Trim();
+        if (line.StartsWith("ai ", StringComparison.OrdinalIgnoreCase))
+        {
+            line = line.Substring(3);
+        }
+        else if (line.Equals("ai", StringComparison.OrdinalIgnoreCase))
+        {
+            return Array.Empty<string>();
+        }
+
+        return line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+    }
+
     [Given("the window input is {string}")]
     public void GivenTheWindowInputIs(string input)
     {
@@ -136,6 +163,14 @@ public sealed class SagePresenterSteps
         World.AskTask = World.WindowPresenter.AskAsync(question);
     }
 
+    [When("the user types the command {string}")]
+    public void WhenTheUserTypesTheCommand(string command)
+    {
+        EnsurePresenter().ShouldNotBeNull();
+        _clockArmed = true;
+        World.ConsoleOutput = ConsoleRouter().Execute(SplitConsoleLine(command));
+    }
+
     [When("the user toggles the window")]
     public void WhenTheUserTogglesTheWindow()
     {
@@ -182,6 +217,18 @@ public sealed class SagePresenterSteps
     public void ThenTheAskedQuestionIs(string expected)
     {
         AskedQuestions().ShouldBe(new[] { expected });
+    }
+
+    [Then("the question {string} is queued")]
+    public async Task ThenTheQuestionIsQueued(string expected)
+    {
+        await WaitUntil(() => AskedQuestions().Contains(expected));
+    }
+
+    [Then("the console displays:")]
+    public void ThenTheConsoleDisplays(string expected)
+    {
+        (World.ConsoleOutput ?? string.Empty).ShouldBe(expected.Replace("\r\n", "\n").Trim());
     }
 
     [Then("nothing is asked")]

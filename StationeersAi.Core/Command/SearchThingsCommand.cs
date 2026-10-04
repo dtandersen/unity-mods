@@ -17,9 +17,9 @@ public sealed class SearchThingsCommand
     }
 
     /// <returns>Matches, the origin used (the player's position when omitted), and the player's facing.</returns>
-    public (IReadOnlyList<ThingInfo> Things, OriginPoint Origin, double? Facing) Search(
-        string query,
-        OriginPoint origin,
+    public (IReadOnlyList<ThingInfo> Things, OriginPoint? Origin, double? Facing) Search(
+        string? query,
+        OriginPoint? origin,
         double? maxDistanceM)
     {
         var status = _player.Status;

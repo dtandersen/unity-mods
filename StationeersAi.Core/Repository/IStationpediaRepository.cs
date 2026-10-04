@@ -10,5 +10,5 @@ public interface IStationpediaRepository
     IReadOnlyList<StationpediaEntry> GetAll();
 
     /// <summary>The page with the given key, or null if none exists.</summary>
-    StationpediaEntry GetByKey(string key);
+    StationpediaEntry? GetByKey(string? key);
 }

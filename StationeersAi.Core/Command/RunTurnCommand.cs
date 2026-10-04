@@ -30,18 +30,18 @@ public sealed class RunTurnRequest
 public sealed class RunTurnCommand
 {
     /// <summary>The model's reasoning and narration, as it happens.</summary>
-    public event Action<string> Think;
+    public event Action<string>? Think;
 
     /// <summary>Each requested tool call, as it happens.</summary>
-    public event Action<string> ToolCall;
+    public event Action<string>? ToolCall;
 
     /// <summary>Each tool's output, as it happens.</summary>
-    public event Action<string> ToolOutput;
+    public event Action<string>? ToolOutput;
 
     /// <summary>The turn's answer: plain text, error, or game-not-loaded notice.</summary>
-    public event Action<string> Answered;
+    public event Action<string>? Answered;
 
-    private readonly Func<IAssistantActivity, AiAssistant> _assistantFactory;
+    private readonly Func<IAssistantActivity?, AiAssistant?> _assistantFactory;
     private readonly Logger _log;
 
     /// <param name="assistantFactory">
@@ -49,7 +49,7 @@ public sealed class RunTurnCommand
     /// receives the activity sink to report reasoning and tool use to.
     /// </param>
     /// <param name="log">Receives exception details.</param>
-    public RunTurnCommand(Func<IAssistantActivity, AiAssistant> assistantFactory, Logger log)
+    public RunTurnCommand(Func<IAssistantActivity?, AiAssistant?> assistantFactory, Logger log)
     {
         _assistantFactory = assistantFactory;
         _log = log;
@@ -62,8 +62,8 @@ public sealed class RunTurnCommand
     /// </param>
     public async Task ExecuteAsync(
         RunTurnRequest request,
-        Conversation conversation,
-        IAssistantActivity activity = null,
+        Conversation? conversation,
+        IAssistantActivity? activity = null,
         CancellationToken cancellationToken = default)
     {
         var prompt = request != null ? request.Prompt : string.Empty;
@@ -95,9 +95,9 @@ public sealed class RunTurnCommand
     private sealed class EventActivity : IAssistantActivity
     {
         private readonly RunTurnCommand _owner;
-        private readonly IAssistantActivity _inner;
+        private readonly IAssistantActivity? _inner;
 
-        public EventActivity(RunTurnCommand owner, IAssistantActivity inner)
+        public EventActivity(RunTurnCommand owner, IAssistantActivity? inner)
         {
             _owner = owner;
             _inner = inner;

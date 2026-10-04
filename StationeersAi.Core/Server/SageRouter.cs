@@ -22,7 +22,7 @@ public sealed class SageRouter
         _data = data ?? throw new ArgumentNullException(nameof(data));
     }
 
-    public SageResponse Handle(string method, string path, IDictionary<string, string> query, string body = null)
+    public SageResponse Handle(string method, string path, IDictionary<string, string> query, string? body = null)
     {
         if (string.IsNullOrWhiteSpace(method) || string.IsNullOrWhiteSpace(path))
         {
@@ -97,7 +97,7 @@ public sealed class SageRouter
         }
     }
 
-    private SageResponse HandlePost(string route, IDictionary<string, string> query, string body)
+    private SageResponse HandlePost(string route, IDictionary<string, string> query, string? body)
     {
         switch (route.ToLowerInvariant())
         {
@@ -110,7 +110,7 @@ public sealed class SageRouter
         }
     }
 
-    private SageResponse Describe(string device)
+    private SageResponse Describe(string? device)
     {
         var command = new DescribeDeviceCommand(_data.Inspector, _data.Devices);
         var details = command.Execute(device);
@@ -122,7 +122,7 @@ public sealed class SageRouter
         return SageResponse.Ok(details);
     }
 
-    private SageResponse Contents(string thing)
+    private SageResponse Contents(string? thing)
     {
         var contents = new ReadThingContentsCommand(_data.ThingContents).Execute(thing);
         if (contents == null)
@@ -133,7 +133,7 @@ public sealed class SageRouter
         return SageResponse.Ok(contents);
     }
 
-    private SageResponse Things(string query, string maxDistance)
+    private SageResponse Things(string? query, string? maxDistance)
     {
         double? distance = null;
         if (!string.IsNullOrWhiteSpace(maxDistance))
@@ -152,7 +152,7 @@ public sealed class SageRouter
         return SageResponse.Ok(new ThingsResult(result.Things, result.Origin, result.Facing));
     }
 
-    private SageResponse Room(string id)
+    private SageResponse Room(string? id)
     {
         long? roomId = Long(id);
         if (!string.IsNullOrWhiteSpace(id) && !roomId.HasValue)
@@ -169,7 +169,7 @@ public sealed class SageRouter
         return SageResponse.Ok(room);
     }
 
-    private SageResponse ReadPage(string key)
+    private SageResponse ReadPage(string? key)
     {
         var page = new ReadStationpediaCommand(_data.Stationpedia).Execute(key);
         if (page == null)
@@ -180,7 +180,7 @@ public sealed class SageRouter
         return SageResponse.Ok(page);
     }
 
-    private SageResponse WriteIc(string body, IDictionary<string, string> query)
+    private SageResponse WriteIc(string? body, IDictionary<string, string> query)
     {
         var request = ParseBody(body);
         var computer = request.Computer ?? Q(query, "computer");
@@ -193,7 +193,7 @@ public sealed class SageRouter
         return SageResponse.Ok(result);
     }
 
-    private SageResponse ExportIc(string body, IDictionary<string, string> query)
+    private SageResponse ExportIc(string? body, IDictionary<string, string> query)
     {
         var request = ParseBody(body);
         var computer = request.Computer ?? Q(query, "computer");
@@ -207,9 +207,9 @@ public sealed class SageRouter
         return SageResponse.Ok(result);
     }
 
-    private static IcRequest ParseBody(string body)
+    private static IcRequest ParseBody(string? body)
     {
-        if (string.IsNullOrWhiteSpace(body))
+        if (body is null || string.IsNullOrWhiteSpace(body))
         {
             return new IcRequest();
         }
@@ -224,9 +224,9 @@ public sealed class SageRouter
         }
     }
 
-    private static string Q(IDictionary<string, string> query, string name)
+    private static string? Q(IDictionary<string, string> query, string name)
     {
-        string value;
+        string? value;
         if (query.TryGetValue(name, out value))
         {
             return value;
@@ -235,7 +235,7 @@ public sealed class SageRouter
         return null;
     }
 
-    private static long? Long(string value)
+    private static long? Long(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -251,7 +251,7 @@ public sealed class SageRouter
         return null;
     }
 
-    private static bool? Bool(string value)
+    private static bool? Bool(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -280,18 +280,18 @@ public sealed class SageRouter
     private sealed class IcRequest
     {
         [JsonProperty("computer")]
-        public string Computer { get; set; }
+        public string? Computer { get; set; }
 
         [JsonProperty("device")]
-        public string Device { get; set; }
+        public string? Device { get; set; }
 
         [JsonProperty("code")]
-        public string Code { get; set; }
+        public string? Code { get; set; }
     }
 
     private sealed class ThingsResult
     {
-        public ThingsResult(IReadOnlyList<ThingInfo> things, OriginPoint origin, double? facing)
+        public ThingsResult(IReadOnlyList<ThingInfo> things, OriginPoint? origin, double? facing)
         {
             Things = things;
             Origin = origin;
@@ -302,7 +302,7 @@ public sealed class SageRouter
         public IReadOnlyList<ThingInfo> Things { get; }
 
         [JsonProperty("origin")]
-        public OriginPoint Origin { get; }
+        public OriginPoint? Origin { get; }
 
         [JsonProperty("facing")]
         public double? Facing { get; }

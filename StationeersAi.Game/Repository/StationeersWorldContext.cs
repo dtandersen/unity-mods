@@ -19,9 +19,9 @@ public sealed class StationeersWorldContext : IWorldContext
         Info = Read();
     }
 
-    public WorldInfo Info { get; }
+    public WorldInfo? Info { get; }
 
-    private static WorldInfo Read()
+    private static WorldInfo? Read()
     {
         try
         {
@@ -60,7 +60,7 @@ public sealed class StationeersWorldContext : IWorldContext
         }
     }
 
-    private static IReadOnlyList<GasMixEntry> ReadAirMix()
+    private static IReadOnlyList<GasMixEntry>? ReadAirMix()
     {
         try
         {
@@ -94,7 +94,7 @@ public sealed class StationeersWorldContext : IWorldContext
         }
     }
 
-    private static string FormatSeconds(int seconds)
+    private static string? FormatSeconds(int seconds)
     {
         if (seconds <= 0)
         {
@@ -114,7 +114,7 @@ public sealed class StationeersWorldContext : IWorldContext
         return $"{seconds}s";
     }
 
-    private static string FormatTime(TimeLength length)
+    private static string? FormatTime(TimeLength length)
     {
         try
         {
@@ -144,7 +144,7 @@ public sealed class StationeersWorldContext : IWorldContext
         }
         catch (Exception)
         {
-            return default(T);
+            return default!;
         }
     }
 }

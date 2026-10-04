@@ -40,7 +40,7 @@ public sealed class SearchStructuresTool : ITool
             FormatContent(query, structures));
     }
 
-    private static string FormatContent(string query, IReadOnlyList<Structure> structures)
+    private static string FormatContent(string? query, IReadOnlyList<Structure> structures)
     {
         if (structures.Count == 0)
         {

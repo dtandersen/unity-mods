@@ -13,7 +13,7 @@ public sealed class GetWorldCommand
         _world = world;
     }
 
-    public WorldInfo Execute()
+    public WorldInfo? Execute()
     {
         return _world.Info;
     }

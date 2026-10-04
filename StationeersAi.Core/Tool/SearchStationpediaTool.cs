@@ -40,7 +40,7 @@ public sealed class SearchStationpediaTool : ITool
             FormatContent(query, entries));
     }
 
-    private static string FormatContent(string query, IReadOnlyList<StationpediaEntry> entries)
+    private static string FormatContent(string? query, IReadOnlyList<StationpediaEntry> entries)
     {
         if (entries.Count == 0)
         {

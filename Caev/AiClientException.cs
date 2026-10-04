@@ -10,7 +10,7 @@ public sealed class AiClientException : Exception
     {
     }
 
-    public AiClientException(string message, int? statusCode, Exception inner)
+    public AiClientException(string message, int? statusCode, Exception? inner)
         : base(message, inner)
     {
         StatusCode = statusCode;

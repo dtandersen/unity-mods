@@ -13,7 +13,7 @@ public sealed class ReadIcCommand
         _editor = editor;
     }
 
-    public IcReadResult Execute(string computer)
+    public IcReadResult Execute(string? computer)
     {
         return _editor.Read(computer);
     }

@@ -29,7 +29,7 @@ public sealed class ReadRoomTool : ITool
     {
         var query = arguments.Get("room");
         long? roomId = null;
-        if (!string.IsNullOrWhiteSpace(query))
+        if (query is not null && !string.IsNullOrWhiteSpace(query))
         {
             long id;
             if (!long.TryParse(query.Trim(), out id))

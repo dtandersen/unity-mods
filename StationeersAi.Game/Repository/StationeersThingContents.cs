@@ -29,7 +29,7 @@ public sealed class StationeersThingContents : IThingContents
         _log = log;
     }
 
-    public IReadOnlyList<ThingContent> Read(string thing)
+    public IReadOnlyList<ThingContent>? Read(string? thing)
     {
         try
         {
@@ -42,7 +42,7 @@ public sealed class StationeersThingContents : IThingContents
         }
     }
 
-    private static IReadOnlyList<ThingContent> ReadInner(string thing)
+    private static IReadOnlyList<ThingContent>? ReadInner(string? thing)
     {
         var matches = ThingMatching.Match(
             UnityEngine.Object.FindObjectsOfType<DynamicThing>(),
@@ -55,7 +55,7 @@ public sealed class StationeersThingContents : IThingContents
         }
 
         var contents = new List<ThingContent>();
-        List<Slot> slots = null;
+        List<Slot>? slots = null;
         try
         {
             slots = matches[0].Slots;
@@ -76,7 +76,7 @@ public sealed class StationeersThingContents : IThingContents
                 continue;
             }
 
-            DynamicThing occupant = null;
+            DynamicThing? occupant = null;
             try
             {
                 occupant = slot.Get();
@@ -91,7 +91,7 @@ public sealed class StationeersThingContents : IThingContents
                 continue;
             }
 
-            string name = null;
+            string? name = null;
             try
             {
                 name = occupant.DisplayName ?? occupant.PrefabName;
@@ -100,12 +100,12 @@ public sealed class StationeersThingContents : IThingContents
             {
             }
 
-            if (string.IsNullOrWhiteSpace(name))
+            if (name is null || string.IsNullOrWhiteSpace(name))
             {
                 continue;
             }
 
-            string slotName = null;
+            string? slotName = null;
             try
             {
                 slotName = slot.DisplayName;
@@ -120,7 +120,7 @@ public sealed class StationeersThingContents : IThingContents
         return contents;
     }
 
-    private static string QuantityText(DynamicThing thing)
+    private static string? QuantityText(DynamicThing thing)
     {
         if (thing is IQuantity quantity)
         {
@@ -136,7 +136,7 @@ public sealed class StationeersThingContents : IThingContents
         return null;
     }
 
-    private static string SafeName(DynamicThing thing)
+    private static string? SafeName(DynamicThing thing)
     {
         try
         {
