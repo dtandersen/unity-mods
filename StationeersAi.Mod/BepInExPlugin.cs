@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Assets.Scripts;
+using Assets.Scripts.GridSystem;
 using BepInEx;
 using HarmonyLib;
 using StationeersAi.Core;
@@ -102,13 +103,19 @@ public class BepInExPlugin : BaseUnityPlugin
     /// <summary>Tears down the mod for the unloading level. No-op when down.</summary>
     private void UnloadMod()
     {
+        if (GameManager.GameState != GameState.Running)
+        {
+            // Prevent unnecessary unload when transitioning from main menu to game
+            return;
+        }
+
         try
         {
             _mod?.Unload();
         }
         catch (Exception ex)
         {
-            _log?.Info(ex.ToString());
+            _log?.Error(ex);
         }
     }
 

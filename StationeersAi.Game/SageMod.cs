@@ -50,6 +50,7 @@ public sealed class SageMod
     /// <summary>Builds window and server for the loaded level. No-op when loaded.</summary>
     public void Load()
     {
+        _log.Info(GameStateLine());
         if (_loaded)
         {
             _log.Warn("SageMod.Load called when already loaded");
@@ -69,15 +70,10 @@ public sealed class SageMod
         _log.Info("SageMod loaded");
     }
 
-    /// <summary>Tears down window and server. No-op when not loaded.</summary>
+    /// <summary>Tears down window and server. The shell only calls this leaving a world.</summary>
     public void Unload()
     {
-        if (!_loaded)
-        {
-            _log.Warn("SageMod.Unload called, but mod not loaded.");
-            return;
-        }
-
+        _log.Info(GameStateLine());
         _log.Info("Unloading SageMod...");
         _loaded = false;
 
@@ -261,6 +257,18 @@ public sealed class SageMod
         catch (Exception)
         {
             return false;
+        }
+    }
+
+    private static string GameStateLine()
+    {
+        try
+        {
+            return $"GameState: {Assets.Scripts.GameManager.GameState}";
+        }
+        catch (Exception)
+        {
+            return "GameState: unknown";
         }
     }
 
