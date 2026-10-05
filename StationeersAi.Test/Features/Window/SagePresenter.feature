@@ -200,7 +200,7 @@ Feature: Sage presenter
     And the turn completes
     Given the AI model will answer "Summary."
     When the user compacts the context
-    Then the conversation size is 1
+    Then the conversation holds 1 message
     And the view shows:
       """
       Tester: first question

@@ -59,15 +59,4 @@ public class AssistantTests
         Mention.TryParse("!sage", "!sage", out _).ShouldBeFalse();
     }
 
-    [Test]
-    public void Conversation_drops_oldest_turn_whole()
-    {
-        var conversation = new Conversation(2);
-        conversation.Add(new ChatMessage(ChatRole.User, "one"));
-        conversation.Add(new ChatMessage(ChatRole.Assistant, "two"));
-        conversation.Add(new ChatMessage(ChatRole.User, "three"));
-
-        conversation.Messages.Count.ShouldBe(1);
-        conversation.Messages[0].Content.ShouldBe("three");
-    }
 }

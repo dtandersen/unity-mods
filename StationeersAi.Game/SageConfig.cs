@@ -40,7 +40,7 @@ public sealed class SageConfig
 
     public ConfigEntry<int> TimeoutSeconds { get; }
 
-    public ConfigEntry<int> ContextMessages { get; }
+    public ConfigEntry<int> ContextBytes { get; }
 
     public ConfigEntry<bool> ServerEnabled { get; }
 
@@ -77,7 +77,7 @@ public sealed class SageConfig
             "System prompt sent to the model.");
         MaxIterations = config.Bind("AI", "MaxToolIterations", 5, "Maximum tool round-trips per question.");
         TimeoutSeconds = config.Bind("AI", "TimeoutSeconds", 120, "HTTP timeout for model requests, in seconds. Raise it if the model is slow with a large conversation.");
-        ContextMessages = config.Bind("AI", "ContextMessages", 20, "How many previous messages to send with each question. 0 disables conversation history.");
+        ContextBytes = config.Bind("AI", "ContextBytes", 128000, "How many bytes of conversation history to send with each question. History holds user and assistant text plus tool calls and results, so a byte budget fits few large turns or many small ones. The default is a quarter of a 1M-token window at about 4 bytes per token. 0 disables conversation history.");
 
         ServerEnabled = config.Bind("Server", "Enabled", false, "Serve Sage game data over HTTP on localhost for outside tools such as Pi.");
         ServerPort = config.Bind("Server", "Port", 8080, "Loopback port for the Sage HTTP server.");

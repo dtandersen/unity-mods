@@ -45,15 +45,33 @@ public sealed class SageAssistantFactory
     /// </summary>
     public string AssistantName => ChatNaming.Resolve(_settings.AiName?.Value);
 
-    private Conversation Conversation => _conversation ??= new Conversation(_settings.ContextMessages.Value);
+    private Conversation Conversation
+    {
+        get
+        {
+            var limit = _settings.ContextBytes.Value;
+            if (_conversation is null)
+            {
+                _conversation = new Conversation(limit);
+            }
+            else if (_conversation.MaxBytes != limit)
+            {
+                var kept = _conversation.Messages;
+                _conversation = new Conversation(limit);
+                _conversation.Replace(kept);
+            }
+
+            return _conversation;
+        }
+    }
 
     /// <summary>Shared console history. Null when history is off.</summary>
-    public Conversation? ConsoleConversation => _settings.ContextMessages.Value > 0 ? Conversation : null;
+    public Conversation? ConsoleConversation => _settings.ContextBytes.Value > 0 ? Conversation : null;
 
     /// <summary>One chat session per player, capped like the console history.</summary>
     public Conversation? MentionConversation(string? player)
     {
-        if (_settings.ContextMessages.Value <= 0)
+        if (_settings.ContextBytes.Value <= 0)
         {
             return null;
         }
@@ -65,7 +83,14 @@ public sealed class SageAssistantFactory
 
         if (!_mentionConversations.TryGetValue(player, out var conversation))
         {
-            conversation = new Conversation(_settings.ContextMessages.Value);
+            conversation = new Conversation(_settings.ContextBytes.Value);
+            _mentionConversations[player] = conversation;
+        }
+        else if (conversation.MaxBytes != _settings.ContextBytes.Value)
+        {
+            var kept = conversation.Messages;
+            conversation = new Conversation(_settings.ContextBytes.Value);
+            conversation.Replace(kept);
             _mentionConversations[player] = conversation;
         }
 

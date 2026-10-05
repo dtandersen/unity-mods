@@ -19,7 +19,7 @@ public sealed class ConversationSteps
 
     private World World => Hooks.GetWorld(_context);
 
-    [Given("a conversation with a limit of {int} messages")]
+    [Given("a conversation with a limit of {int} bytes")]
     public void GivenAConversationWithALimit(int limit)
     {
         World.Conversation = new Conversation(limit);
@@ -52,7 +52,7 @@ public sealed class ConversationSteps
         await TestComposition.Assistant(World).CompactAsync(World.Conversation);
     }
 
-    [Then("the conversation size is {int}")]
+    [Then("the conversation holds {int} message(s)")]
     public void ThenTheConversationSizeIs(int count)
     {
         World.Conversation.Messages.Count.ShouldBe(count);
