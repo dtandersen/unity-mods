@@ -7,11 +7,11 @@ using StationeersAi.Repository;
 namespace StationeersAi.Command;
 
 /// <summary>Domain operation: look up IC10 instructions by mnemonic.</summary>
-public sealed class ReadMipsCommand
+public sealed class ReadInstructionsCommand
 {
     private readonly IMipsReference _reference;
 
-    public ReadMipsCommand(IMipsReference reference)
+    public ReadInstructionsCommand(IMipsReference reference)
     {
         _reference = reference;
     }

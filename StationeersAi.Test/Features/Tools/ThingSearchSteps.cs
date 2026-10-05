@@ -22,8 +22,8 @@ public sealed class ThingSearchSteps
     [Given("the {string} holds:")]
     public void GivenTheThingHolds(string name, Table table)
     {
-        World.ThingContents.HasMatch = true;
-        World.ThingContents.Contents.AddRange(table.Rows.Select(row => new ThingContent(
+        World.ThingSlots.HasMatch = true;
+        World.ThingSlots.Contents.AddRange(table.Rows.Select(row => new ThingSlot(
             row["Slot"],
             row["Item"],
             row["Quantity"])));

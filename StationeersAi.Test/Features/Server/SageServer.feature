@@ -6,7 +6,7 @@ Feature: Sage HTTP API
     Given my position is "1", "2", "3" on "Europa"
 
   Scenario: Player status
-    When I GET /sage/status
+    When I GET /sage/players
     Then the response is:
       """
       {"X":1.0,"Y":2.0,"Z":3.0,"World":"Europa","Details":null,"RoomId":null,"FacingYaw":null}
@@ -66,7 +66,7 @@ Feature: Sage HTTP API
 
   Scenario: MIPS reference
     Given the MIPS reference contains "add" and "sub"
-    When I GET /sage/mips?instruction=add
+    When I GET /sage/instructions?instruction=add
     Then the response is:
       """
       [{"Name":"add","Example":"add r? device var","Description":"Does add."}]
@@ -74,7 +74,7 @@ Feature: Sage HTTP API
 
   Scenario: IC editor read
     Given the IC editor holds "alias a d0" on "Lab Computer"
-    When I GET /sage/ic?computer=lab
+    When I GET /sage/ic/lab
     Then the response is:
       """
       {"Found":true,"Device":"Lab Computer","Code":"alias a d0","Error":null}
@@ -112,7 +112,7 @@ Feature: Sage HTTP API
     Given the stationpedia contains:
       | Key       | Title      | Description   | Text                      |
       | ItemCable | Cable Coil | Spooled wire. | Cable Coil carries power. |
-    When I GET /sage/stationpedia/read?key=ItemCable
+    When I GET /sage/stationpedia/ItemCable
     Then the response is:
       """
       {"Key":"ItemCable","Title":"Cable Coil","Description":"Spooled wire.","Text":"Cable Coil carries power."}
@@ -122,7 +122,7 @@ Feature: Sage HTTP API
     Given the stationpedia contains:
       | Key     | Title                 | Description                 | Text   |
       | ItemFan | <color=red>Fan</color> | Moves <link=Air>air</link>. | Plain. |
-    When I GET /sage/stationpedia/read?key=ItemFan
+    When I GET /sage/stationpedia/ItemFan
     Then the response is:
       """
       {"Key":"ItemFan","Title":"Fan","Description":"Moves air.","Text":"Plain."}
@@ -130,7 +130,7 @@ Feature: Sage HTTP API
 
   Scenario: Device describe
     Given the device "Air Vent" exists
-    When I GET /sage/devices/describe?device=Air Vent
+    When I GET /sage/devices/Air Vent
     Then the response is:
       """
       {"Name":"Air Vent","Type":"StructureAirVent","Thing":101,"NetworkId":7,"IsOn":true,"Logic":[{"Name":"Pressure","Value":101.3,"Writable":false},{"Name":"On","Value":1.0,"Writable":true}],"Slots":[{"Index":0,"Slot":"Filter","Occupant":"empty"}],"Devices":null,"Chip":null,"Storage":null}
@@ -141,7 +141,7 @@ Feature: Sage HTTP API
       | Reagent | Quantity |
       | Iron    | 60       |
       | Copper  | 12.5     |
-    When I GET /sage/devices/describe?device=1456
+    When I GET /sage/devices/1456
     Then the response is:
       """
       {"Name":"Autolathe","Type":"StructureAutolathe","Thing":1456,"NetworkId":0,"IsOn":false,"Logic":[],"Slots":[{"Index":0,"Slot":"Import","Occupant":"empty"},{"Index":1,"Slot":"Export","Occupant":"empty"}],"Devices":null,"Chip":null,"Storage":[{"Reagent":"Iron","Quantity":60.0},{"Reagent":"Copper","Quantity":12.5}]}
@@ -157,12 +157,12 @@ Feature: Sage HTTP API
       {"things":[{"Name":"Iron Ingot","Type":"Ingot","Thing":501,"Quantity":"x5","X":1.0,"Y":2.0,"Z":4.0,"RoomId":0}],"origin":{"X":1.0,"Y":2.0,"Z":3.0},"facing":null}
       """
 
-  Scenario: Thing contents lists container slots
+  Scenario: Thing slots list container slots
     Given the "Mining Belt" holds:
       | Slot   | Item       | Quantity |
       | Slot 1 | Iron Ore   | x12      |
       | Slot 2 | Copper Ore | x4       |
-    When I GET /sage/things/contents?thing=301
+    When I GET /sage/things/301/slots
     Then the response is:
       """
       [{"Slot":"Slot 1","Name":"Iron Ore","Quantity":"x12"},{"Slot":"Slot 2","Name":"Copper Ore","Quantity":"x4"}]
@@ -184,14 +184,14 @@ Feature: Sage HTTP API
       | Oxygen   | 10    |
       | Nitrogen | 40    |
     And I stand in room 5
-    When I GET /sage/room?id=5
+    When I GET /sage/rooms/5
     Then the response is:
       """
       {"RoomId":5,"RoomType":"sealed","TemperatureC":20.0,"PressureKpa":101.0,"VolumeLitres":100.0,"Gases":[{"Gas":"Oxygen","Moles":10.0},{"Gas":"Nitrogen","Moles":40.0}]}
       """
 
   Scenario: IC editor write
-    When I POST /sage/ic with:
+    When I POST /sage/ic/lab with:
       """
       {"computer":"lab","code":"alias a d0"}
       """
@@ -201,9 +201,9 @@ Feature: Sage HTTP API
       """
 
   Scenario: IC export
-    When I POST /sage/ic/export with:
+    When I PUT /sage/ic/lab/export with:
       """
-      {"computer":"lab","device":"housing"}
+      {"device":"housing"}
       """
     Then the response is:
       """

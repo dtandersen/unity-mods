@@ -44,7 +44,7 @@ public sealed class RawHttpRequest
         }
 
         var method = first[0].Trim().ToUpperInvariant();
-        if (method != "GET" && method != "POST")
+        if (method != "GET" && method != "POST" && method != "PUT")
         {
             return null;
         }

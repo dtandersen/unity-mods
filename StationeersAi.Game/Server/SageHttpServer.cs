@@ -20,7 +20,7 @@ namespace StationeersAi.Game.Server;
 /// </summary>
 public sealed class SageHttpServer : IDisposable
 {
-    private readonly Func<SageData> _data;
+    private readonly Func<SageCommands> _data;
     private readonly IMainThread _threads;
     private readonly Logger _log;
     private readonly Func<int> _port;
@@ -30,7 +30,7 @@ public sealed class SageHttpServer : IDisposable
     private Thread? _loop;
     private volatile bool _running;
 
-    public SageHttpServer(Func<SageData> data, IMainThread threads, Logger log, Func<int> port, Func<string> token)
+    public SageHttpServer(Func<SageCommands> data, IMainThread threads, Logger log, Func<int> port, Func<string> token)
     {
         _data = data;
         _threads = threads;

@@ -50,10 +50,10 @@ public class ToolTests
             new SearchStationpediaTool(new SearchStationpediaCommand(new StationpediaIndex(pages))),
             new ReadStationpediaTool(new ReadStationpediaCommand(pages)),
             new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(player))),
-            new GetStatusTool(new GetStatusCommand(player)),
+            new GetStatusTool(new GetPlayerCommand(player)),
             new GetWorldTool(new GetWorldCommand(world)),
             new WriteIcTool(new WriteIcCommand(editor)),
-            new MipsReferenceTool(new ReadMipsCommand(mips)),
+            new MipsReferenceTool(new ReadInstructionsCommand(mips)),
             new SearchDevicesTool(new SearchDevicesCommand(devices)),
         });
     }

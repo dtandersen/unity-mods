@@ -5,16 +5,16 @@ using StationeersAi.Repository;
 namespace StationeersAi.Command;
 
 /// <summary>Domain operation: list what a container thing holds.</summary>
-public sealed class ReadThingContentsCommand
+public sealed class ReadThingSlotsCommand
 {
-    private readonly IThingContents _contents;
+    private readonly IThingSlots _contents;
 
-    public ReadThingContentsCommand(IThingContents contents)
+    public ReadThingSlotsCommand(IThingSlots contents)
     {
         _contents = contents;
     }
 
-    public IReadOnlyList<ThingContent>? Execute(string? thing)
+    public IReadOnlyList<ThingSlot>? Execute(string? thing)
     {
         return _contents.Read(thing);
     }

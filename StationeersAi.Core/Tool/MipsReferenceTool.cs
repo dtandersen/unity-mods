@@ -7,9 +7,9 @@ namespace StationeersAi.Tool;
 /// <summary>Tool: look up IC10 instructions from the game's editor help.</summary>
 public sealed class MipsReferenceTool : ITool
 {
-    private readonly ReadMipsCommand _command;
+    private readonly ReadInstructionsCommand _command;
 
-    public MipsReferenceTool(ReadMipsCommand command)
+    public MipsReferenceTool(ReadInstructionsCommand command)
     {
         _command = command;
     }

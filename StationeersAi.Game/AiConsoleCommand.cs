@@ -5,7 +5,7 @@ namespace StationeersAi.Game;
 
 /// <summary>
 /// The <c>ai</c> console command: <c>ai &lt;question&gt;</c> asks the assistant,
-/// <c>ai clear</c> drops the conversation, <c>ai compact</c> summarises it.
+/// <c>ai reset</c> drops the conversation, <c>ai compact</c> summarises it.
 /// Questions are answered asynchronously; the answer streams into the Sage
 /// window when the model replies. Hands each line straight to the shared
 /// presenter.

@@ -16,7 +16,7 @@ Feature: Console command
 
   Scenario: Clear the context
     Given the AI agent has context
-    When the user types the command "ai clear"
+    When the user types the command "ai reset"
     Then the AI agent has an empty context
 
   Scenario: Compact the context

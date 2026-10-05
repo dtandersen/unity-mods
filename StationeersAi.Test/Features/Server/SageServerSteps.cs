@@ -54,17 +54,17 @@ public sealed class SageServerSteps
     [When(@"I GET (.+)")]
     public void WhenIGet(string request)
     {
-        var router = new SageRouter(SageDataFrom(World));
+        var router = new SageRouter(CommandsFrom(World));
         Parse(request, out var path, out var query);
         _response = router.Handle("GET", path, query);
     }
 
-    [When(@"I POST (.+) with:")]
-    public void WhenIPostWith(string request, string body)
+    [When(@"I (POST|PUT) (.+) with:")]
+    public void WhenIPostWith(string method, string request, string body)
     {
-        var router = new SageRouter(SageDataFrom(World));
+        var router = new SageRouter(CommandsFrom(World));
         Parse(request, out var path, out var query);
-        _response = router.Handle("POST", path, query, body);
+        _response = router.Handle(method, path, query, body);
     }
 
     [Then("the response is:")]
@@ -76,6 +76,25 @@ public sealed class SageServerSteps
         var want = JToken.Parse(expected);
         JToken.DeepEquals(actual, want).ShouldBeTrue(
             "GET gave other JSON.\nActual: " + _response.Body + "\nWant: " + want);
+    }
+
+    private static SageCommands CommandsFrom(World world)
+    {
+        return new SageCommands(
+            world.Items,
+            world.Structures,
+            world.Recipes,
+            world.Stationpedia,
+            world.Player,
+            world.Worlds,
+            world.Ic,
+            world.Export,
+            world.Mips,
+            world.Devices,
+            world.Inspector,
+            world.Things,
+            world.ThingSlots,
+            world.RoomInspector);
     }
 
     private static void Parse(string request, out string path, out IDictionary<string, string> query)
@@ -109,24 +128,4 @@ public sealed class SageServerSteps
         }
     }
 
-    private static SageData SageDataFrom(World world)
-    {
-        return new SageData
-        {
-            Items = world.Items,
-            Structures = world.Structures,
-            Recipes = world.Recipes,
-            Stationpedia = world.Stationpedia,
-            Player = world.Player,
-            Worlds = world.Worlds,
-            Ic = world.Ic,
-            Export = world.Export,
-            Mips = world.Mips,
-            Devices = world.Devices,
-            Inspector = world.Inspector,
-            Things = world.Things,
-            ThingContents = world.ThingContents,
-            Rooms = world.RoomInspector,
-        };
-    }
 }

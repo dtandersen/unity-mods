@@ -1,25 +1,30 @@
 using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
-using StationeersAi.Command;
-using StationeersAi.Entity;
-using StationeersAi.Query;
+using System.Reflection;
 
 namespace StationeersAi.Server;
 
 /// <summary>
-/// Unity-free HTTP router for Sage. Maps <c>GET /sage/...</c> to the same
-/// commands the chat assistant calls, and writes the result as JSON. The mod
-/// hosts this over <c>HttpListener</c>; tests call <see cref="Handle"/>
-/// straight with fakes.
+/// Unity-free HTTP router for Sage. Finds the <see cref="SageRouteAttribute"/>
+/// methods on <see cref="SageController"/> once, then calls the one matching
+/// each <c>METHOD /sage/...</c> pair. Routes may hold <c>{name}</c> template
+/// parts, which match any one path part; plain routes win over templates. A
+/// parameter named <c>body</c> takes the request body; every other parameter
+/// takes the path part or query value of the same name, with the path winning.
+/// The mod hosts this over raw TCP; tests call <see cref="Handle"/> straight
+/// with fakes.
 /// </summary>
 public sealed class SageRouter
 {
-    private readonly SageData _data;
+    private static readonly IReadOnlyDictionary<string, MethodInfo> LiteralRoutes = FindLiteralRoutes();
 
-    public SageRouter(SageData data)
+    private static readonly IReadOnlyList<TemplateRoute> TemplateRoutes = FindTemplateRoutes();
+
+    private readonly SageController _controller;
+
+    public SageRouter(SageCommands commands)
     {
-        _data = data ?? throw new ArgumentNullException(nameof(data));
+        _controller = new SageController(commands);
     }
 
     public SageResponse Handle(string method, string path, IDictionary<string, string> query, string? body = null)
@@ -27,6 +32,13 @@ public sealed class SageRouter
         if (string.IsNullOrWhiteSpace(method) || string.IsNullOrWhiteSpace(path))
         {
             return SageResponse.Error(400, "Expected a method and path.");
+        }
+
+        if (!method.Equals("GET", StringComparison.OrdinalIgnoreCase) &&
+            !method.Equals("POST", StringComparison.OrdinalIgnoreCase) &&
+            !method.Equals("PUT", StringComparison.OrdinalIgnoreCase))
+        {
+            return SageResponse.Error(405, "Only GET, POST, and PUT serve here.");
         }
 
         var route = path.TrimEnd('/');
@@ -41,187 +53,141 @@ public sealed class SageRouter
 
         query = query ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        if (method.Equals("GET", StringComparison.OrdinalIgnoreCase))
+        MethodInfo? target;
+        IDictionary<string, string>? captured = null;
+        if (!LiteralRoutes.TryGetValue(method.ToUpperInvariant() + " " + route.ToLowerInvariant(), out target) ||
+            target is null)
         {
-            return HandleGet(route, query);
-        }
-
-        if (method.Equals("POST", StringComparison.OrdinalIgnoreCase))
-        {
-            return HandlePost(route, query, body);
-        }
-
-        return SageResponse.Error(405, "Only GET and POST serve here.");
-    }
-
-    private SageResponse HandleGet(string route, IDictionary<string, string> query)
-    {
-        switch (route.ToLowerInvariant())
-        {
-            case "/status":
-                return SageResponse.Ok(new GetStatusCommand(_data.Player).Execute());
-            case "/world":
-                return SageResponse.Ok(new GetWorldCommand(_data.Worlds).Execute());
-            case "/inventory":
-                return SageResponse.Ok(new SearchInventoryCommand(new InventoryIndex(_data.Player)).Execute(Q(query, "q")));
-            case "/devices":
-                return SageResponse.Ok(new SearchDevicesCommand(_data.Devices).Execute(
-                    Q(query, "q"),
-                    Long(Q(query, "network")),
-                    Bool(Q(query, "logic")),
-                    Long(Q(query, "room"))));
-            case "/devices/describe":
-                return Describe(Q(query, "device"));
-            case "/things":
-                return Things(Q(query, "q"), Q(query, "maxDistance"));
-            case "/things/contents":
-                return Contents(Q(query, "thing"));
-            case "/room":
-                return Room(Q(query, "id"));
-            case "/items":
-                return SageResponse.Ok(new SearchItemsCommand(new ItemIndex(_data.Items)).Execute(Q(query, "q")));
-            case "/structures":
-                return SageResponse.Ok(new SearchStructuresCommand(new StructureIndex(_data.Structures)).Execute(Q(query, "q")));
-            case "/recipes":
-                return SageResponse.Ok(new SearchRecipesCommand(new RecipeIndex(_data.Recipes)).Execute(Q(query, "q")));
-            case "/stationpedia":
-                return SageResponse.Ok(new SearchStationpediaCommand(new StationpediaIndex(_data.Stationpedia)).Execute(Q(query, "q")));
-            case "/stationpedia/read":
-                return ReadPage(Q(query, "key"));
-            case "/mips":
-                return SageResponse.Ok(new ReadMipsCommand(_data.Mips).Execute(Q(query, "instruction")));
-            case "/ic":
-                return SageResponse.Ok(new ReadIcCommand(_data.Ic).Execute(Q(query, "computer")));
-            default:
-                return SageResponse.Error(404, "No route serves " + route + ".");
-        }
-    }
-
-    private SageResponse HandlePost(string route, IDictionary<string, string> query, string? body)
-    {
-        switch (route.ToLowerInvariant())
-        {
-            case "/ic":
-                return WriteIc(body, query);
-            case "/ic/export":
-                return ExportIc(body, query);
-            default:
-                return SageResponse.Error(404, "No route serves " + route + ".");
-        }
-    }
-
-    private SageResponse Describe(string? device)
-    {
-        var command = new DescribeDeviceCommand(_data.Inspector, _data.Devices);
-        var details = command.Execute(device);
-        if (details == null)
-        {
-            return SageResponse.Error(404, "Device '" + device + "' not found.");
-        }
-
-        return SageResponse.Ok(details);
-    }
-
-    private SageResponse Contents(string? thing)
-    {
-        var contents = new ReadThingContentsCommand(_data.ThingContents).Execute(thing);
-        if (contents == null)
-        {
-            return SageResponse.Error(404, "Thing '" + thing + "' not found.");
-        }
-
-        return SageResponse.Ok(contents);
-    }
-
-    private SageResponse Things(string? query, string? maxDistance)
-    {
-        double? distance = null;
-        if (!string.IsNullOrWhiteSpace(maxDistance))
-        {
-            double parsed;
-            if (!double.TryParse(maxDistance, out parsed))
+            target = MatchTemplate(method, route, out captured);
+            if (target is null)
             {
-                return SageResponse.Error(400, "maxDistance must be a number.");
+                return SageResponse.Error(404, "No route serves " + route + ".");
+            }
+        }
+
+        return (SageResponse)target.Invoke(_controller, Args(target, query, captured, body))!;
+    }
+
+    private static MethodInfo? MatchTemplate(string method, string route, out IDictionary<string, string>? captured)
+    {
+        captured = null;
+        var parts = route.Trim('/').Split('/');
+        foreach (var template in TemplateRoutes)
+        {
+            if (!template.Method.Equals(method, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
             }
 
-            distance = parsed;
+            if (template.Parts.Length != parts.Length)
+            {
+                continue;
+            }
+
+            var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var matches = true;
+            for (var i = 0; i < parts.Length; i++)
+            {
+                var literal = template.Parts[i] as string;
+                var par = template.Parts[i] as ParamPart;
+                if (literal != null)
+                {
+                    if (!literal.Equals(parts[i], StringComparison.OrdinalIgnoreCase))
+                    {
+                        matches = false;
+                        break;
+                    }
+                }
+                else if (par != null)
+                {
+                    values[par.Name] = Unescape(parts[i]);
+                }
+            }
+
+            if (matches)
+            {
+                captured = values;
+                return template.Target;
+            }
         }
 
-        var command = new SearchThingsCommand(_data.Things, _data.Player);
-        var result = command.Search(query, null, distance);
-        return SageResponse.Ok(new ThingsResult(result.Things, result.Origin, result.Facing));
+        return null;
     }
 
-    private SageResponse Room(string? id)
+    private static object?[] Args(MethodInfo target, IDictionary<string, string> query, IDictionary<string, string>? captured, string? body)
     {
-        long? roomId = Long(id);
-        if (!string.IsNullOrWhiteSpace(id) && !roomId.HasValue)
+        var pars = target.GetParameters();
+        var args = new object?[pars.Length];
+        for (var i = 0; i < pars.Length; i++)
         {
-            return SageResponse.Error(400, "id must be a number.");
+            var name = pars[i].Name ?? string.Empty;
+            if (name.Equals("body", StringComparison.OrdinalIgnoreCase))
+            {
+                args[i] = body;
+                continue;
+            }
+
+            string? value = null;
+            if (captured != null && captured.TryGetValue(name, out var fromPath))
+            {
+                value = fromPath;
+            }
+            else
+            {
+                value = Q(query, name);
+            }
+
+            args[i] = value;
         }
 
-        var room = new ReadRoomCommand(_data.Rooms, _data.Player).Execute(roomId);
-        if (room == null)
-        {
-            return SageResponse.Error(404, "Room not found.");
-        }
-
-        return SageResponse.Ok(room);
+        return args;
     }
 
-    private SageResponse ReadPage(string? key)
+    private static IReadOnlyDictionary<string, MethodInfo> FindLiteralRoutes()
     {
-        var page = new ReadStationpediaCommand(_data.Stationpedia).Execute(key);
-        if (page == null)
+        var routes = new Dictionary<string, MethodInfo>(StringComparer.Ordinal);
+        foreach (var method in typeof(SageController).GetMethods(BindingFlags.Instance | BindingFlags.Public))
         {
-            return SageResponse.Error(404, "Page '" + key + "' not found.");
+            foreach (SageRouteAttribute route in method.GetCustomAttributes(typeof(SageRouteAttribute), false))
+            {
+                if (!route.Route.Contains("{"))
+                {
+                    routes[route.Method.ToUpperInvariant() + " " + route.Route.ToLowerInvariant()] = method;
+                }
+            }
         }
 
-        return SageResponse.Ok(page);
+        return routes;
     }
 
-    private SageResponse WriteIc(string? body, IDictionary<string, string> query)
+    private static IReadOnlyList<TemplateRoute> FindTemplateRoutes()
     {
-        var request = ParseBody(body);
-        var computer = request.Computer ?? Q(query, "computer");
-        var result = new WriteIcCommand(_data.Ic).Execute(computer, request.Code ?? string.Empty);
-        if (result == null || !result.Written)
+        var routes = new List<TemplateRoute>();
+        foreach (var method in typeof(SageController).GetMethods(BindingFlags.Instance | BindingFlags.Public))
         {
-            return SageResponse.Error(404, result != null ? result.Error ?? "Write fell through." : "Write fell through.");
+            foreach (SageRouteAttribute route in method.GetCustomAttributes(typeof(SageRouteAttribute), false))
+            {
+                if (route.Route.Contains("{"))
+                {
+                    routes.Add(new TemplateRoute(route.Method, Split(route.Route), method));
+                }
+            }
         }
 
-        return SageResponse.Ok(result);
+        return routes;
     }
 
-    private SageResponse ExportIc(string? body, IDictionary<string, string> query)
+    private static object[] Split(string route)
     {
-        var request = ParseBody(body);
-        var computer = request.Computer ?? Q(query, "computer");
-        var device = request.Device ?? Q(query, "device");
-        var result = new ExportIcCommand(_data.Export).Execute(computer, device);
-        if (result == null || !result.Written)
+        var parts = route.Trim('/').Split('/');
+        var parsed = new object[parts.Length];
+        for (var i = 0; i < parts.Length; i++)
         {
-            return SageResponse.Error(404, result != null ? result.Error ?? "Export fell through." : "Export fell through.");
+            ParamPart par;
+            parsed[i] = ParamPart.TryParse(parts[i], out par) ? (object)par : (object)parts[i];
         }
 
-        return SageResponse.Ok(result);
-    }
-
-    private static IcRequest ParseBody(string? body)
-    {
-        if (body is null || string.IsNullOrWhiteSpace(body))
-        {
-            return new IcRequest();
-        }
-
-        try
-        {
-            return JsonConvert.DeserializeObject<IcRequest>(body) ?? new IcRequest();
-        }
-        catch (JsonException)
-        {
-            return new IcRequest();
-        }
+        return parsed;
     }
 
     private static string? Q(IDictionary<string, string> query, string name)
@@ -235,76 +201,59 @@ public sealed class SageRouter
         return null;
     }
 
-    private static long? Long(string? value)
+    private static string Unescape(string value)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        try
         {
-            return null;
+            return Uri.UnescapeDataString(value.Replace('+', ' '));
         }
-
-        long parsed;
-        if (long.TryParse(value, out parsed))
+        catch (Exception)
         {
-            return parsed;
+            return value;
         }
-
-        return null;
     }
 
-    private static bool? Bool(string? value)
+    private sealed class TemplateRoute
     {
-        if (string.IsNullOrWhiteSpace(value))
+        public TemplateRoute(string method, object[] parts, MethodInfo target)
         {
-            return null;
+            Method = method;
+            Parts = parts;
+            Target = target;
         }
 
-        bool parsed;
-        if (bool.TryParse(value, out parsed))
+        public string Method { get; }
+
+        public object[] Parts { get; }
+
+        public MethodInfo Target { get; }
+    }
+
+    private sealed class ParamPart
+    {
+        private ParamPart(string name)
         {
-            return parsed;
+            Name = name;
         }
 
-        if (value == "1")
+        public string Name { get; }
+
+        public static bool TryParse(string part, out ParamPart par)
         {
+            par = null!;
+            if (part.Length < 3 || !part.StartsWith("{", StringComparison.Ordinal) || !part.EndsWith("}", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            var name = part.Substring(1, part.Length - 2).Trim();
+            if (name.Length == 0)
+            {
+                return false;
+            }
+
+            par = new ParamPart(name);
             return true;
         }
-
-        if (value == "0")
-        {
-            return false;
-        }
-
-        return null;
-    }
-
-    private sealed class IcRequest
-    {
-        [JsonProperty("computer")]
-        public string? Computer { get; set; }
-
-        [JsonProperty("device")]
-        public string? Device { get; set; }
-
-        [JsonProperty("code")]
-        public string? Code { get; set; }
-    }
-
-    private sealed class ThingsResult
-    {
-        public ThingsResult(IReadOnlyList<ThingInfo> things, OriginPoint? origin, double? facing)
-        {
-            Things = things;
-            Origin = origin;
-            Facing = facing;
-        }
-
-        [JsonProperty("things")]
-        public IReadOnlyList<ThingInfo> Things { get; }
-
-        [JsonProperty("origin")]
-        public OriginPoint? Origin { get; }
-
-        [JsonProperty("facing")]
-        public double? Facing { get; }
     }
 }

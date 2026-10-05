@@ -17,19 +17,19 @@ namespace StationeersAi.Repository;
 /// so a worn mining belt answers as well as a dropped one. Snapshotted on
 /// Unity's main thread; dying things are skipped, never fatal.
 /// </summary>
-public sealed class StationeersThingContents : IThingContents
+public sealed class StationeersThingSlots : IThingSlots
 {
     private readonly IMainThread _threads;
 
     private readonly Logger _log;
 
-    public StationeersThingContents(IMainThread mainThread, Logger log)
+    public StationeersThingSlots(IMainThread mainThread, Logger log)
     {
         _threads = mainThread;
         _log = log;
     }
 
-    public IReadOnlyList<ThingContent>? Read(string? thing)
+    public IReadOnlyList<ThingSlot>? Read(string? thing)
     {
         try
         {
@@ -42,7 +42,7 @@ public sealed class StationeersThingContents : IThingContents
         }
     }
 
-    private static IReadOnlyList<ThingContent>? ReadInner(string? thing)
+    private static IReadOnlyList<ThingSlot>? ReadInner(string? thing)
     {
         var matches = ThingMatching.Match(
             UnityEngine.Object.FindObjectsOfType<DynamicThing>(),
@@ -54,7 +54,7 @@ public sealed class StationeersThingContents : IThingContents
             return null;
         }
 
-        var contents = new List<ThingContent>();
+        var contents = new List<ThingSlot>();
         List<Slot>? slots = null;
         try
         {
@@ -114,7 +114,7 @@ public sealed class StationeersThingContents : IThingContents
             {
             }
 
-            contents.Add(new ThingContent(slotName ?? slot.Type.ToString(), name, QuantityText(occupant)));
+            contents.Add(new ThingSlot(slotName ?? slot.Type.ToString(), name, QuantityText(occupant)));
         }
 
         return contents;

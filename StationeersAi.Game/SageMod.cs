@@ -207,7 +207,7 @@ public sealed class SageMod
             }
 
             _httpServer = new SageHttpServer(
-                _assistants.BuildSageData,
+                () => _assistants.Commands,
                 _threads,
                 _log,
                 () => _settings.ServerPort.Value,

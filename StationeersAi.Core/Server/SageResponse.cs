@@ -24,21 +24,32 @@ public sealed class SageResponse
 
     public static SageResponse Ok(object? payload)
     {
-        return new SageResponse(200, Serialize(payload));
+        return new SageResponse(200, Serialize(payload, false));
+    }
+
+    /// <summary>
+    /// Same as <see cref="Ok"/>, but indented for eyes. Only the API
+    /// description uses this; game data stays compact on the wire.
+    /// </summary>
+    public static SageResponse OkPretty(object? payload)
+    {
+        return new SageResponse(200, Serialize(payload, true));
     }
 
     public static SageResponse Error(int status, string message)
     {
-        return new SageResponse(status, Serialize(new ErrorBody(message)));
+        return new SageResponse(status, Serialize(new ErrorBody(message), false));
     }
 
-    private static string Serialize(object? payload)
+    private static string Serialize(object? payload, bool pretty)
     {
         // NB: JToken.ToString(Formatting) is missing from the Newtonsoft copy
         // the game loads, so round-trip through the oldest stable call.
         var token = payload is null ? null : JToken.FromObject(payload);
         StripTags(token);
-        return JsonConvert.SerializeObject(token);
+        return pretty
+            ? JsonConvert.SerializeObject(token, Newtonsoft.Json.Formatting.Indented)
+            : JsonConvert.SerializeObject(token);
     }
 
     private static void StripTags(JToken? token)

@@ -4,11 +4,11 @@ using StationeersAi.Repository;
 namespace StationeersAi.Command;
 
 /// <summary>Domain operation: report the player's current status.</summary>
-public sealed class GetStatusCommand
+public sealed class GetPlayerCommand
 {
     private readonly IPlayerContext _player;
 
-    public GetStatusCommand(IPlayerContext player)
+    public GetPlayerCommand(IPlayerContext player)
     {
         _player = player;
     }

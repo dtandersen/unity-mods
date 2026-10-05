@@ -23,7 +23,7 @@ in settings):
 
 ```
 ai how do I make cable coil?
-ai clear     # drop conversation history
+ai reset     # drop conversation history
 ai compact   # summarise history into one message
 ```
 

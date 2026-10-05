@@ -89,26 +89,7 @@ public sealed class SageAssistantFactory
         return null;
     }
 
-    public SageData BuildSageData()
-    {
-        return new SageData
-        {
-            Items = _commands.Items(),
-            Structures = _commands.Structures(),
-            Recipes = _commands.Recipes(),
-            Stationpedia = _commands.Stationpedia(),
-            Player = _commands.Player(),
-            Worlds = _commands.Worlds(),
-            Ic = _commands.IcEditor(),
-            Export = _commands.IcExport(),
-            Mips = _commands.Mips(),
-            Devices = _commands.Devices(),
-            Inspector = _commands.Inspector(),
-            Things = _commands.Things(),
-            ThingContents = _commands.Contents(),
-            Rooms = _commands.Rooms(),
-        };
-    }
+    public SageCommands Commands => _commands.Commands();
 
     public AiAssistant? BuildAssistant(IAssistantActivity? activity)
     {
@@ -118,24 +99,25 @@ public sealed class SageAssistantFactory
             return null;
         }
 
+        var commands = _commands.Commands();
         var tools = new ToolHandler(new ITool[]
         {
-            new SearchItemsTool(_commands.SearchItems()),
-            new SearchStructuresTool(_commands.SearchStructures()),
-            new SearchRecipesTool(_commands.SearchRecipes()),
-            new SearchStationpediaTool(_commands.SearchStationpedia()),
-            new ReadStationpediaTool(_commands.ReadStationpedia()),
-            new SearchInventoryTool(_commands.SearchInventory()),
-            new GetStatusTool(_commands.GetStatus()),
-            new GetWorldTool(_commands.GetWorld()),
-            new WriteIcTool(_commands.WriteIc()),
-            new ReadIcTool(_commands.ReadIc()),
-            new ExportIcTool(_commands.ExportIc()),
-            new MipsReferenceTool(_commands.ReadMips()),
-            new SearchDevicesTool(_commands.SearchDevices()),
-            new DescribeDeviceTool(_commands.DescribeDevice()),
-            new SearchThingsTool(_commands.SearchThings()),
-            new ReadRoomTool(_commands.ReadRoom()),
+            new SearchItemsTool(commands.SearchItems()),
+            new SearchStructuresTool(commands.SearchStructures()),
+            new SearchRecipesTool(commands.SearchRecipes()),
+            new SearchStationpediaTool(commands.SearchStationpedia()),
+            new ReadStationpediaTool(commands.ReadStationpedia()),
+            new SearchInventoryTool(commands.SearchInventory()),
+            new GetStatusTool(commands.GetPlayer()),
+            new GetWorldTool(commands.GetWorld()),
+            new WriteIcTool(commands.WriteIc()),
+            new ReadIcTool(commands.ReadIc()),
+            new ExportIcTool(commands.ExportIc()),
+            new MipsReferenceTool(commands.ReadInstructions()),
+            new SearchDevicesTool(commands.SearchDevices()),
+            new DescribeDeviceTool(commands.DescribeDevice()),
+            new SearchThingsTool(commands.SearchThings()),
+            new ReadRoomTool(commands.ReadRoom()),
         });
 
         var client = new OpenAiChatClient(

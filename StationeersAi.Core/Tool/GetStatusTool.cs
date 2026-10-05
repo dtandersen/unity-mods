@@ -6,9 +6,9 @@ namespace StationeersAi.Tool;
 /// <summary>Tool: report the player's current status (position, world, condition).</summary>
 public sealed class GetStatusTool : ITool
 {
-    private readonly GetStatusCommand _command;
+    private readonly GetPlayerCommand _command;
 
-    public GetStatusTool(GetStatusCommand command)
+    public GetStatusTool(GetPlayerCommand command)
     {
         _command = command;
     }

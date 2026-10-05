@@ -120,7 +120,7 @@ public sealed class SagePresenter : IChatSink
         var prompt = args != null ? string.Join(" ", args).Trim() : string.Empty;
         if (prompt.Length == 0)
         {
-            return "Usage: ai <question>  (also: ai clear, ai compact)";
+            return "Usage: ai <question>  (also: ai reset, ai compact)";
         }
 
         _ = AskAsync(prompt);

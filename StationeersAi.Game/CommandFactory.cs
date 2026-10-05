@@ -1,14 +1,14 @@
-using StationeersAi.Command;
-using StationeersAi.Query;
 using StationeersAi.Repository;
+using StationeersAi.Server;
 using Logger = StationeersAi.Core.Logger;
 
 namespace StationeersAi.Game;
 
 /// <summary>
-/// Builds game commands and the live readers behind them from the current
-/// game sources. Every method builds fresh stateless objects, so callers
-/// always read live data and the factory itself holds no game state.
+/// Builds the live readers behind the core <see cref="SageCommands"/> from
+/// the current game sources. Every method builds fresh stateless objects,
+/// so callers always read live data and the factory itself holds no game
+/// state.
 /// </summary>
 public sealed class CommandFactory
 {
@@ -85,9 +85,9 @@ public sealed class CommandFactory
         return new StationeersThingCatalog(_executor, _log);
     }
 
-    public IThingContents Contents()
+    public IThingSlots Slots()
     {
-        return new StationeersThingContents(_executor, _log);
+        return new StationeersThingSlots(_executor, _log);
     }
 
     public IRoomInspector Rooms()
@@ -95,83 +95,26 @@ public sealed class CommandFactory
         return new StationeersRoomInspector(_executor, _log);
     }
 
-    public SearchItemsCommand SearchItems()
+    /// <summary>
+    /// One <see cref="SageCommands"/> wired with fresh live readers. The
+    /// router and the chat assistant share this, so both serve the same data.
+    /// </summary>
+    public SageCommands Commands()
     {
-        return new SearchItemsCommand(new ItemIndex(Items()));
-    }
-
-    public SearchStructuresCommand SearchStructures()
-    {
-        return new SearchStructuresCommand(new StructureIndex(Structures()));
-    }
-
-    public SearchRecipesCommand SearchRecipes()
-    {
-        return new SearchRecipesCommand(new RecipeIndex(Recipes()));
-    }
-
-    public SearchStationpediaCommand SearchStationpedia()
-    {
-        return new SearchStationpediaCommand(new StationpediaIndex(Stationpedia()));
-    }
-
-    public ReadStationpediaCommand ReadStationpedia()
-    {
-        return new ReadStationpediaCommand(Stationpedia());
-    }
-
-    public SearchInventoryCommand SearchInventory()
-    {
-        return new SearchInventoryCommand(new InventoryIndex(Player()));
-    }
-
-    public GetStatusCommand GetStatus()
-    {
-        return new GetStatusCommand(Player());
-    }
-
-    public GetWorldCommand GetWorld()
-    {
-        return new GetWorldCommand(Worlds());
-    }
-
-    public WriteIcCommand WriteIc()
-    {
-        return new WriteIcCommand(IcEditor());
-    }
-
-    public ReadIcCommand ReadIc()
-    {
-        return new ReadIcCommand(IcEditor());
-    }
-
-    public ExportIcCommand ExportIc()
-    {
-        return new ExportIcCommand(IcExport());
-    }
-
-    public ReadMipsCommand ReadMips()
-    {
-        return new ReadMipsCommand(Mips());
-    }
-
-    public SearchDevicesCommand SearchDevices()
-    {
-        return new SearchDevicesCommand(Devices());
-    }
-
-    public DescribeDeviceCommand DescribeDevice()
-    {
-        return new DescribeDeviceCommand(Inspector(), Devices());
-    }
-
-    public SearchThingsCommand SearchThings()
-    {
-        return new SearchThingsCommand(Things(), Player());
-    }
-
-    public ReadRoomCommand ReadRoom()
-    {
-        return new ReadRoomCommand(Rooms(), Player());
+        return new SageCommands(
+            Items(),
+            Structures(),
+            Recipes(),
+            Stationpedia(),
+            Player(),
+            Worlds(),
+            IcEditor(),
+            IcExport(),
+            Mips(),
+            Devices(),
+            Inspector(),
+            Things(),
+            Slots(),
+            Rooms());
     }
 }

@@ -40,7 +40,7 @@ public sealed class World : IDisposable
 
     public InMemoryThingCatalog Things { get; } = new InMemoryThingCatalog();
 
-    public InMemoryThingContents ThingContents { get; } = new InMemoryThingContents();
+    public InMemoryThingSlots ThingSlots { get; } = new InMemoryThingSlots();
 
     public InMemoryRoomInspector RoomInspector { get; } = new InMemoryRoomInspector();
 
