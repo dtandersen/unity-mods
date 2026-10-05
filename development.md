@@ -86,7 +86,11 @@ dotnet build StationeersAi.Mod/StationeersAi.Mod.csproj -c Release -p:PackageOnB
 ```
 
 BepInEx cannot reload plugins, so every change means rebuild + restart the
-game, then check `BepInEx/LogOutput.log`.
+game, then check `BepInEx/LogOutput.log`. BepInEx holds disk writes back
+about 2 seconds by default, so fresh lines can lag. For instant writes
+(when you chase a crash), set `InstantFlushing = true` under
+`[Logging.Disk]` in `BepInEx.cfg`. Sage flushes held lines to disk after
+errors and on unload, so crash context still lands without that setting.
 
 ## Test
 

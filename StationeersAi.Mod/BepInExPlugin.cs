@@ -87,6 +87,7 @@ public class BepInExPlugin : BaseUnityPlugin
     private void OnDestroy()
     {
         UnloadMod();
+        _log?.Flush();
     }
 
     /// <summary>Loads the permanent mod for the level. No-op when down.</summary>
@@ -116,6 +117,10 @@ public class BepInExPlugin : BaseUnityPlugin
         catch (Exception ex)
         {
             _log?.Error(ex);
+        }
+        finally
+        {
+            _log?.Flush();
         }
     }
 

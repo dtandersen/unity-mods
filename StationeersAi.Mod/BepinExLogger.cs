@@ -29,5 +29,29 @@ public sealed class BepinExLogger : Logger
     public void Error(System.Exception error)
     {
         _logger.LogError(error?.ToString() ?? "unknown error");
+        Flush();
+    }
+
+    /// <summary>
+    /// Pushes held log lines to disk. BepInEx holds disk writes back
+    /// about 2 seconds by default, so call this after errors and unload
+    /// to keep crash context in LogOutput.log.
+    /// </summary>
+    public void Flush()
+    {
+        foreach (var listener in BepInEx.Logging.Logger.Listeners)
+        {
+            if (listener is DiskLogListener disk && disk.LogWriter != null)
+            {
+                try
+                {
+                    disk.LogWriter.Flush();
+                }
+                catch (System.Exception)
+                {
+                    // Never let log flushing break the game.
+                }
+            }
+        }
     }
 }
