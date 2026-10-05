@@ -165,7 +165,7 @@ public sealed class SageHttpServer : IDisposable
                 stream.ReadTimeout = 10000;
                 stream.WriteTimeout = 10000;
 
-                var head = ReadHead(stream);
+                var head = ReadHead(stream, out var leftover);
                 if (head == null)
                 {
                     return;
@@ -194,7 +194,7 @@ public sealed class SageHttpServer : IDisposable
                     stream.Write(go, 0, go.Length);
                 }
 
-                request.Body = length > 0 ? ReadBody(stream, length) : null;
+                request.Body = length > 0 ? ReadBody(stream, length, leftover) : null;
 
                 if (!request.Path.StartsWith("/sage", StringComparison.OrdinalIgnoreCase))
                 {
@@ -248,8 +248,14 @@ public sealed class SageHttpServer : IDisposable
         return string.Equals(header, "Bearer " + want, StringComparison.Ordinal);
     }
 
-    private static string? ReadHead(NetworkStream stream)
+    /// <summary>
+    /// Reads the head and keeps any body bytes that arrived in the same
+    /// packet. Small PUT bodies often land with the head in one read; dropping
+    /// those bytes used to stall the body read until the socket timed out.
+    /// </summary>
+    private static string? ReadHead(NetworkStream stream, out byte[] leftover)
     {
+        leftover = new byte[0];
         var bytes = new List<byte>(4096);
         var buffer = new byte[1024];
         while (bytes.Count < 65536)
@@ -274,24 +280,34 @@ public sealed class SageHttpServer : IDisposable
                 bytes.Add(buffer[i]);
             }
 
-            if (EndsHead(bytes))
+            var end = HeadEnd(bytes);
+            if (end >= 0)
             {
-                return Encoding.GetEncoding("iso-8859-1").GetString(bytes.ToArray());
+                var all = bytes.ToArray();
+                leftover = new byte[all.Length - end];
+                Array.Copy(all, end, leftover, 0, leftover.Length);
+                return Encoding.GetEncoding("iso-8859-1").GetString(all, 0, end);
             }
         }
 
         return null;
     }
 
-    private static bool EndsHead(List<byte> bytes)
+    private static int HeadEnd(List<byte> bytes)
     {
-        var n = bytes.Count;
-        return n >= 4 &&
-            bytes[n - 4] == '\r' && bytes[n - 3] == '\n' &&
-            bytes[n - 2] == '\r' && bytes[n - 1] == '\n';
+        for (var i = 0; i + 3 < bytes.Count; i++)
+        {
+            if (bytes[i] == '\r' && bytes[i + 1] == '\n' &&
+                bytes[i + 2] == '\r' && bytes[i + 3] == '\n')
+            {
+                return i + 4;
+            }
+        }
+
+        return -1;
     }
 
-    private static string? ReadBody(NetworkStream stream, int length)
+    private static string? ReadBody(NetworkStream stream, int length, byte[] leftover)
     {
         if (length <= 0 || length > 1048576)
         {
@@ -300,6 +316,13 @@ public sealed class SageHttpServer : IDisposable
 
         var bytes = new byte[length];
         var done = 0;
+        var kept = leftover != null ? Math.Min(leftover.Length, length) : 0;
+        if (kept > 0)
+        {
+            Array.Copy(leftover, 0, bytes, 0, kept);
+            done = kept;
+        }
+
         while (done < length)
         {
             int read;

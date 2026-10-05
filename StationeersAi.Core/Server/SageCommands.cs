@@ -102,9 +102,9 @@ public sealed class SageCommands
         return new GetWorldCommand(_worlds);
     }
 
-    public ReadIcCommand ReadIc()
+    public ReadComputerCommand ReadComputer()
     {
-        return new ReadIcCommand(_ic);
+        return new ReadComputerCommand(_ic, _export);
     }
 
     public ReadHousingCommand ReadHousing()

@@ -50,9 +50,7 @@ public sealed class StationeersIcEditor : IIcEditor
             return new IcWriteResult(false, null, 0, $"Several computers match '{computer}': {ComputerBoards.Names(matches)}");
         }
 
-        _log.Info("TEMP write enter");
         matches[0].Motherboard.SetSourceCode(code);
-        _log.Info("TEMP write set done");
         try
         {
             matches[0].Motherboard.SendUpdate();
@@ -62,7 +60,6 @@ public sealed class StationeersIcEditor : IIcEditor
             _log.Info(ex.ToString());
         }
 
-        _log.Info("TEMP write exit");
         return new IcWriteResult(true, matches[0].Name, code.Split('\n').Length, null);
     }
     public IcReadResult Read(string? computer)

@@ -57,6 +57,107 @@ public sealed class StationeersIcExport : IIcExport
         }
     }
 
+    public IcWriteResult Select(string? computer, string? device)
+    {
+        try
+        {
+            return _threads.RunSync(() => SelectInner(computer, device));
+        }
+        catch (Exception ex)
+        {
+            _log.Info(ex.ToString());
+            return new IcWriteResult(false, null, 0, "Select failed.");
+        }
+    }
+
+    public ReadComputerResult Selected(string? computer)
+    {
+        try
+        {
+            return _threads.RunSync(() => SelectedInner(computer));
+        }
+        catch (Exception ex)
+        {
+            _log.Info(ex.ToString());
+            return new ReadComputerResult(null, null, null, "Select read failed.");
+        }
+    }
+
+    private ReadComputerResult SelectedInner(string? computer)
+    {
+        var boards = ComputerBoards.Match(computer);
+        if (boards.Count == 0)
+        {
+            return new ReadComputerResult(null, null, null, $"Computer '{computer}' not found. Available: {ComputerBoards.Available()}");
+        }
+
+        if (boards.Count > 1)
+        {
+            return new ReadComputerResult(null, null, null, $"Several computers match '{computer}': {ComputerBoards.Names(boards)}");
+        }
+
+        var motherboard = boards[0].Motherboard;
+        try
+        {
+            var field = motherboard.GetType().GetField("_dropdown", BindingFlags.Instance | BindingFlags.NonPublic);
+            var dropdown = field?.GetValue(motherboard);
+            var selected = (int?)dropdown?.GetType().GetProperty("SelectedIndex")?.GetValue(dropdown, null);
+            var items = dropdown?.GetType().GetField("_items", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(dropdown) as System.Collections.IList;
+            string? device = null;
+            if (items != null && selected.HasValue && selected.Value >= 0 && selected.Value < items.Count)
+            {
+                device = items[selected.Value]?.GetType().GetProperty("Title")?.GetValue(items[selected.Value], null) as string;
+            }
+
+            return new ReadComputerResult(boards[0].Name, device, null, null);
+        }
+        catch (Exception ex)
+        {
+            _log.Info(ex.ToString());
+            return new ReadComputerResult(null, null, null, "Select read failed.");
+        }
+    }
+
+    private IcWriteResult SelectInner(string? computer, string? device)
+    {
+        var boards = ComputerBoards.Match(computer);
+        if (boards.Count == 0)
+        {
+            return new IcWriteResult(false, null, 0, $"Computer '{computer}' not found. Available: {ComputerBoards.Available()}");
+        }
+
+        if (boards.Count > 1)
+        {
+            return new IcWriteResult(false, null, 0, $"Several computers match '{computer}': {ComputerBoards.Names(boards)}");
+        }
+
+        var motherboard = boards[0].Motherboard;
+        var selection = MatchNetworked(motherboard, device);
+        if (selection.Error != null)
+        {
+            return selection.Error;
+        }
+
+        try
+        {
+            SelectHolder(motherboard, selection.Index);
+        }
+        catch (Exception ex)
+        {
+            _log.Info(ex.ToString());
+            return new IcWriteResult(false, null, 0, "Select failed.");
+        }
+
+        var housing = selection.Housing;
+        if (housing == null)
+        {
+            return new IcWriteResult(false, null, 0, "Select failed.");
+        }
+
+        var name = SafeName(housing);
+        return new IcWriteResult(true, name ?? "housing", 0, null);
+    }
+
     private IcWriteResult ImportInner(string? computer, string? device)
     {
         var boards = ComputerBoards.Match(computer);
@@ -263,7 +364,12 @@ public sealed class StationeersIcExport : IIcExport
         }
     }
 
-    /// <summary>Points the motherboard dropdown at one holder by index.</summary>
+    /// <summary>
+    /// Points the motherboard dropdown at one holder by index and refreshes
+    /// its label. <c>SetSelectedIndex</c> alone only flips the backing field;
+    /// the visible text updates in <c>ItemClicked</c>, which also pops the
+    /// dropdown open, so the label is set straight instead.
+    /// </summary>
     private void SelectHolder(object motherboard, int index)
     {
         var field = motherboard.GetType().GetField("_dropdown", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -273,7 +379,18 @@ public sealed class StationeersIcExport : IIcExport
             throw new InvalidOperationException("Motherboard dropdown is missing.");
         }
 
-        dropdown.GetType().GetMethod("SetSelectedIndex")?.Invoke(dropdown, new object[] { index });
+        var type = dropdown.GetType();
+        type.GetMethod("SetSelectedIndex")?.Invoke(dropdown, new object[] { index });
+
+        var items = type.GetField("_items", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(dropdown) as System.Collections.IList;
+        var textMesh = type.GetField("_selectedTextMesh", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(dropdown);
+        if (items == null || textMesh == null || index < 0 || index >= items.Count)
+        {
+            throw new InvalidOperationException("Motherboard dropdown is missing.");
+        }
+
+        var title = items[index]?.GetType().GetProperty("Title")?.GetValue(items[index], null) as string;
+        textMesh.GetType().GetProperty("text")?.SetValue(textMesh, title ?? string.Empty, null);
     }
 
     private static string HousingNames(IReadOnlyList<CircuitHousing> housings)

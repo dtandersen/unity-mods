@@ -550,59 +550,6 @@ public class ToolTests
     }
 
     [Test]
-    public void Read_ic_returns_the_editor_text()
-    {
-        var editor = new InMemoryIcEditor { EditorCode = "yield\n sleep 1" };
-        var tools = new ToolHandler(new ITool[]
-        {
-            new ReadIcTool(new ReadIcCommand(editor)),
-        });
-
-        var result = Call(tools, "read_ic", ("computer", "Lab Computer"));
-        result.IsSuccess.ShouldBeTrue();
-        result.Content.ShouldBe("yield\n sleep 1\nCode hash: d59a099c");
-    }
-
-    [Test]
-    public void Read_ic_empty_editor_says_so()
-    {
-        var tools = new ToolHandler(new ITool[]
-        {
-            new ReadIcTool(new ReadIcCommand(new InMemoryIcEditor())),
-        });
-
-        var result = Call(tools, "read_ic", ("computer", "1189"));
-        result.IsSuccess.ShouldBeTrue();
-        result.Content.ShouldBe("(editor is empty)");
-    }
-
-    [Test]
-    public void Read_ic_missing_computer_fails()
-    {
-        var tools = new ToolHandler(new ITool[]
-        {
-            new ReadIcTool(new ReadIcCommand(new InMemoryIcEditor())),
-        });
-
-        var result = Call(tools, "read_ic");
-        result.IsSuccess.ShouldBeFalse();
-        result.Content.ShouldContain("'computer'");
-    }
-
-    [Test]
-    public void Read_ic_unknown_computer_fails()
-    {
-        var tools = new ToolHandler(new ITool[]
-        {
-            new ReadIcTool(new ReadIcCommand(new InMemoryIcEditor { ResolveAs = null })),
-        });
-
-        var result = Call(tools, "read_ic", ("computer", "Nope"));
-        result.IsSuccess.ShouldBeFalse();
-        result.Content.ShouldContain("Nope");
-    }
-
-    [Test]
     public void Export_ic_burns_and_verifies()
     {
         var export = new InMemoryIcExport();

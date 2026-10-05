@@ -13,4 +13,10 @@ public interface IIcExport
 
     /// <summary>Pulls chip code into the editor. Never returns null.</summary>
     IcWriteResult Import(string? computer, string? device);
+
+    /// <summary>Points the computer at one housing. Never returns null.</summary>
+    IcWriteResult Select(string? computer, string? device);
+
+    /// <summary>Reads the pointed housing. Never returns null.</summary>
+    ReadComputerResult Selected(string? computer);
 }

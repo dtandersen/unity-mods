@@ -27,4 +27,23 @@ public sealed class InMemoryIcExport : IIcExport
         Imports.Add((computer, device));
         return ImportResult;
     }
+
+    public readonly List<(string? Computer, string? Device)> Selections = new List<(string? Computer, string? Device)>();
+
+    /// <summary>The result selections return.</summary>
+    public IcWriteResult SelectResult { get; set; } = new IcWriteResult(true, "Light Controller", 0, null);
+
+    public IcWriteResult Select(string? computer, string? device)
+    {
+        Selections.Add((computer, device));
+        return SelectResult;
+    }
+
+    /// <summary>The selection reads return.</summary>
+    public ReadComputerResult SelectionResult { get; set; } = new ReadComputerResult(null, null, null, null);
+
+    public ReadComputerResult Selected(string? computer)
+    {
+        return SelectionResult;
+    }
 }

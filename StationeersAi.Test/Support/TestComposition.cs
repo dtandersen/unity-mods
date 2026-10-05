@@ -27,7 +27,6 @@ internal static class TestComposition
             new GetStatusTool(new GetPlayerCommand(world.Player)),
             new GetWorldTool(new GetWorldCommand(world.Worlds)),
             new WriteIcTool(new UseComputerCommand(world.Ic, world.Export)),
-            new ReadIcTool(new ReadIcCommand(world.Ic)),
             new ExportIcTool(new UseComputerCommand(world.Ic, world.Export)),
             new MipsReferenceTool(new ReadInstructionsCommand(world.Mips)),
             new SearchDevicesTool(new SearchDevicesCommand(world.Devices)),

@@ -58,6 +58,12 @@ public sealed class SageServerSteps
         World.Housing.HousingCode = code;
     }
 
+    [Given("the computer points at {string}")]
+    public void GivenTheComputerPointsAt(string device)
+    {
+        World.Export.SelectionResult = new ReadComputerResult(null, device, null, null);
+    }
+
     [When(@"I GET (.+)")]
     public void WhenIGet(string request)
     {

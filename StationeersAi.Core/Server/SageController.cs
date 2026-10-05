@@ -175,11 +175,10 @@ public sealed class SageController
         return SageResponse.Ok(_commands.ReadHousing().Execute(device));
     }
 
-    [SageGet("/ic", "Read the code on the open computer.")]
-    [SageGet("/ic/{device}", "Read the code on one computer.")]
-    public SageResponse ReadIc(string? device)
+    [SageGet("/computer/{computer}", "Read a computer's editor text and housing.")]
+    public SageResponse ReadComputer(string? computer)
     {
-        return SageResponse.Ok(_commands.ReadIc().Execute(device));
+        return SageResponse.Ok(_commands.ReadComputer().Execute(computer));
     }
 
     [SagePut("/computer/{computer}", "Set editor text, pick the housing, and burn.")]

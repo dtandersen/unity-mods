@@ -48,16 +48,21 @@ public sealed class UseComputerCommand
             }
         }
 
-        if (!export)
+        if (export)
         {
-            return staged ?? new IcWriteResult(false, null, 0, "Nothing to do: set sourceCode, import, export, or a mix.");
+            if (string.IsNullOrWhiteSpace(device))
+            {
+                return new IcWriteResult(false, null, 0, "device is required to export.");
+            }
+
+            return _export.Export(computer, device);
         }
 
-        if (string.IsNullOrWhiteSpace(device))
+        if (staged == null && device != null)
         {
-            return new IcWriteResult(false, null, 0, "device is required to export.");
+            return _export.Select(computer, device);
         }
 
-        return _export.Export(computer, device);
+        return staged ?? new IcWriteResult(false, null, 0, "Nothing to do: set sourceCode, device, import, export, or a mix.");
     }
 }

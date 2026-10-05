@@ -111,7 +111,6 @@ public sealed class SageAssistantFactory
             new GetStatusTool(commands.GetPlayer()),
             new GetWorldTool(commands.GetWorld()),
             new WriteIcTool(commands.UseComputer()),
-            new ReadIcTool(commands.ReadIc()),
             new ExportIcTool(commands.UseComputer()),
             new MipsReferenceTool(commands.ReadInstructions()),
             new SearchDevicesTool(commands.SearchDevices()),

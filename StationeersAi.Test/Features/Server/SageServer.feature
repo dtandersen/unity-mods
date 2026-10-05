@@ -72,20 +72,21 @@ Feature: Sage HTTP API
       [{"Name":"add","Example":"add r? device var","Description":"Does add."}]
       """
 
-  Scenario: IC editor read
-    Given the IC editor holds "alias a d0" on "Lab Computer"
-    When I GET /sage/ic/lab
-    Then the response is:
-      """
-      {"Found":true,"Device":"Lab Computer","Code":"alias a d0","Error":null}
-      """
-
   Scenario: Circuit housing read
     Given the housing holds "alias a d0" on "Climate Control"
     When I GET /sage/circuit-housings/Climate%20Control
     Then the response is:
       """
       {"Found":true,"Device":"Climate Control","Code":"alias a d0","Error":null}
+      """
+
+  Scenario: Computer read
+    Given the IC editor holds "alias a d0" on "Lab Computer"
+    And the computer points at "Climate Control"
+    When I GET /sage/computer/lab
+    Then the response is:
+      """
+      {"Computer":"Lab Computer","Device":"Climate Control","SourceCode":"alias a d0","Error":null}
       """
 
   Scenario: World read
@@ -226,4 +227,14 @@ Feature: Sage HTTP API
     Then the response is:
       """
       {"Written":true,"Device":"Lab Computer","Lines":3,"Error":null}
+      """
+
+  Scenario: IC select housing
+    When I PUT /sage/computer/lab with:
+      """
+      {"device":"housing"}
+      """
+    Then the response is:
+      """
+      {"Written":true,"Device":"Light Controller","Lines":0,"Error":null}
       """
