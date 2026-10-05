@@ -96,6 +96,37 @@ public sealed class SagePresenter : IChatSink
         PushAll();
     }
 
+    /// <summary>Runs one console line split into words. Never throws.</summary>
+    public string OnConsoleCommand(string[] args)
+    {
+        if (args != null && args.Length > 0)
+        {
+            switch (args[0].ToLowerInvariant())
+            {
+                case "window":
+                    ShowAndFocus();
+                    return "Sage window opened.";
+
+                case "reset":
+                    ClearConversation();
+                    return "Context cleared.";
+
+                case "compact":
+                    _ = CompactConversation();
+                    return "Compacting context...";
+            }
+        }
+
+        var prompt = args != null ? string.Join(" ", args).Trim() : string.Empty;
+        if (prompt.Length == 0)
+        {
+            return "Usage: ai <question>  (also: ai clear, ai compact)";
+        }
+
+        _ = AskAsync(prompt);
+        return "Question queued";
+    }
+
     public bool Busy
     {
         get { lock (_gate) return _busy; }
@@ -198,7 +229,7 @@ public sealed class SagePresenter : IChatSink
         catch (Exception ex)
         {
             Say($"error: {ex.Message}");
-            _log.Log(ex.ToString());
+            _log.Info(ex.ToString());
         }
     }
 

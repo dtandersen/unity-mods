@@ -38,7 +38,7 @@ public sealed class StationeersThingCatalog : IThingCatalog
         }
         catch (Exception ex)
         {
-            _log.Log(ex.ToString());
+            _log.Info(ex.ToString());
             return new ThingInfo[0];
         }
     }

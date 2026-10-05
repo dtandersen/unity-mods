@@ -28,9 +28,9 @@ public sealed class StationeersRecipeRepository : IRecipeRepository
 
     public StationeersRecipeRepository(IRecipeProvider tables, IMainThread executor, Logger log)
     {
-        _tables = tables ?? throw new ArgumentNullException(nameof(tables));
-        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
-        _log = log ?? throw new ArgumentNullException(nameof(log));
+        _tables = tables;
+        _executor = executor;
+        _log = log;
     }
 
     public IReadOnlyList<RecipeEntity> GetAll()
@@ -41,7 +41,7 @@ public sealed class StationeersRecipeRepository : IRecipeRepository
         }
         catch (Exception ex)
         {
-            _log.Log(ex.ToString());
+            _log.Info(ex.ToString());
             return new RecipeEntity[0];
         }
     }

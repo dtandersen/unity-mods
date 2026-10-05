@@ -82,7 +82,7 @@ public sealed class RunTurnCommand
         catch (Exception ex)
         {
             OnAnswered($"error: {ex.Message}");
-            _log.Log(ex.ToString());
+            _log.Info(ex.ToString());
         }
     }
 

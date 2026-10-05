@@ -22,7 +22,7 @@ public sealed class StationeersMipsReference : IMipsReference
 
     public StationeersMipsReference(Logger log)
     {
-        _log = log ?? throw new ArgumentNullException(nameof(log));
+        _log = log;
     }
 
     public IReadOnlyList<MipsInstruction>? Instructions => Read();
@@ -46,7 +46,7 @@ public sealed class StationeersMipsReference : IMipsReference
             }
             catch (Exception ex)
             {
-                _log.Log($"mips reference skipped {command}: {ex.Message}");
+                _log.Info($"mips reference skipped {command}: {ex.Message}");
             }
         }
 

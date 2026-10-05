@@ -22,8 +22,8 @@ public sealed class StationeersWorldContext : IWorldContext
 
     public StationeersWorldContext(IMainThread executor, Logger log)
     {
-        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
-        _log = log ?? throw new ArgumentNullException(nameof(log));
+        _executor = executor;
+        _log = log;
     }
 
     public WorldInfo? Info
@@ -36,7 +36,7 @@ public sealed class StationeersWorldContext : IWorldContext
             }
             catch (Exception ex)
             {
-                _log.Log(ex.ToString());
+                _log.Info(ex.ToString());
                 return null;
             }
         }

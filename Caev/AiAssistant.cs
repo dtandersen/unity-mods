@@ -171,7 +171,7 @@ public sealed class AiAssistant
 
     private void Log(string message)
     {
-        _log.Log(message);
+        _log.Info(message);
     }
 
     private static string Describe(ToolArguments arguments)

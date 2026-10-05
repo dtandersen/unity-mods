@@ -69,10 +69,10 @@ public sealed class SageHttpServer : IDisposable
         _loop = new Thread(Loop);
         _loop.IsBackground = true;
         _loop.Start();
-        _log.Log("Sage HTTP server on " + _listener.LocalEndpoint + ". Bound=" + _listener.Server.IsBound);
+        _log.Info("Sage HTTP server on " + _listener.LocalEndpoint + ". Bound=" + _listener.Server.IsBound);
         if (string.IsNullOrWhiteSpace(_token != null ? _token() : null))
         {
-            _log.Log("Sage HTTP Server/Token is blank: only this machine can call.");
+            _log.Info("Sage HTTP Server/Token is blank: only this machine can call.");
         }
 
         SelfCheck(port);
@@ -106,17 +106,17 @@ public sealed class SageHttpServer : IDisposable
                 if (result.AsyncWaitHandle.WaitOne(3000))
                 {
                     client.EndConnect(result);
-                    _log.Log("Sage HTTP self-check: connected to own socket.");
+                    _log.Info("Sage HTTP self-check: connected to own socket.");
                 }
                 else
                 {
-                    _log.Log("Sage HTTP self-check: own socket did not answer in 3s.");
+                    _log.Info("Sage HTTP self-check: own socket did not answer in 3s.");
                 }
             }
         }
         catch (Exception ex)
         {
-            _log.Log("Sage HTTP self-check fell through: " + ex.Message);
+            _log.Info("Sage HTTP self-check fell through: " + ex.Message);
         }
     }
 
@@ -139,7 +139,7 @@ public sealed class SageHttpServer : IDisposable
             {
                 if (_running)
                 {
-                    _log.Log("Sage HTTP listener fell through: " + ex);
+                    _log.Info("Sage HTTP listener fell through: " + ex);
                 }
 
                 return;
@@ -214,7 +214,7 @@ public sealed class SageHttpServer : IDisposable
             }
             catch (Exception ex)
             {
-                _log.Log(ex.ToString());
+                _log.Info(ex.ToString());
             }
         }
     }

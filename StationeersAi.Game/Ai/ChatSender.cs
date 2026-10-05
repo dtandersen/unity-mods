@@ -69,7 +69,7 @@ internal sealed class ChatSender
         }
         catch (Exception ex)
         {
-            _log.Log($"chat send failed: {ex}");
+            _log.Info($"chat send failed: {ex}");
         }
     }
 }

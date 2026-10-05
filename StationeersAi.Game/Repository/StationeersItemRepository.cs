@@ -22,9 +22,9 @@ public sealed class StationeersItemRepository : IItemRepository
 
     public StationeersItemRepository(IPrefabProvider prefabs, IMainThread executor, Logger log)
     {
-        _prefabs = prefabs ?? throw new ArgumentNullException(nameof(prefabs));
-        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
-        _log = log ?? throw new ArgumentNullException(nameof(log));
+        _prefabs = prefabs;
+        _executor = executor;
+        _log = log;
     }
 
     public IReadOnlyList<ItemEntity> GetAll()
@@ -35,7 +35,7 @@ public sealed class StationeersItemRepository : IItemRepository
         }
         catch (Exception ex)
         {
-            _log.Log(ex.ToString());
+            _log.Info(ex.ToString());
             return new ItemEntity[0];
         }
     }

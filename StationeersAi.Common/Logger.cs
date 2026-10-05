@@ -6,5 +6,9 @@ namespace StationeersAi.Core;
 /// </summary>
 public interface Logger
 {
-    void Log(string message);
+    void Info(string message);
+
+    void Warn(string message);
+
+    void Error(System.Exception error);
 }

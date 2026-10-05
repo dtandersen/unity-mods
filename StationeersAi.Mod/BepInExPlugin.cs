@@ -44,7 +44,7 @@ public class BepInExPlugin : BaseUnityPlugin
         var synchronizationContext = SynchronizationContext.Current;
         var unityThreadId = Thread.CurrentThread.ManagedThreadId;
         _executor = new MainThreadExecutor(synchronizationContext, unityThreadId, _log);
-        _log.Log($"captured Unity thread {unityThreadId}; synchronization context available={synchronizationContext != null}");
+        _log.Info($"captured Unity thread {unityThreadId}; synchronization context available={synchronizationContext != null}");
 
         _settings = new SageConfig(Config);
         if (!_settings.ModEnabled.Value)
@@ -77,10 +77,10 @@ public class BepInExPlugin : BaseUnityPlugin
             () => assistants.ConsoleConversation,
             _executor.Run);
         _mod = new SageMod(_settings, assistants, view, presenter, _executor, _log);
-        CommandLine.AddCommand("ai", new AiConsoleCommand(commands, presenter));
-        _log.Log("registered 'ai' console command");
+        CommandLine.AddCommand("ai", new AiConsoleCommand(presenter));
+        _log.Info("registered 'ai' console command");
 
-        _log.Log($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");
+        _log.Info($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");
     }
 
     private void OnDestroy()
@@ -108,7 +108,7 @@ public class BepInExPlugin : BaseUnityPlugin
         }
         catch (Exception ex)
         {
-            _log?.Log(ex.ToString());
+            _log?.Info(ex.ToString());
         }
     }
 

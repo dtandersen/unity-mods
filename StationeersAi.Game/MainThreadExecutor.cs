@@ -39,7 +39,7 @@ public sealed class MainThreadExecutor : IMainThread
         var synchronizationContext = _synchronizationContext;
         if (synchronizationContext == null)
         {
-            _log.Log("cannot dispatch to Unity main thread: synchronization context was not captured");
+            _log.Info("cannot dispatch to Unity main thread: synchronization context was not captured");
             return;
         }
 
@@ -111,7 +111,7 @@ public sealed class MainThreadExecutor : IMainThread
         }
         catch (Exception ex)
         {
-            _log.Log(ex.ToString());
+            _log.Info(ex.ToString());
         }
     }
 }

@@ -21,9 +21,9 @@ public sealed class StationeersStructureRepository : IStructureRepository
 
     public StationeersStructureRepository(IPrefabProvider prefabs, IMainThread executor, Logger log)
     {
-        _prefabs = prefabs ?? throw new ArgumentNullException(nameof(prefabs));
-        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
-        _log = log ?? throw new ArgumentNullException(nameof(log));
+        _prefabs = prefabs;
+        _executor = executor;
+        _log = log;
     }
 
     public IReadOnlyList<StructureEntity> GetAll()
@@ -34,7 +34,7 @@ public sealed class StationeersStructureRepository : IStructureRepository
         }
         catch (Exception ex)
         {
-            _log.Log(ex.ToString());
+            _log.Info(ex.ToString());
             return new StructureEntity[0];
         }
     }

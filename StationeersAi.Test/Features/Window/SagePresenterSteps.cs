@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Caev;
 using Reqnroll;
 using Shouldly;
-using StationeersAi.Command;
 using StationeersAi.Test.Fakes;
 using StationeersAi.Test.Support;
 using StationeersAi.Window;
@@ -77,14 +76,13 @@ public sealed class SagePresenterSteps
     }
 
     /// <summary>
-    /// The true console parsing (<see cref="AiConsoleRouter"/>, the same
-    /// object the game's <c>ai</c> command hands off to), wired to the
-    /// scenario presenter. The shell splits the raw line on spaces, so
-    /// the step does the same after stripping the <c>ai</c> prefix.
+    /// Runs the console line through the scenario presenter, the same path
+    /// the game's <c>ai</c> command takes. The shell splits the raw line on
+    /// spaces, so the step does the same after stripping the <c>ai</c> prefix.
     /// </summary>
-    private AiConsoleRouter ConsoleRouter()
+    private string ConsoleCommand(string command)
     {
-        return new AiConsoleRouter(World.WindowPresenter);
+        return World.WindowPresenter.OnConsoleCommand(SplitConsoleLine(command));
     }
 
     private static string[] SplitConsoleLine(string command)
@@ -142,6 +140,20 @@ public sealed class SagePresenterSteps
         World.Ai.PauseAfterCalls = count;
     }
 
+    [Given("the SAGE window isn't visible")]
+    public void GivenTheSageWindowIsntVisible()
+    {
+        EnsurePresenter().ShouldNotBeNull();
+        World.WindowPresenter.Visible.ShouldBeFalse();
+    }
+
+    [Given("the AI agent has context")]
+    public void GivenTheAiAgentHasContext()
+    {
+        World.Conversation.Add(new ChatMessage(ChatRole.User, "what time is it?"));
+        World.Conversation.Add(new ChatMessage(ChatRole.Assistant, "it is noon"));
+    }
+
     [When("the turn pauses")]
     public async Task WhenTheTurnPauses()
     {
@@ -168,7 +180,7 @@ public sealed class SagePresenterSteps
     {
         EnsurePresenter().ShouldNotBeNull();
         _clockArmed = true;
-        World.ConsoleOutput = ConsoleRouter().Execute(SplitConsoleLine(command));
+        World.ConsoleOutput = ConsoleCommand(command);
     }
 
     [When("the user toggles the window")]
@@ -229,6 +241,27 @@ public sealed class SagePresenterSteps
     public void ThenTheConsoleDisplays(string expected)
     {
         (World.ConsoleOutput ?? string.Empty).ShouldBe(expected.Replace("\r\n", "\n").Trim());
+    }
+
+    [Then("the AI agent has an empty context")]
+    public void ThenTheAiAgentHasAnEmptyContext()
+    {
+        World.Conversation.Messages.ShouldBeEmpty();
+    }
+
+    [Then("the AI agent compacts its context")]
+    public async Task ThenTheAiAgentCompactsItsContext()
+    {
+        await WaitUntil(() => World.Conversation.Messages.Count == 1);
+        var summary = World.Conversation.Messages.ShouldHaveSingleItem();
+        summary.Role.ShouldBe(ChatRole.Assistant);
+    }
+
+    [Then("the SAGE window is visible")]
+    public void ThenTheSageWindowIsVisible()
+    {
+        World.WindowPresenter.Visible.ShouldBeTrue();
+        World.WindowView.Visible.ShouldBeTrue();
     }
 
     [Then("nothing is asked")]

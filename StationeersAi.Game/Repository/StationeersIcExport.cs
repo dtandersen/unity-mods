@@ -34,7 +34,7 @@ public sealed class StationeersIcExport : IIcExport
         }
         catch (Exception ex)
         {
-            _log.Log(ex.ToString());
+            _log.Info(ex.ToString());
             return new IcWriteResult(false, null, 0, "Export failed.");
         }
     }
@@ -60,7 +60,7 @@ public sealed class StationeersIcExport : IIcExport
         }
         catch (Exception ex)
         {
-            _log.Log(ex.ToString());
+            _log.Info(ex.ToString());
             return new IcWriteResult(false, null, 0, "Editor read failed.");
         }
 
@@ -91,7 +91,7 @@ public sealed class StationeersIcExport : IIcExport
         }
         catch (Exception ex)
         {
-            _log.Log(ex.ToString());
+            _log.Info(ex.ToString());
             return new IcWriteResult(false, null, 0, "Export failed.");
         }
 
@@ -113,7 +113,7 @@ public sealed class StationeersIcExport : IIcExport
         }
         catch (Exception ex)
         {
-            _log.Log(ex.ToString());
+            _log.Info(ex.ToString());
         }
 
         if (burned == null || CodeHash.Hash(burned) != CodeHash.Hash(text))

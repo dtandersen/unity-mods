@@ -41,7 +41,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
         }
         catch (Exception ex)
         {
-            _log.Log(ex.ToString());
+            _log.Info(ex.ToString());
             return null;
         }
     }

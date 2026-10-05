@@ -21,9 +21,9 @@ public sealed class StationeersStationpediaRepository : IStationpediaRepository
 
     public StationeersStationpediaRepository(IStationpediaProvider pages, IMainThread executor, Logger log)
     {
-        _pages = pages ?? throw new ArgumentNullException(nameof(pages));
-        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
-        _log = log ?? throw new ArgumentNullException(nameof(log));
+        _pages = pages;
+        _executor = executor;
+        _log = log;
     }
 
     public IReadOnlyList<StationpediaEntry> GetAll()
@@ -34,7 +34,7 @@ public sealed class StationeersStationpediaRepository : IStationpediaRepository
         }
         catch (Exception ex)
         {
-            _log.Log(ex.ToString());
+            _log.Info(ex.ToString());
             return new StationpediaEntry[0];
         }
     }

@@ -32,7 +32,7 @@ public sealed class StationeersIcEditor : IIcEditor
         }
         catch (Exception ex)
         {
-            _log.Log(ex.ToString());
+            _log.Info(ex.ToString());
             return new IcWriteResult(false, null, 0, "Editor write failed.");
         }
     }
@@ -57,7 +57,7 @@ public sealed class StationeersIcEditor : IIcEditor
         }
         catch (Exception ex)
         {
-            _log.Log(ex.ToString());
+            _log.Info(ex.ToString());
         }
 
         return new IcWriteResult(true, matches[0].Name, code.Split('\n').Length, null);
@@ -70,7 +70,7 @@ public sealed class StationeersIcEditor : IIcEditor
         }
         catch (Exception ex)
         {
-            _log.Log(ex.ToString());
+            _log.Info(ex.ToString());
             return new IcReadResult(false, null, null, "Editor read failed.");
         }
     }
@@ -96,7 +96,7 @@ public sealed class StationeersIcEditor : IIcEditor
         }
         catch (Exception ex)
         {
-            _log.Log(ex.ToString());
+            _log.Info(ex.ToString());
             return new IcReadResult(false, null, null, "Editor read failed.");
         }
 

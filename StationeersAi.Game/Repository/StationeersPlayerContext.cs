@@ -25,9 +25,9 @@ public sealed class StationeersPlayerContext : IPlayerContext
 
     public StationeersPlayerContext(IHumanProvider humans, IMainThread executor, Logger log)
     {
-        _humans = humans ?? throw new ArgumentNullException(nameof(humans));
-        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
-        _log = log ?? throw new ArgumentNullException(nameof(log));
+        _humans = humans;
+        _executor = executor;
+        _log = log;
     }
 
     public string? Name => Read(h => h == null ? null : PlayerName(h), (string?)null);
@@ -44,7 +44,7 @@ public sealed class StationeersPlayerContext : IPlayerContext
         }
         catch (Exception ex)
         {
-            _log.Log(ex.ToString());
+            _log.Info(ex.ToString());
             return empty;
         }
     }

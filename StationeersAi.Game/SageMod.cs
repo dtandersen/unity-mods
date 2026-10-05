@@ -52,6 +52,7 @@ public sealed class SageMod
     {
         if (_loaded)
         {
+            _log.Warn("SageMod.Load called when already loaded");
             return;
         }
 
@@ -60,10 +61,12 @@ public sealed class SageMod
             return;
         }
 
+        _log.Info("Loading SageMod...");
+
         EnsureWindow();
         EnsureHttpServer();
         _loaded = true;
-        _log.Log("mod loaded");
+        _log.Info("SageMod loaded");
     }
 
     /// <summary>Tears down window and server. No-op when not loaded.</summary>
@@ -71,9 +74,11 @@ public sealed class SageMod
     {
         if (!_loaded)
         {
+            _log.Warn("SageMod.Unload called, but mod not loaded.");
             return;
         }
 
+        _log.Info("Unloading SageMod...");
         _loaded = false;
 
         try
@@ -82,7 +87,7 @@ public sealed class SageMod
         }
         catch (Exception ex)
         {
-            _log.Log(ex.ToString());
+            _log.Error(ex);
         }
 
         _httpServer = null;
@@ -96,13 +101,13 @@ public sealed class SageMod
         }
         catch (Exception ex)
         {
-            _log.Log(ex.ToString());
+            _log.Error(ex);
         }
 
         _view.Show(null);
         _holder = null;
         _window = null;
-        _log.Log("mod unloaded");
+        _log.Info("SageMod unloaded");
     }
 
     /// <summary>
@@ -139,7 +144,7 @@ public sealed class SageMod
             return;
         }
 
-        _log.Log($"chat seen from '{message.DisplayName}': {Truncate(message.ChatText, 80)}");
+        _log.Info($"chat seen from '{message.DisplayName}': {Truncate(message.ChatText, 80)}");
 
         var mentioned = Mention.TryParse(_settings.MentionTrigger.Value, message.ChatText, out var prompt);
         if (!mentioned)
@@ -150,11 +155,11 @@ public sealed class SageMod
             }
 
             prompt = message.ChatText.Trim();
-            _log.Log($"direct chat asking: {Truncate(prompt, 80)}");
+            _log.Info($"direct chat asking: {Truncate(prompt, 80)}");
         }
         else
         {
-            _log.Log($"mention matched, asking: {Truncate(prompt, 80)}");
+            _log.Info($"mention matched, asking: {Truncate(prompt, 80)}");
         }
 
         EnsureWindow();
@@ -162,7 +167,7 @@ public sealed class SageMod
         var responder = MentionResponderInstance();
         if (responder.IsBusy)
         {
-            _log.Log("mention ignored: Sage is already answering");
+            _log.Info("mention ignored: Sage is already answering");
             return;
         }
 
@@ -211,7 +216,7 @@ public sealed class SageMod
         }
         catch (Exception ex)
         {
-            _log.Log($"Sage HTTP server did not start: {ex.Message}");
+            _log.Info($"Sage HTTP server did not start: {ex.Message}");
             _httpServer = null;
         }
     }
@@ -234,7 +239,7 @@ public sealed class SageMod
         _window.WindowToggle = () => _settings.WindowToggle.Value;
         _view.Show(_window);
         _presenter.Refresh();
-        _log.Log($"Sage window ready ({_settings.WindowToggle.Value})");
+        _log.Info($"Sage window ready ({_settings.WindowToggle.Value})");
     }
 
     /// <summary>

@@ -16,8 +16,18 @@ public sealed class BepinExLogger : Logger
         _logger = logger;
     }
 
-    public void Log(string message)
+    public void Info(string message)
     {
         _logger.LogInfo(StationeersAi.Formatting.LogText.Sanitize(message));
+    }
+
+    public void Warn(string message)
+    {
+        _logger.LogWarning(StationeersAi.Formatting.LogText.Sanitize(message));
+    }
+
+    public void Error(System.Exception error)
+    {
+        _logger.LogError(error?.ToString() ?? "unknown error");
     }
 }

@@ -1,8 +1,6 @@
-using System;
 using StationeersAi.Command;
 using StationeersAi.Query;
 using StationeersAi.Repository;
-using StationeersAi.Window;
 using Logger = StationeersAi.Core.Logger;
 
 namespace StationeersAi.Game;
@@ -23,8 +21,8 @@ public sealed class CommandFactory
 
     public CommandFactory(IMainThread executor, Logger log)
     {
-        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
-        _log = log ?? throw new ArgumentNullException(nameof(log));
+        _executor = executor;
+        _log = log;
     }
 
     public IItemRepository Items()
@@ -175,10 +173,5 @@ public sealed class CommandFactory
     public ReadRoomCommand ReadRoom()
     {
         return new ReadRoomCommand(Rooms(), Player());
-    }
-
-    public AiConsoleRouter AiConsoleRouter(SagePresenter presenter)
-    {
-        return new AiConsoleRouter(presenter);
     }
 }

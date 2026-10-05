@@ -34,7 +34,7 @@ public sealed class SageAssistantFactory
     {
         _settings = settings;
         _configPath = configPath;
-        _commands = commands ?? throw new ArgumentNullException(nameof(commands));
+        _commands = commands;
         _threads = threads;
         _log = log;
     }
@@ -166,7 +166,7 @@ public sealed class SageAssistantFactory
         }
         catch (Exception ex)
         {
-            _log.Log($"SYSTEM.md unreadable, using configured prompt: {ex.Message}");
+            _log.Info($"SYSTEM.md unreadable, using configured prompt: {ex.Message}");
         }
 
         return _settings.SystemPrompt.Value;

@@ -28,7 +28,7 @@ public sealed class ChatMessageSink : IChatSink
     public void Write(string line)
     {
         var text = line ?? string.Empty;
-        _log.Log($"chat sink queued: {Truncate(text, 80)}");
+        _log.Info($"chat sink queued: {Truncate(text, 80)}");
         _threads.Run(() => _sender.Send(_assistantName(), text));
     }
 
