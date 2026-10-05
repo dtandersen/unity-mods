@@ -20,6 +20,7 @@ public sealed class SageCommands
     private readonly IWorldContext _worlds;
     private readonly IIcEditor _ic;
     private readonly IIcExport _export;
+    private readonly IIcHousing _housing;
     private readonly IMipsReference _mips;
     private readonly IDeviceCatalog _devices;
     private readonly IDeviceInspector _inspector;
@@ -36,6 +37,7 @@ public sealed class SageCommands
         IWorldContext worlds,
         IIcEditor ic,
         IIcExport export,
+        IIcHousing housing,
         IMipsReference mips,
         IDeviceCatalog devices,
         IDeviceInspector inspector,
@@ -51,6 +53,7 @@ public sealed class SageCommands
         _worlds = worlds;
         _ic = ic;
         _export = export;
+        _housing = housing;
         _mips = mips;
         _devices = devices;
         _inspector = inspector;
@@ -99,19 +102,19 @@ public sealed class SageCommands
         return new GetWorldCommand(_worlds);
     }
 
-    public WriteIcCommand WriteIc()
-    {
-        return new WriteIcCommand(_ic);
-    }
-
     public ReadIcCommand ReadIc()
     {
         return new ReadIcCommand(_ic);
     }
 
-    public ExportIcCommand ExportIc()
+    public ReadHousingCommand ReadHousing()
     {
-        return new ExportIcCommand(_export);
+        return new ReadHousingCommand(_housing);
+    }
+
+    public UseComputerCommand UseComputer()
+    {
+        return new UseComputerCommand(_ic, _export);
     }
 
     public ReadInstructionsCommand ReadInstructions()

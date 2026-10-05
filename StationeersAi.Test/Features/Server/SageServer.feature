@@ -80,6 +80,14 @@ Feature: Sage HTTP API
       {"Found":true,"Device":"Lab Computer","Code":"alias a d0","Error":null}
       """
 
+  Scenario: Circuit housing read
+    Given the housing holds "alias a d0" on "Climate Control"
+    When I GET /sage/circuit-housings/Climate%20Control
+    Then the response is:
+      """
+      {"Found":true,"Device":"Climate Control","Code":"alias a d0","Error":null}
+      """
+
   Scenario: World read
     Given a world
     When I GET /sage/world
@@ -191,9 +199,9 @@ Feature: Sage HTTP API
       """
 
   Scenario: IC editor write
-    When I POST /sage/ic/lab with:
+    When I PUT /sage/computer/lab with:
       """
-      {"computer":"lab","code":"alias a d0"}
+      {"sourceCode":"alias a d0"}
       """
     Then the response is:
       """
@@ -201,11 +209,21 @@ Feature: Sage HTTP API
       """
 
   Scenario: IC export
-    When I PUT /sage/ic/lab/export with:
+    When I PUT /sage/computer/lab with:
       """
-      {"device":"housing"}
+      {"device":"housing","export":true}
       """
     Then the response is:
       """
       {"Written":true,"Device":"Climate Control","Lines":37,"Error":null}
+      """
+
+  Scenario: IC import
+    When I PUT /sage/computer/lab with:
+      """
+      {"device":"housing","import":true}
+      """
+    Then the response is:
+      """
+      {"Written":true,"Device":"Lab Computer","Lines":3,"Error":null}
       """

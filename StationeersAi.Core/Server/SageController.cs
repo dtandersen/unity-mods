@@ -169,33 +169,24 @@ public sealed class SageController
         return SageResponse.Ok(_commands.ReadInstructions().Execute(instruction));
     }
 
+    [SageGet("/circuit-housings/{device}", "Read the code from an IC10 circuit housing.")]
+    public SageResponse ReadHousing(string? device)
+    {
+        return SageResponse.Ok(_commands.ReadHousing().Execute(device));
+    }
+
     [SageGet("/ic", "Read the code on the open computer.")]
-    [SageGet("/ic/{computer}", "Read the code on one computer.")]
-    public SageResponse ReadIc(string? computer)
+    [SageGet("/ic/{device}", "Read the code on one computer.")]
+    public SageResponse ReadIc(string? device)
     {
-        return SageResponse.Ok(_commands.ReadIc().Execute(computer));
+        return SageResponse.Ok(_commands.ReadIc().Execute(device));
     }
 
-    [SagePost("/ic/{computer}", "Write code to one computer.")]
-    public SageResponse WriteIc(string? body, string? computer)
+    [SagePut("/computer/{computer}", "Set editor text, pick the housing, and burn.")]
+    public SageResponse UseComputer(string? body, string? computer)
     {
         var request = ParseBody(body);
-        computer = request.Computer ?? computer;
-        var result = _commands.WriteIc().Execute(computer, request.Code ?? string.Empty);
-        if (result == null || !result.Written)
-        {
-            return SageResponse.Error(404, result != null ? result.Error ?? "Write fell through." : "Write fell through.");
-        }
-
-        return SageResponse.Ok(result);
-    }
-
-    [SagePut("/ic/{computer}/export", "Send code from a computer to a device.")]
-    public SageResponse ExportIc(string? body, string? computer)
-    {
-        var request = ParseBody(body);
-        computer = request.Computer ?? computer;
-        var result = _commands.ExportIc().Execute(computer, request.Device);
+        var result = _commands.UseComputer().Execute(computer, request.Device, request.SourceCode, request.Export == true, request.Import == true);
         if (result == null || !result.Written)
         {
             return SageResponse.Error(404, result != null ? result.Error ?? "Export fell through." : "Export fell through.");
@@ -286,6 +277,15 @@ public sealed class SageController
 
         [JsonProperty("code")]
         public string? Code { get; set; }
+
+        [JsonProperty("sourceCode")]
+        public string? SourceCode { get; set; }
+
+        [JsonProperty("export")]
+        public bool? Export { get; set; }
+
+        [JsonProperty("import")]
+        public bool? Import { get; set; }
     }
 
     private sealed class ThingsResult

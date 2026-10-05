@@ -52,7 +52,7 @@ public class ToolTests
             new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(player))),
             new GetStatusTool(new GetPlayerCommand(player)),
             new GetWorldTool(new GetWorldCommand(world)),
-            new WriteIcTool(new WriteIcCommand(editor)),
+            new WriteIcTool(new UseComputerCommand(editor, new InMemoryIcExport())),
             new MipsReferenceTool(new ReadInstructionsCommand(mips)),
             new SearchDevicesTool(new SearchDevicesCommand(devices)),
         });
@@ -539,7 +539,7 @@ public class ToolTests
         var editor = new InMemoryIcEditor();
         var tools = new ToolHandler(new ITool[]
         {
-            new WriteIcTool(new WriteIcCommand(editor)),
+            new WriteIcTool(new UseComputerCommand(editor, new InMemoryIcExport())),
         });
         var code = string.Join("\n", System.Linq.Enumerable.Repeat("yield", WriteIcTool.MaxCodeLines + 1));
 
@@ -608,7 +608,7 @@ public class ToolTests
         var export = new InMemoryIcExport();
         var tools = new ToolHandler(new ITool[]
         {
-            new ExportIcTool(new ExportIcCommand(export)),
+            new ExportIcTool(new UseComputerCommand(new InMemoryIcEditor(), export)),
         });
 
         var result = Call(tools, "export_ic", ("computer", "Lab Computer"), ("device", "Climate Control"));
@@ -624,7 +624,7 @@ public class ToolTests
     {
         var tools = new ToolHandler(new ITool[]
         {
-            new ExportIcTool(new ExportIcCommand(new InMemoryIcExport())),
+            new ExportIcTool(new UseComputerCommand(new InMemoryIcEditor(), new InMemoryIcExport())),
         });
 
         var result = Call(tools, "export_ic", ("computer", "Lab Computer"));
@@ -637,7 +637,7 @@ public class ToolTests
     {
         var tools = new ToolHandler(new ITool[]
         {
-            new ExportIcTool(new ExportIcCommand(new InMemoryIcExport
+            new ExportIcTool(new UseComputerCommand(new InMemoryIcEditor(), new InMemoryIcExport
             {
                 Result = new IcWriteResult(false, null, 0, "Chip reports IncorrectVariable at line 12."),
             })),

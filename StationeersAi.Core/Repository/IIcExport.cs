@@ -10,4 +10,7 @@ public interface IIcExport
 {
     /// <summary>Exports editor text to the chip. Never returns null.</summary>
     IcWriteResult Export(string? computer, string? device);
+
+    /// <summary>Pulls chip code into the editor. Never returns null.</summary>
+    IcWriteResult Import(string? computer, string? device);
 }

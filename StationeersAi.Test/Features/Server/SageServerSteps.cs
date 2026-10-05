@@ -51,6 +51,13 @@ public sealed class SageServerSteps
         World.Ic.EditorCode = code;
     }
 
+    [Given("the housing holds {string} on {string}")]
+    public void GivenTheHousingHolds(string code, string device)
+    {
+        World.Housing.ResolveAs = device;
+        World.Housing.HousingCode = code;
+    }
+
     [When(@"I GET (.+)")]
     public void WhenIGet(string request)
     {
@@ -89,6 +96,7 @@ public sealed class SageServerSteps
             world.Worlds,
             world.Ic,
             world.Export,
+            world.Housing,
             world.Mips,
             world.Devices,
             world.Inspector,

@@ -17,3 +17,17 @@ Feature: Export IC tool
     Given the export fails with "Chip reports IncorrectVariable at line 12."
     When I export from computer "Lab Computer" to "Climate Control"
     Then the tool fails with "Chip reports IncorrectVariable at line 12."
+
+  Scenario: Import pulls chip into editor
+    Given the import succeeds
+    When I import from housing "Climate Control" into "Lab Computer"
+    Then the tool succeeds
+    And the tool result is:
+      """
+      Pulled 3 lines from Climate Control into Lab Computer.
+      """
+
+  Scenario: Import fails when the housing is unknown
+    Given the import fails with "Housing 'Nope' not found on this computer's network. Available: none"
+    When I import from housing "Nope" into "Lab Computer"
+    Then the tool fails with "Housing 'Nope' not found on this computer's network. Available: none"

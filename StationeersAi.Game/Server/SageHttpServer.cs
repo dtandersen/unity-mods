@@ -209,7 +209,17 @@ public sealed class SageHttpServer : IDisposable
                 }
 
                 var captured = request;
-                var response = _threads.RunSync(() => new SageRouter(_data()).Handle(captured.Method, captured.Path, captured.Query, captured.Body));
+                SageResponse response;
+                try
+                {
+                    response = _threads.RunSync(() => new SageRouter(_data()).Handle(captured.Method, captured.Path, captured.Query, captured.Body));
+                }
+                catch (TimeoutException)
+                {
+                    Write(stream, 503, "{\"error\":\"Game is busy; try again.\"}");
+                    return;
+                }
+
                 Write(stream, response.Status, response.Body);
             }
             catch (Exception ex)

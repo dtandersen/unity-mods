@@ -10,9 +10,9 @@ public sealed class WriteIcTool : ITool
     /// <summary>The editor's line cap (line indices 0-127).</summary>
     public const int MaxCodeLines = 127;
 
-    private readonly WriteIcCommand _command;
+    private readonly UseComputerCommand _command;
 
-    public WriteIcTool(WriteIcCommand command)
+    public WriteIcTool(UseComputerCommand command)
     {
         _command = command;
     }
@@ -46,7 +46,7 @@ public sealed class WriteIcTool : ITool
             return new ToolFailure($"Code is {lines} lines; the editor holds {MaxCodeLines}.");
         }
 
-        var result = _command.Execute(computer, code);
+        var result = _command.Execute(computer, null, code, false, false);
         if (result == null || !result.Written)
         {
             return new ToolFailure(result?.Error ?? "Computer not found.");

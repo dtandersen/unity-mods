@@ -32,6 +32,8 @@ public sealed class World : IDisposable
 
     public InMemoryIcExport Export { get; } = new InMemoryIcExport();
 
+    public InMemoryIcHousing Housing { get; } = new InMemoryIcHousing();
+
     public InMemoryMipsReference Mips { get; } = new InMemoryMipsReference();
 
     public InMemoryDeviceCatalog Devices { get; } = new InMemoryDeviceCatalog();

@@ -41,4 +41,30 @@ public sealed class ExportIcSteps
                 ["device"] = device,
             })));
     }
+
+    [Given("the import succeeds")]
+    public void GivenTheImportSucceeds()
+    {
+        World.Export.ImportResult = new IcWriteResult(true, "Lab Computer", 3, null);
+    }
+
+    [Given("the import fails with {string}")]
+    public void GivenTheImportFailsWith(string error)
+    {
+        World.Export.ImportResult = new IcWriteResult(false, null, 0, error);
+    }
+
+    [When("I import from housing {string} into {string}")]
+    public void WhenIImportFromHousingInto(string device, string computer)
+    {
+        World.ToolResult = TestComposition.Tools(World).Handle(new ToolCall(
+            "call_1",
+            "export_ic",
+            new ToolArguments(new System.Collections.Generic.Dictionary<string, string>
+            {
+                ["computer"] = computer,
+                ["device"] = device,
+                ["import"] = "true",
+            })));
+    }
 }

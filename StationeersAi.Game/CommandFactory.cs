@@ -65,6 +65,11 @@ public sealed class CommandFactory
         return new StationeersIcExport(_executor, _log);
     }
 
+    public IIcHousing IcHousing()
+    {
+        return new StationeersIcHousing(_executor, _log);
+    }
+
     public IMipsReference Mips()
     {
         return new StationeersMipsReference(_log);
@@ -110,6 +115,7 @@ public sealed class CommandFactory
             Worlds(),
             IcEditor(),
             IcExport(),
+            IcHousing(),
             Mips(),
             Devices(),
             Inspector(),
