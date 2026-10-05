@@ -25,6 +25,13 @@ public sealed class SageController
         return SageResponse.Ok(_commands.GetPlayer().Execute());
     }
 
+    [SageGet("/INDEX.md", "Read this API description as text.")]
+    [SageGet("/")]
+    public SageResponse Index()
+    {
+        return new SageResponse(200, SageIndex.Describe());
+    }
+
     [SageGet("/openapi", "Read this API description.")]
     public SageResponse OpenApi(string? pretty)
     {
@@ -184,12 +191,11 @@ public sealed class SageController
     }
 
     [SagePut("/ic/{computer}/export", "Send code from a computer to a device.")]
-    public SageResponse ExportIc(string? body, string? computer, string? device)
+    public SageResponse ExportIc(string? body, string? computer)
     {
         var request = ParseBody(body);
         computer = request.Computer ?? computer;
-        device = request.Device ?? device;
-        var result = _commands.ExportIc().Execute(computer, device);
+        var result = _commands.ExportIc().Execute(computer, request.Device);
         if (result == null || !result.Written)
         {
             return SageResponse.Error(404, result != null ? result.Error ?? "Export fell through." : "Export fell through.");
