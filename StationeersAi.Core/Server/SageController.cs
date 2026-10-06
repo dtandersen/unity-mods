@@ -19,10 +19,10 @@ public sealed class SageController
         _commands = commands;
     }
 
-    [SageGet("/players", "Read the player's health, suit, and position.")]
-    public SageResponse Players()
+    [SageGet("/players", "Describe the player's health, suit, and position.")]
+    public SageResponse DescribePlayer()
     {
-        return SageResponse.Ok(_commands.GetPlayer().Execute());
+        return SageResponse.Ok(_commands.DescribePlayer().Execute());
     }
 
     [SageGet("/INDEX.md", "Read this API description as text.")]
@@ -163,10 +163,10 @@ public sealed class SageController
         return SageResponse.Ok(page);
     }
 
-    [SageGet("/instructions", "Search the instruction list.")]
-    public SageResponse Instructions(string? instruction)
+    [SageGet("/instructions", "List the IC10 instructions.")]
+    public SageResponse ListInstructions(string? instruction)
     {
-        return SageResponse.Ok(_commands.ReadInstructions().Execute(instruction));
+        return SageResponse.Ok(_commands.ListInstructions().Execute(instruction));
     }
 
     [SageGet("/circuit-housings/{device}", "Read the code from an IC10 circuit housing.")]

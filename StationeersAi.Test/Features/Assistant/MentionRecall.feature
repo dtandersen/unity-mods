@@ -1,6 +1,6 @@
 Feature: Mention recall
 
-  Mentions in chat belong to one session per player. The second ask sees the
+  Mentions in chat share the one base session. The second ask sees the
   first question and answer, so Sage does not re-search what it already knows.
 
   Scenario: Second mention sees the first turn

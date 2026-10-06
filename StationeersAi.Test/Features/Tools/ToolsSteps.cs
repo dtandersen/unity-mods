@@ -161,13 +161,17 @@ public sealed class ToolsSteps
             stacks[i].Name.ShouldBe(row["Name"]);
             stacks[i].Quantity.ShouldBe(row["Quantity"]);
             stacks[i].Slot.ShouldBe(row["Slot"]);
+            if (row.ContainsKey("Hand"))
+            {
+                (stacks[i].Hand ?? string.Empty).ShouldBe(row["Hand"]);
+            }
         }
     }
 
     [Then("the status result is:")]
     public void ThenTheStatusResultIs(Table table)
     {
-        var status = World.ToolResult.ShouldBeOfType<ToolSuccess<GetStatusResult>>().Value.Status;
+        var status = World.ToolResult.ShouldBeOfType<ToolSuccess<DescribePlayerResult>>().Value.Status;
         var row = table.Rows.Single();
 
         status.X.ShouldBe(float.Parse(row["X"], CultureInfo.InvariantCulture));

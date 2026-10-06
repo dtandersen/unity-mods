@@ -176,7 +176,7 @@ public sealed class SageMod
             ? "player"
             : message.DisplayName;
         _presenter.Write($"{speaker}: {prompt}");
-        _ = responder.HandleAsync(prompt, _assistants.MentionConversation(message.DisplayName));
+        _ = responder.HandleAsync(prompt, _assistants.MentionConversation());
     }
 
     /// <summary>

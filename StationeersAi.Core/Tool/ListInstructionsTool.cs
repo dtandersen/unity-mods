@@ -4,19 +4,19 @@ using Caev.Tools;
 
 namespace StationeersAi.Tool;
 
-/// <summary>Tool: look up IC10 instructions from the game's editor help.</summary>
-public sealed class MipsReferenceTool : ITool
+/// <summary>Tool: list IC10 instructions from the game's editor help.</summary>
+public sealed class ListInstructionsTool : ITool
 {
-    private readonly ReadInstructionsCommand _command;
+    private readonly ListInstructionsCommand _command;
 
-    public MipsReferenceTool(ReadInstructionsCommand command)
+    public ListInstructionsTool(ListInstructionsCommand command)
     {
         _command = command;
     }
 
     public ToolDefinition Definition { get; } = new ToolDefinition(
-        "mips_reference",
-        "Look up IC10 instructions: usage and what each one does. Name one for its usage and description; omit the argument for the bare name list.",
+        "list_instructions",
+        "List IC10 instructions: usage and what each one does. Name one for its usage and description; omit the argument for the bare name list.",
         new[] { new ToolParameter("instruction", "One instruction mnemonic, e.g. 'l'.", Required: false) });
 
     public ToolResult Execute(ToolArguments arguments)
@@ -30,8 +30,8 @@ public sealed class MipsReferenceTool : ITool
 
         if (string.IsNullOrWhiteSpace(instruction))
         {
-            return new ToolSuccess<MipsReferenceResult>(
-                new MipsReferenceResult(instructions),
+            return new ToolSuccess<ListInstructionsResult>(
+                new ListInstructionsResult(instructions),
                 string.Join("\n", instructions.Select(entry => entry.Name)));
         }
 
@@ -47,8 +47,8 @@ public sealed class MipsReferenceTool : ITool
             lines.Add(line);
         }
 
-        return new ToolSuccess<MipsReferenceResult>(
-            new MipsReferenceResult(instructions),
+        return new ToolSuccess<ListInstructionsResult>(
+            new ListInstructionsResult(instructions),
             string.Join("\n", lines));
     }
 }

@@ -57,19 +57,19 @@ public sealed class StationeersPlayerContext : IPlayerContext
             return inventory;
         }
 
-        AddSlot(inventory, "Left hand", human.LeftHandSlot);
-        AddSlot(inventory, "Right hand", human.RightHandSlot);
-        AddSlot(inventory, "Uniform", human.UniformSlot);
-        AddSlot(inventory, "Suit", human.SuitSlot);
-        AddSlot(inventory, "Helmet", human.HelmetSlot);
-        AddSlot(inventory, "Glasses", human.GlassesSlot);
-        AddSlot(inventory, "Backpack", human.BackpackSlot);
-        AddSlot(inventory, "Toolbelt", human.ToolbeltSlot);
-        AddSlot(inventory, "Stomach", human.StomachSlot);
+        AddSlot(inventory, "Left hand", human.LeftHandSlot, "Left");
+        AddSlot(inventory, "Right hand", human.RightHandSlot, "Right");
+        AddSlot(inventory, "Uniform", human.UniformSlot, null);
+        AddSlot(inventory, "Suit", human.SuitSlot, null);
+        AddSlot(inventory, "Helmet", human.HelmetSlot, null);
+        AddSlot(inventory, "Glasses", human.GlassesSlot, null);
+        AddSlot(inventory, "Backpack", human.BackpackSlot, null);
+        AddSlot(inventory, "Toolbelt", human.ToolbeltSlot, null);
+        AddSlot(inventory, "Stomach", human.StomachSlot, null);
         return inventory;
     }
 
-    private static void AddSlot(List<ItemStack> inventory, string fallbackName, Slot slot)
+    private static void AddSlot(List<ItemStack> inventory, string fallbackName, Slot slot, string? hand)
     {
         if (slot == null)
         {
@@ -88,7 +88,8 @@ public sealed class StationeersPlayerContext : IPlayerContext
             Id: occupant.PrefabName,
             Name: name,
             Quantity: QuantityText(occupant),
-            Slot: label));
+            Slot: label,
+            Hand: hand));
         AddNested(inventory, label, occupant);
     }
 

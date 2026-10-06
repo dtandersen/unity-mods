@@ -92,9 +92,9 @@ public sealed class SageCommands
         return new SearchInventoryCommand(new InventoryIndex(_player));
     }
 
-    public GetPlayerCommand GetPlayer()
+    public DescribePlayerCommand DescribePlayer()
     {
-        return new GetPlayerCommand(_player);
+        return new DescribePlayerCommand(_player);
     }
 
     public GetWorldCommand GetWorld()
@@ -117,9 +117,9 @@ public sealed class SageCommands
         return new UseComputerCommand(_ic, _export);
     }
 
-    public ReadInstructionsCommand ReadInstructions()
+    public ListInstructionsCommand ListInstructions()
     {
-        return new ReadInstructionsCommand(_mips);
+        return new ListInstructionsCommand(_mips);
     }
 
     public SearchDevicesCommand SearchDevices()

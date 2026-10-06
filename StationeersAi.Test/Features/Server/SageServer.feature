@@ -23,6 +23,16 @@ Feature: Sage HTTP API
       [{"Id":"Cable Coil","Name":"Cable Coil","Quantity":null,"Slot":"Toolbelt"}]
       """
 
+  Scenario: Inventory search reports the hand
+    Given my inventory contains:
+      | Item   | Slot       |
+      | Welder | Right hand |
+    When I GET /sage/inventory?q=welder
+    Then the response is:
+      """
+      [{"Id":"Welder","Name":"Welder","Quantity":null,"Slot":"Right hand","Hand":"Right"}]
+      """
+
   Scenario: Device search
     Given live devices exist:
       | Name      | Type              | Thing | Network | Logic | Room |

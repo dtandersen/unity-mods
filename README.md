@@ -40,12 +40,12 @@ Sage can call these tools:
 | `search_recipes` | Manufacturing recipes with station + ingredients |
 | `search_stationpedia` / `read_stationpedia` | In-game encyclopedia pages |
 | `search_inventory` | What you are carrying and where it is worn |
-| `get_status` | Your position and world |
+| `describe_player` | Your position and world |
 | `get_world` | World, orbit, sunlight, and outside air |
 | `write_ic` | Place MIPS source in a computer's editor |
 | `read_ic` | Read a computer's editor text |
 | `export_ic` | Burn editor text to a housing chip, hash-verified |
-| `mips_reference` | IC10 instruction usage and descriptions |
+| `list_instructions` | IC10 instruction usage and descriptions |
 | `search_devices` | Live devices: labels, types, networks |
 | `describe_device` | One device: ports, settings, slots |
 

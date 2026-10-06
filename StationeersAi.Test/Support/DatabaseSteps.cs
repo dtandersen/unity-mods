@@ -104,12 +104,29 @@ public sealed class DatabaseSteps
 
         foreach (var row in table.Rows)
         {
+            var slot = row.ContainsKey("Slot") ? row["Slot"] : null;
             world.Player.Carry(new ItemStack(
                 row["Item"],
                 row["Item"],
                 row.ContainsKey("Quantity") ? row["Quantity"] : null,
-                row.ContainsKey("Slot") ? row["Slot"] : null));
+                slot,
+                row.ContainsKey("Hand") ? row["Hand"] : HandOf(slot)));
         }
+    }
+
+    private static string HandOf(string slot)
+    {
+        if (string.Equals(slot, "Left hand", System.StringComparison.OrdinalIgnoreCase))
+        {
+            return "Left";
+        }
+
+        if (string.Equals(slot, "Right hand", System.StringComparison.OrdinalIgnoreCase))
+        {
+            return "Right";
+        }
+
+        return null;
     }
 
     private static double Number(string value)

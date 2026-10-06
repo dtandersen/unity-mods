@@ -19,7 +19,7 @@ public sealed class SearchInventoryTool : ITool
 
     public ToolDefinition Definition { get; } = new ToolDefinition(
         "search_inventory",
-        "Search what the player is carrying by name. Omit the query to list everything carried and worn. Returns CSV with columns Name, Quantity, Slot.",
+        "Search what the player is carrying by name. Omit the query to list everything carried and worn. Returns CSV with columns Name, Quantity, Slot, Hand. Hand is Left or Right for items held in the hands, else blank.",
         new[] { new ToolParameter("query", "Text to match against carried item names, e.g. 'welder'. Omit to list all.", Required: false) });
 
     public ToolResult Execute(ToolArguments arguments)
@@ -49,8 +49,9 @@ public sealed class SearchInventoryTool : ITool
             stack.Name ?? string.Empty,
             stack.Quantity ?? string.Empty,
             stack.Slot ?? string.Empty,
+            stack.Hand ?? string.Empty,
         });
 
-        return Csv.Build(new[] { "Name", "Quantity", "Slot" }, rows);
+        return Csv.Build(new[] { "Name", "Quantity", "Slot", "Hand" }, rows);
     }
 }

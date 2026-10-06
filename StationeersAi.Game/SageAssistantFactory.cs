@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Assets.Scripts.Objects;
 using Assets.Scripts.Objects.Entities;
 using Caev;
@@ -14,8 +13,8 @@ using Logger = StationeersAi.Core.Logger;
 namespace StationeersAi.Game;
 
 /// <summary>
-/// Builds the assistant from the factory's commands and owns the shared
-/// conversations. The shell keeps one for the session; the presenter asks
+/// Builds the assistant from the factory's commands and owns the one shared
+/// conversation. The shell keeps one for the session; the presenter asks
 /// it for an assistant each turn and the mod asks it for server data.
 /// </summary>
 public sealed class SageAssistantFactory
@@ -25,8 +24,6 @@ public sealed class SageAssistantFactory
     private readonly CommandFactory _commands;
     private readonly MainThreadExecutor _threads;
     private readonly Logger _log;
-
-    private readonly Dictionary<string, Conversation> _mentionConversations = new Dictionary<string, Conversation>();
 
     private Conversation? _conversation;
 
@@ -68,33 +65,10 @@ public sealed class SageAssistantFactory
     /// <summary>Shared console history. Null when history is off.</summary>
     public Conversation? ConsoleConversation => _settings.ContextBytes.Value > 0 ? Conversation : null;
 
-    /// <summary>One chat session per player, capped like the console history.</summary>
-    public Conversation? MentionConversation(string? player)
+    /// <summary>The one shared history for chat mentions and the console. Null when history is off.</summary>
+    public Conversation? MentionConversation()
     {
-        if (_settings.ContextBytes.Value <= 0)
-        {
-            return null;
-        }
-
-        if (player is null || string.IsNullOrWhiteSpace(player))
-        {
-            player = "player";
-        }
-
-        if (!_mentionConversations.TryGetValue(player, out var conversation))
-        {
-            conversation = new Conversation(_settings.ContextBytes.Value);
-            _mentionConversations[player] = conversation;
-        }
-        else if (conversation.MaxBytes != _settings.ContextBytes.Value)
-        {
-            var kept = conversation.Messages;
-            conversation = new Conversation(_settings.ContextBytes.Value);
-            conversation.Replace(kept);
-            _mentionConversations[player] = conversation;
-        }
-
-        return conversation;
+        return _settings.ContextBytes.Value > 0 ? Conversation : null;
     }
 
     public string? PlayerName()
@@ -133,11 +107,12 @@ public sealed class SageAssistantFactory
             new SearchStationpediaTool(commands.SearchStationpedia()),
             new ReadStationpediaTool(commands.ReadStationpedia()),
             new SearchInventoryTool(commands.SearchInventory()),
-            new GetStatusTool(commands.GetPlayer()),
+            new DescribePlayerTool(commands.DescribePlayer()),
             new GetWorldTool(commands.GetWorld()),
             new WriteIcTool(commands.UseComputer()),
+            new ReadIcTool(commands.ReadComputer(), commands.ReadHousing()),
             new ExportIcTool(commands.UseComputer()),
-            new MipsReferenceTool(commands.ReadInstructions()),
+            new ListInstructionsTool(commands.ListInstructions()),
             new SearchDevicesTool(commands.SearchDevices()),
             new DescribeDeviceTool(commands.DescribeDevice()),
             new SearchThingsTool(commands.SearchThings()),

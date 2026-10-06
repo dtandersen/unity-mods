@@ -14,8 +14,8 @@ Feature: Tool activity reporting
     Then the tool calls reported "search_inventory(query=welder)"
     And the tool output reported:
       """
-      Name,Quantity,Slot
-      Welder,85%,Right hand
+      Name,Quantity,Slot,Hand
+      Welder,85%,Right hand,Right
       """
 
   Scenario: The model's reasoning is reported as thinking

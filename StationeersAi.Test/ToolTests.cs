@@ -50,10 +50,10 @@ public class ToolTests
             new SearchStationpediaTool(new SearchStationpediaCommand(new StationpediaIndex(pages))),
             new ReadStationpediaTool(new ReadStationpediaCommand(pages)),
             new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(player))),
-            new GetStatusTool(new GetPlayerCommand(player)),
+            new DescribePlayerTool(new DescribePlayerCommand(player)),
             new GetWorldTool(new GetWorldCommand(world)),
             new WriteIcTool(new UseComputerCommand(editor, new InMemoryIcExport())),
-            new MipsReferenceTool(new ReadInstructionsCommand(mips)),
+            new ListInstructionsTool(new ListInstructionsCommand(mips)),
             new SearchDevicesTool(new SearchDevicesCommand(devices)),
         });
     }
@@ -160,14 +160,14 @@ public class ToolTests
     }
 
     [Test]
-    public void Get_status_reports_position_and_world()
+    public void Describe_player_reports_position_and_world()
     {
         var player = new InMemoryPlayerContext
         {
             Status = new PlayerStatus(1.5f, 2.25f, -3f, "Europa", null, 5, null),
         };
 
-        var result = Call(Tools(player, new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference()), "get_status");
+        var result = Call(Tools(player, new InMemoryWorldContext(), new InMemoryIcEditor(), new InMemoryMipsReference()), "describe_player");
         result.IsSuccess.ShouldBeTrue();
         result.Content.ShouldContain("Position: (1.5, 2.3, -3.0)");
         result.Content.ShouldContain("World: Europa");
@@ -175,9 +175,9 @@ public class ToolTests
     }
 
     [Test]
-    public void Get_status_unavailable_fails()
+    public void Describe_player_unavailable_fails()
     {
-        var result = Call(Tools(), "get_status");
+        var result = Call(Tools(), "describe_player");
         result.IsSuccess.ShouldBeFalse();
     }
 
@@ -280,7 +280,7 @@ public class ToolTests
     }
 
     [Test]
-    public void Mips_reference_lists_names_on_blank()
+    public void List_instructions_lists_names_on_blank()
     {
         var mips = new InMemoryMipsReference();
         mips.Instructions.Add(new MipsInstruction("l", "l r? device var", "Loads a value."));
@@ -288,21 +288,21 @@ public class ToolTests
 
         var result = Call(
             Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcEditor(), mips),
-            "mips_reference");
+            "list_instructions");
 
         result.IsSuccess.ShouldBeTrue();
         result.Content.ShouldBe("l\nyield");
     }
 
     [Test]
-    public void Mips_reference_describes_one_instruction()
+    public void List_instructions_describes_one_instruction()
     {
         var mips = new InMemoryMipsReference();
         mips.Instructions.Add(new MipsInstruction("l", "l r? device var", "Loads a value."));
 
         var result = Call(
             Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcEditor(), mips),
-            "mips_reference",
+            "list_instructions",
             ("instruction", "L"));
 
         result.IsSuccess.ShouldBeTrue();
@@ -310,9 +310,9 @@ public class ToolTests
     }
 
     [Test]
-    public void Mips_reference_unknown_instruction_fails()
+    public void List_instructions_unknown_instruction_fails()
     {
-        var result = Call(Tools(), "mips_reference", ("instruction", "nope"));
+        var result = Call(Tools(), "list_instructions", ("instruction", "nope"));
         result.IsSuccess.ShouldBeFalse();
         result.Content.ShouldContain("nope");
     }

@@ -7,11 +7,11 @@ using Caev.Tools;
 namespace StationeersAi.Test.Features.Tools;
 
 [Binding]
-public sealed class MipsReferenceSteps
+public sealed class ListInstructionsSteps
 {
     private readonly ScenarioContext _context;
 
-    public MipsReferenceSteps(ScenarioContext context)
+    public ListInstructionsSteps(ScenarioContext context)
     {
         _context = context;
     }
@@ -30,7 +30,7 @@ public sealed class MipsReferenceSteps
     {
         World.ToolResult = TestComposition.Tools(World).Handle(new ToolCall(
             "call_1",
-            "mips_reference",
+            "list_instructions",
             new ToolArguments(new Dictionary<string, string> { ["instruction"] = instruction })));
     }
 }

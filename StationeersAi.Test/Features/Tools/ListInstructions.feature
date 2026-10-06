@@ -1,11 +1,11 @@
-Feature: MIPS reference tool
+Feature: List instructions tool
 
-  The mips_reference tool looks up IC10 instructions from the game's editor
+  The list_instructions tool lists IC10 instructions from the game's editor
   help: usage and what each one does.
 
   Scenario: Blank call returns names only
     Given the MIPS reference knows "l" and "yield"
-    When I call the "mips_reference" tool
+    When I call the "list_instructions" tool
     Then the tool succeeds
     And the tool result is:
       """
