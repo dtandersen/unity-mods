@@ -7,6 +7,6 @@ namespace StationeersAi.Repository;
 /// </summary>
 public interface IHousingRepository
 {
-    /// <summary>Resolves one housing. Never returns null.</summary>
-    HousingLookup Find(long thingId);
+    /// <summary>Resolves one housing. Throws <see cref="ThingNotFound"/> when no housing carries the id.</summary>
+    IHousing Find(long thingId);
 }

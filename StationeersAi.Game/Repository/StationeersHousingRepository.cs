@@ -25,24 +25,21 @@ public sealed class StationeersHousingRepository : IHousingRepository
         _log = log;
     }
 
-    public HousingLookup Find(long thingId)
+    public IHousing Find(long thingId)
     {
         try
         {
             return _threads.RunSync(() => FindInner(thingId));
         }
-        catch (ThingNotFound notFound)
+        catch (Exception ex) when (!(ex is ThingNotFound))
         {
-            return new HousingLookup(null, notFound.Message);
-        }
-        catch (Exception ex)
-        {
+            // A game fault, not a missed id: record it, then let the caller report it.
             _log.Info(ex.ToString());
-            return new HousingLookup(null, "Housing lookup failed.");
+            throw;
         }
     }
 
-    private HousingLookup FindInner(long thingId)
+    private IHousing FindInner(long thingId)
     {
         var housings = All();
         foreach (var housing in housings)
@@ -59,7 +56,7 @@ public sealed class StationeersHousingRepository : IHousingRepository
 
             if (id == thingId)
             {
-                return new HousingLookup(new StationeersHousing(housing, _threads, _log), null);
+                return new StationeersHousing(housing, _threads, _log);
             }
         }
 

@@ -45,31 +45,28 @@ public sealed class StationeersComputerRepository : IComputerRepository
         _log = log;
     }
 
-    public ComputerLookup Find(long computerId)
+    public IComputer Find(long computerId)
     {
         try
         {
             return _threads.RunSync(() => FindInner(computerId));
         }
-        catch (ThingNotFound notFound)
+        catch (Exception ex) when (!(ex is ThingNotFound))
         {
-            return new ComputerLookup(null, notFound.Message);
-        }
-        catch (Exception ex)
-        {
+            // A game fault, not a missed id: record it, then let the caller report it.
             _log.Info(ex.ToString());
-            return new ComputerLookup(null, "Computer lookup failed.");
+            throw;
         }
     }
 
-    private ComputerLookup FindInner(long computerId)
+    private IComputer FindInner(long computerId)
     {
         var boards = All();
         foreach (var board in boards)
         {
             if (board.ThingId == computerId || (board.ComputerId != 0 && board.ComputerId == computerId))
             {
-                return new ComputerLookup(new StationeersComputer(board.Motherboard, board.Name, _threads, _log), null);
+                return new StationeersComputer(board.Motherboard, board.Name, _threads, _log);
             }
         }
 

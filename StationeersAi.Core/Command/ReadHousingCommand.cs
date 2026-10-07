@@ -1,3 +1,4 @@
+using System;
 using StationeersAi.Entity;
 using StationeersAi.Repository;
 
@@ -15,11 +16,18 @@ public sealed class ReadHousingCommand
 
     public IcReadResult Execute(long device)
     {
-        var found = _housings.Find(device);
-        var target = found.Housing;
-        if (target == null)
+        IHousing target;
+        try
         {
-            return new IcReadResult(false, null, null, found.Error ?? "Housing not found.");
+            target = _housings.Find(device);
+        }
+        catch (ThingNotFound notFound)
+        {
+            return new IcReadResult(false, null, null, notFound.Message);
+        }
+        catch (Exception)
+        {
+            return new IcReadResult(false, null, null, "Housing lookup failed.");
         }
 
         return target.Read();

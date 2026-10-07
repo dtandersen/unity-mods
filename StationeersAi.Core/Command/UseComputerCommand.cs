@@ -1,3 +1,4 @@
+using System;
 using StationeersAi.Entity;
 using StationeersAi.Repository;
 
@@ -23,11 +24,18 @@ public sealed class UseComputerCommand
 
     public IcWriteResult Execute(long computer, long? device, string? sourceCode, bool export, bool import)
     {
-        var found = _computers.Find(computer);
-        var target = found.Computer;
-        if (target == null)
+        IComputer target;
+        try
         {
-            return new IcWriteResult(false, null, 0, found.Error ?? "Computer not found.");
+            target = _computers.Find(computer);
+        }
+        catch (ThingNotFound notFound)
+        {
+            return new IcWriteResult(false, null, 0, notFound.Message);
+        }
+        catch (Exception)
+        {
+            return new IcWriteResult(false, null, 0, "Computer lookup failed.");
         }
 
         IcWriteResult? staged = null;

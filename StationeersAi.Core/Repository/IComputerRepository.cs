@@ -7,6 +7,6 @@ namespace StationeersAi.Repository;
 /// </summary>
 public interface IComputerRepository
 {
-    /// <summary>Resolves one computer. Never returns null.</summary>
-    ComputerLookup Find(long computerId);
+    /// <summary>Resolves one computer. Throws <see cref="ThingNotFound"/> when no board carries the id.</summary>
+    IComputer Find(long computerId);
 }

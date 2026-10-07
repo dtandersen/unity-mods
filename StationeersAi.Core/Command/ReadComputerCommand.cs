@@ -1,3 +1,4 @@
+using System;
 using StationeersAi.Entity;
 using StationeersAi.Repository;
 
@@ -15,11 +16,18 @@ public sealed class ReadComputerCommand
 
     public ReadComputerResult Execute(long computer)
     {
-        var found = _computers.Find(computer);
-        var target = found.Computer;
-        if (target == null)
+        IComputer target;
+        try
         {
-            return new ReadComputerResult(null, null, null, found.Error ?? "Computer not found.");
+            target = _computers.Find(computer);
+        }
+        catch (ThingNotFound notFound)
+        {
+            return new ReadComputerResult(null, null, null, notFound.Message);
+        }
+        catch (Exception)
+        {
+            return new ReadComputerResult(null, null, null, "Computer lookup failed.");
         }
 
         var code = target.Read();
