@@ -20,13 +20,13 @@ public sealed class WriteIcSteps
     [Given("a computer {string}")]
     public void GivenAComputer(string name)
     {
-        World.Computers.ResolveAs = name;
+        World.Computer.Name = name;
     }
 
     [Given("no computer is found")]
     public void GivenNoComputerIsFound()
     {
-        World.Computers.ResolveAs = null;
+        World.Computers.Found = false;
     }
 
     [When("I write to computer {string}:")]

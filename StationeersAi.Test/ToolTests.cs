@@ -232,13 +232,13 @@ public class ToolTests
         var result = Call(
             Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), computers, new InMemoryMipsReference()),
             "write_ic",
-            ("computer", "Lab Computer"),
+            ("computer", "1189"),
             ("code", "alias Device d0\n yield"));
 
         result.IsSuccess.ShouldBeTrue();
         result.Content.ShouldContain("Wrote 2 lines to Lab Computer");
         computers.Computer.Writes.Count.ShouldBe(1);
-        computers.Lookups[0].ShouldBe("Lab Computer");
+        computers.Lookups[0].ShouldBe(1189L);
     }
 
     [Test]
@@ -253,7 +253,7 @@ public class ToolTests
             ("code", "yield"));
 
         result.IsSuccess.ShouldBeTrue();
-        computers.Lookups[0].ShouldBe("1189");
+        computers.Lookups[0].ShouldBe(1189L);
     }
 
     [Test]
@@ -267,16 +267,32 @@ public class ToolTests
     [Test]
     public void Write_ic_unknown_computer_fails()
     {
-        var computers = new InMemoryComputerRepository { ResolveAs = null };
+        var computers = new InMemoryComputerRepository { Found = false };
 
         var result = Call(
             Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), computers, new InMemoryMipsReference()),
             "write_ic",
-            ("computer", "Nope"),
+            ("computer", "999"),
             ("code", "yield"));
 
         result.IsSuccess.ShouldBeFalse();
-        result.Content.ShouldContain("Nope");
+        result.Content.ShouldContain("999");
+    }
+
+    [Test]
+    public void Write_ic_refuses_a_computer_label()
+    {
+        var computers = new InMemoryComputerRepository();
+
+        var result = Call(
+            Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), computers, new InMemoryMipsReference()),
+            "write_ic",
+            ("computer", "Lab Computer"),
+            ("code", "yield"));
+
+        result.IsSuccess.ShouldBeFalse();
+        result.Content.ShouldContain("is not a thing id");
+        computers.Lookups.Count.ShouldBe(0);
     }
 
     [Test]
@@ -543,7 +559,7 @@ public class ToolTests
         });
         var code = string.Join("\n", System.Linq.Enumerable.Repeat("yield", WriteIcTool.MaxCodeLines + 1));
 
-        var result = Call(tools, "write_ic", ("computer", "Lab Computer"), ("code", code));
+        var result = Call(tools, "write_ic", ("computer", "1189"), ("code", code));
         result.IsSuccess.ShouldBeFalse();
         result.Content.ShouldContain("128 lines");
         computers.Computer.Writes.Count.ShouldBe(0);
@@ -558,12 +574,12 @@ public class ToolTests
             new ExportIcTool(new UseComputerCommand(computers)),
         });
 
-        var result = Call(tools, "export_ic", ("computer", "Lab Computer"), ("device", "Climate Control"));
+        var result = Call(tools, "export_ic", ("computer", "1189"), ("device", "2200"));
         result.IsSuccess.ShouldBeTrue();
         result.Content.ShouldContain("Exported 37 lines to Climate Control. Chip hash matches the editor.");
-        computers.Lookups[0].ShouldBe("Lab Computer");
+        computers.Lookups[0].ShouldBe(1189L);
         computers.Computer.Exports.Count.ShouldBe(1);
-        computers.Computer.Exports[0].ShouldBe("Climate Control");
+        computers.Computer.Exports[0].ShouldBe(2200L);
     }
 
     [Test]
@@ -574,7 +590,7 @@ public class ToolTests
             new ExportIcTool(new UseComputerCommand(new InMemoryComputerRepository())),
         });
 
-        var result = Call(tools, "export_ic", ("computer", "Lab Computer"));
+        var result = Call(tools, "export_ic", ("computer", "1189"));
         result.IsSuccess.ShouldBeFalse();
         result.Content.ShouldContain("'device'");
     }
@@ -590,7 +606,7 @@ public class ToolTests
             })),
         });
 
-        var result = Call(tools, "export_ic", ("computer", "Lab Computer"), ("device", "Climate Control"));
+        var result = Call(tools, "export_ic", ("computer", "1189"), ("device", "2200"));
         result.IsSuccess.ShouldBeFalse();
         result.Content.ShouldContain("IncorrectVariable");
     }

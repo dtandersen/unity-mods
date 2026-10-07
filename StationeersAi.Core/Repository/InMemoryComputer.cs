@@ -8,11 +8,11 @@ public sealed class InMemoryComputer : IComputer
 {
     public readonly List<string?> Writes = new List<string?>();
 
-    public readonly List<string?> Exports = new List<string?>();
+    public readonly List<long> Exports = new List<long>();
 
-    public readonly List<string?> Imports = new List<string?>();
+    public readonly List<long> Imports = new List<long>();
 
-    public readonly List<string?> Selections = new List<string?>();
+    public readonly List<long> Selections = new List<long>();
 
     /// <summary>The name write and read results report as the computer.</summary>
     public string Name { get; set; } = "Lab Computer";
@@ -43,19 +43,19 @@ public sealed class InMemoryComputer : IComputer
         return new IcReadResult(true, Name, EditorCode, null);
     }
 
-    public IcWriteResult Export(string? device)
+    public IcWriteResult Export(long device)
     {
         Exports.Add(device);
         return Result;
     }
 
-    public IcWriteResult Import(string? device)
+    public IcWriteResult Import(long device)
     {
         Imports.Add(device);
         return ImportResult;
     }
 
-    public IcWriteResult Select(string? device)
+    public IcWriteResult Select(long device)
     {
         Selections.Add(device);
         return SelectResult;

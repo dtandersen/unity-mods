@@ -172,20 +172,44 @@ public sealed class SageController
     [SageGet("/circuit-housings/{device}", "Read the code from an IC10 circuit housing.")]
     public SageResponse ReadHousing(string? device)
     {
-        return SageResponse.Ok(_commands.ReadHousing().Execute(device));
+        var deviceId = Long(device);
+        if (!deviceId.HasValue)
+        {
+            return SageResponse.Error(400, "device must be a thing id.");
+        }
+
+        return SageResponse.Ok(_commands.ReadHousing().Execute(deviceId.Value));
     }
 
     [SageGet("/computer/{computer}", "Read a computer's editor text and housing.")]
     public SageResponse ReadComputer(string? computer)
     {
-        return SageResponse.Ok(_commands.ReadComputer().Execute(computer));
+        var computerId = Long(computer);
+        if (!computerId.HasValue)
+        {
+            return SageResponse.Error(400, "computer must be a thing id.");
+        }
+
+        return SageResponse.Ok(_commands.ReadComputer().Execute(computerId.Value));
     }
 
     [SagePut("/computer/{computer}", "Set editor text, pick the housing, and burn.")]
     public SageResponse UseComputer(string? body, string? computer)
     {
+        var computerId = Long(computer);
+        if (!computerId.HasValue)
+        {
+            return SageResponse.Error(400, "computer must be a thing id.");
+        }
+
         var request = ParseBody(body);
-        var result = _commands.UseComputer().Execute(computer, request.Device, request.SourceCode, request.Export == true, request.Import == true);
+        var deviceId = Long(request.Device);
+        if (!deviceId.HasValue && !string.IsNullOrWhiteSpace(request.Device))
+        {
+            return SageResponse.Error(400, "device must be a thing id.");
+        }
+
+        var result = _commands.UseComputer().Execute(computerId.Value, deviceId, request.SourceCode, request.Export == true, request.Import == true);
         if (result == null || !result.Written)
         {
             return SageResponse.Error(404, result != null ? result.Error ?? "Export fell through." : "Export fell through.");

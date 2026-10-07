@@ -17,11 +17,14 @@ save-specific ids are baked in.
 ## What ic-burn.sh checks
 
 1. API answers (`GET /sage/`).
-2. Finds two housings and one computer on the same network.
-3. Burns program A (light on) to housing 1, reads the chip back, compares
+2. Finds two housings and one computer on the same network, and takes their
+   thing ids.
+3. Refuses a burn that names the housing by label, and a read that names the
+   computer by label (`400`).
+4. Burns program A (light on) to housing 1, reads the chip back, compares
    text and hash.
-4. Burns program B (light off) to housing 2, reads back, compares.
-5. Confirms the two housings hold different code.
+5. Burns program B (light off) to housing 2, reads back, compares.
+6. Confirms the two housings hold different code.
 
 A `Written:true` answer already means the server hash-checked the burn;
 the read-back compare proves it a second time.

@@ -66,11 +66,15 @@ public sealed class StationeersComputer : IComputer
         }
     }
 
-    public IcWriteResult Export(string? device)
+    public IcWriteResult Export(long device)
     {
         try
         {
             return _threads.RunSync(() => ExportInner(device));
+        }
+        catch (ThingNotFound notFound)
+        {
+            return new IcWriteResult(false, null, 0, notFound.Message);
         }
         catch (Exception ex)
         {
@@ -79,11 +83,15 @@ public sealed class StationeersComputer : IComputer
         }
     }
 
-    public IcWriteResult Import(string? device)
+    public IcWriteResult Import(long device)
     {
         try
         {
             return _threads.RunSync(() => ImportInner(device));
+        }
+        catch (ThingNotFound notFound)
+        {
+            return new IcWriteResult(false, null, 0, notFound.Message);
         }
         catch (Exception ex)
         {
@@ -92,11 +100,15 @@ public sealed class StationeersComputer : IComputer
         }
     }
 
-    public IcWriteResult Select(string? device)
+    public IcWriteResult Select(long device)
     {
         try
         {
             return _threads.RunSync(() => SelectInner(device));
+        }
+        catch (ThingNotFound notFound)
+        {
+            return new IcWriteResult(false, null, 0, notFound.Message);
         }
         catch (Exception ex)
         {
@@ -172,7 +184,7 @@ public sealed class StationeersComputer : IComputer
         }
     }
 
-    private IcWriteResult SelectInner(string? device)
+    private IcWriteResult SelectInner(long device)
     {
         var selection = MatchNetworked(_motherboard, device);
         if (selection.Error != null)
@@ -200,7 +212,7 @@ public sealed class StationeersComputer : IComputer
         return new IcWriteResult(true, name ?? "housing", 0, null);
     }
 
-    private IcWriteResult ImportInner(string? device)
+    private IcWriteResult ImportInner(long device)
     {
         var selection = MatchNetworked(_motherboard, device);
         if (selection.Error != null)
@@ -234,7 +246,7 @@ public sealed class StationeersComputer : IComputer
         return new IcWriteResult(true, _name, text.Split('\n').Length, null);
     }
 
-    private IcWriteResult ExportInner(string? device)
+    private IcWriteResult ExportInner(long device)
     {
         string text;
         try
@@ -306,9 +318,10 @@ public sealed class StationeersComputer : IComputer
     }
 
     /// <summary>
-    /// Matches <paramref name="device"/> inside the motherboard's holder
-    /// list: only housings on the computer's network. Carries the holder
-    /// index for the dropdown and an error when nothing matches.
+    /// Finds the holder carrying thing id <paramref name="device"/> inside
+    /// the motherboard's holder list: only housings on the computer's
+    /// network. Carries the holder index for the dropdown, and refuses when
+    /// no holder carries that id.
     /// </summary>
     private sealed class NetworkSelection
     {
@@ -317,7 +330,7 @@ public sealed class StationeersComputer : IComputer
         public IcWriteResult? Error;
     }
 
-    private NetworkSelection MatchNetworked(ProgrammableChipMotherboard motherboard, string? device)
+    private NetworkSelection MatchNetworked(ProgrammableChipMotherboard motherboard, long device)
     {
         var selection = new NetworkSelection();
         var holders = MotherboardHolders(motherboard);
@@ -343,26 +356,28 @@ public sealed class StationeersComputer : IComputer
             return selection;
         }
 
-        var matches = ThingMatching.Match(
-            networked,
-            housing => SafeName(housing),
-            housing => SafeId(housing),
-            device);
-        if (matches.Count == 0)
+        for (var index = 0; index < networked.Count; index++)
         {
-            selection.Error = new IcWriteResult(false, null, 0, $"Housing '{device}' not found on this computer's network. Available: {HousingNames(networked)}");
-            return selection;
+            var housing = networked[index];
+            long id;
+            try
+            {
+                id = housing.ReferenceId;
+            }
+            catch (Exception)
+            {
+                continue;
+            }
+
+            if (id == device)
+            {
+                selection.Index = holders.IndexOf(housing);
+                selection.Housing = housing;
+                return selection;
+            }
         }
 
-        if (matches.Count > 1)
-        {
-            selection.Error = new IcWriteResult(false, null, 0, $"Several housings match '{device}'.");
-            return selection;
-        }
-
-        selection.Index = holders.IndexOf(matches[0]);
-        selection.Housing = matches[0];
-        return selection;
+        throw new ThingNotFound("Housing", device, " on this computer's network", Described(networked));
     }
 
     /// <summary>The motherboard's dropdown, read by reflection; the game keeps it private.</summary>
@@ -424,19 +439,26 @@ public sealed class StationeersComputer : IComputer
         textMesh.GetType().GetProperty("text")?.SetValue(textMesh, title ?? string.Empty, null);
     }
 
-    private static string HousingNames(IReadOnlyList<CircuitHousing> housings)
+    /// <summary>The networked housings as <c>label #id</c>, so a missed burn shows what to retry.</summary>
+    private static string Described(IReadOnlyList<CircuitHousing> housings)
     {
-        var names = new List<string>();
+        var listed = new List<string>();
         foreach (var housing in housings)
         {
             var name = SafeName(housing);
-            if (!string.IsNullOrWhiteSpace(name) && !names.Contains(name))
+            if (string.IsNullOrWhiteSpace(name))
             {
-                names.Add(name);
+                continue;
+            }
+
+            var entry = $"{name} #{SafeId(housing)}";
+            if (!listed.Contains(entry))
+            {
+                listed.Add(entry);
             }
         }
 
-        return names.Count == 0 ? "none" : string.Join(", ", names.ToArray());
+        return listed.Count == 0 ? "none" : string.Join(", ", listed.ToArray());
     }
 
     private static ProgrammableChip? HousingChip(CircuitHousing housing)

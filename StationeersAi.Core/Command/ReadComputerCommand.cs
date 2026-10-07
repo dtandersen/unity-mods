@@ -13,7 +13,7 @@ public sealed class ReadComputerCommand
         _computers = computers;
     }
 
-    public ReadComputerResult Execute(string? computer)
+    public ReadComputerResult Execute(long computer)
     {
         var found = _computers.Find(computer);
         var target = found.Computer;

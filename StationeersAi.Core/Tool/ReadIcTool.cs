@@ -19,11 +19,11 @@ public sealed class ReadIcTool : ITool
 
     public ToolDefinition Definition { get; } = new ToolDefinition(
         "read_ic",
-        "Read the full text in a computer or laptop's IC editor, and optionally a housing's burned chip. Takes the computer, by label or thing id, with an optional housing device. Never writes.",
+        "Read the full text in a computer or laptop's IC editor, and optionally a housing's burned chip. Takes the computer's thing id, with an optional housing thing id. Never writes.",
         new[]
         {
-            new ToolParameter("computer", "The computer or laptop, by label or thing id."),
-            new ToolParameter("device", "The housing holding the chip, by label or thing id. Omit it to read only the editor.", false),
+            new ToolParameter("computer", "The computer or laptop, by thing id. Read it from search_devices."),
+            new ToolParameter("device", "The housing holding the chip, by thing id. Omit it to read only the editor.", false),
         });
 
     public ToolResult Execute(ToolArguments arguments)
@@ -34,7 +34,13 @@ public sealed class ReadIcTool : ITool
             return new ToolFailure("Missing required argument 'computer'.");
         }
 
-        var viewed = _computer.Execute(computer);
+        long computerId;
+        if (!ThingId.TryParse(computer, out computerId))
+        {
+            return new ToolFailure(ThingId.NotAThingId("computer", computer));
+        }
+
+        var viewed = _computer.Execute(computerId);
         if (viewed == null || viewed.Computer == null)
         {
             return new ToolFailure(viewed?.Error ?? "Computer not found.");
@@ -47,7 +53,13 @@ public sealed class ReadIcTool : ITool
         var device = arguments.Get("device");
         if (!string.IsNullOrWhiteSpace(device))
         {
-            var chip = _housing.Execute(device);
+            long deviceId;
+            if (!ThingId.TryParse(device, out deviceId))
+            {
+                return new ToolFailure(ThingId.NotAThingId("device", device));
+            }
+
+            var chip = _housing.Execute(deviceId);
             if (chip == null || !chip.Found)
             {
                 return new ToolFailure(chip?.Error ?? "Housing not found.");

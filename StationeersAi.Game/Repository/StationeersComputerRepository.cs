@@ -9,26 +9,28 @@ using StationeersAi.Repository;
 namespace StationeersAi.Repository;
 
 /// <summary>
-/// Finds the IC editor board a label or thing id names and builds one
-/// <see cref="StationeersComputer"/> for the single match. Reads Unity's
-/// objects on the main thread, so the computer it hands back already names
-/// one editor.
+/// Finds the live IC editor board carrying a thing id and builds one
+/// <see cref="StationeersComputer"/> for it. Reads Unity's objects on the
+/// main thread, so the computer it hands back already names one editor.
 /// </summary>
 public sealed class StationeersComputerRepository : IComputerRepository
 {
-    /// <summary>One IC editor board and the computer it belongs to.</summary>
+    /// <summary>One IC editor board, its label, and the ids that reach it.</summary>
     private sealed class Board
     {
-        public Board(ProgrammableChipMotherboard motherboard, string name, long computerId)
+        public Board(ProgrammableChipMotherboard motherboard, string name, long thingId, long computerId)
         {
             Motherboard = motherboard;
             Name = name;
+            ThingId = thingId;
             ComputerId = computerId;
         }
 
         public ProgrammableChipMotherboard Motherboard { get; }
 
         public string Name { get; }
+
+        public long ThingId { get; }
 
         public long ComputerId { get; }
     }
@@ -43,11 +45,15 @@ public sealed class StationeersComputerRepository : IComputerRepository
         _log = log;
     }
 
-    public ComputerLookup Find(string? computer)
+    public ComputerLookup Find(long computerId)
     {
         try
         {
-            return _threads.RunSync(() => FindInner(computer));
+            return _threads.RunSync(() => FindInner(computerId));
+        }
+        catch (ThingNotFound notFound)
+        {
+            return new ComputerLookup(null, notFound.Message);
         }
         catch (Exception ex)
         {
@@ -56,68 +62,21 @@ public sealed class StationeersComputerRepository : IComputerRepository
         }
     }
 
-    private ComputerLookup FindInner(string? computer)
+    private ComputerLookup FindInner(long computerId)
     {
-        var boards = Match(computer);
-        if (boards.Count == 0)
-        {
-            return new ComputerLookup(null, $"Computer '{computer}' not found. Available: {Names(All())}");
-        }
-
-        if (boards.Count > 1)
-        {
-            return new ComputerLookup(null, $"Several computers match '{computer}': {Names(boards)}");
-        }
-
-        var board = boards[0];
-        return new ComputerLookup(new StationeersComputer(board.Motherboard, board.Name, _threads, _log), null);
-    }
-
-    /// <summary>Finds IC editor boards by computer label, board label, or reference id.</summary>
-    private static IReadOnlyList<Board> Match(string? computer)
-    {
-        long thing;
-        if (computer is not null && !string.IsNullOrWhiteSpace(computer) && long.TryParse(computer.Trim(), out thing))
-        {
-            var matches = new List<Board>();
-            foreach (var board in All())
-            {
-                long reference;
-                try
-                {
-                    reference = board.Motherboard.ReferenceId;
-                }
-                catch (Exception)
-                {
-                    continue;
-                }
-
-                if (reference == thing || board.ComputerId == thing)
-                {
-                    matches.Add(board);
-                }
-            }
-
-            return matches;
-        }
-
-        return ThingMatching.Match(All(), board => board.Name, board => board.Motherboard.ReferenceId, computer);
-    }
-
-    private static string Names(IReadOnlyList<Board> boards)
-    {
-        var names = new List<string>();
+        var boards = All();
         foreach (var board in boards)
         {
-            if (!names.Contains(board.Name))
+            if (board.ThingId == computerId || (board.ComputerId != 0 && board.ComputerId == computerId))
             {
-                names.Add(board.Name);
+                return new ComputerLookup(new StationeersComputer(board.Motherboard, board.Name, _threads, _log), null);
             }
         }
 
-        return names.Count == 0 ? "none" : string.Join(", ", names.ToArray());
+        throw new ThingNotFound("Computer", computerId, null, Described(boards));
     }
 
+    /// <summary>The boards in the world, each labelled and numbered for a missed lookup.</summary>
     private static IReadOnlyList<Board> All()
     {
         var boards = new List<Board>();
@@ -126,6 +85,15 @@ public sealed class StationeersComputerRepository : IComputerRepository
             if (motherboard == null)
             {
                 continue;
+            }
+
+            long thingId = 0;
+            try
+            {
+                thingId = motherboard.ReferenceId;
+            }
+            catch (Exception)
+            {
             }
 
             string? computer = null;
@@ -149,9 +117,25 @@ public sealed class StationeersComputerRepository : IComputerRepository
             {
             }
 
-            boards.Add(new Board(motherboard, computer ?? own ?? "unnamed editor", computerId));
+            boards.Add(new Board(motherboard, computer ?? own ?? "unnamed editor", thingId, computerId));
         }
 
         return boards;
+    }
+
+    /// <summary>Boards as <c>label #id</c>, so a missed lookup shows what to retry.</summary>
+    private static string Described(IReadOnlyList<Board> boards)
+    {
+        var listed = new List<string>();
+        foreach (var board in boards)
+        {
+            var entry = board.ThingId != 0 ? $"{board.Name} #{board.ThingId}" : board.Name;
+            if (!listed.Contains(entry))
+            {
+                listed.Add(entry);
+            }
+        }
+
+        return listed.Count == 0 ? "none" : string.Join(", ", listed.ToArray());
     }
 }

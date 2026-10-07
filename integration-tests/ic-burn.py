@@ -55,20 +55,30 @@ _, devices = call("GET", "/sage/devices?q=")
 housings = [d for d in devices if d.get("Type") == "StructureCircuitHousing"]
 computers = [d for d in devices if d.get("Type") == "StructureComputer"]
 assert len(housings) >= 2 and computers, "need 1 computer + 2 housings"
-computer, h1, h2 = computers[0]["Name"], housings[0]["Name"], housings[1]["Name"]
-print("computer:", computer, "| housings:", h1, "/", h2)
+# Sage addresses devices by thing id; labels are for the printout.
+names = {d["Thing"]: d["Name"] for d in devices}
+computer, h1, h2 = computers[0]["Thing"], housings[0]["Thing"], housings[1]["Thing"]
+print("computer:", computer, names[computer], "| housings:", h1, names[h1], "/", h2, names[h2])
 
 
 def burn(housing, program):
-    status, res = call("PUT", "/sage/computer/%s" % urllib.parse.quote(computer),
-                       {"sourceCode": program, "device": housing, "export": True})
+    status, res = call("PUT", "/sage/computer/%s" % computer,
+                       {"sourceCode": program, "device": str(housing), "export": True})
     print(res)
     return status, res
 
 
 def readback(housing):
-    _, res = call("GET", "/sage/circuit-housings/%s" % urllib.parse.quote(housing))
+    _, res = call("GET", "/sage/circuit-housings/%s" % housing)
     return res.get("Code") or ""
+
+
+print("== labels are refused ==")
+status, res = call("PUT", "/sage/computer/%s" % computer,
+                   {"sourceCode": PROGRAM_A, "device": names[h1], "export": True})
+check("burn by housing label refused", status, 400)
+status, _ = call("GET", "/sage/computer/%s" % urllib.parse.quote(names[computer]))
+check("read by computer label refused", status, 400)
 
 
 print("== A -> %s ==" % h1)

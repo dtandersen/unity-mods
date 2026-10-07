@@ -47,14 +47,14 @@ public sealed class SageServerSteps
     [Given("the IC editor holds {string} on {string}")]
     public void GivenTheIcEditorHolds(string code, string computer)
     {
-        World.Computers.ResolveAs = computer;
+        World.Computer.Name = computer;
         World.Computer.EditorCode = code;
     }
 
     [Given("the housing holds {string} on {string}")]
     public void GivenTheHousingHolds(string code, string device)
     {
-        World.Housings.ResolveAs = device;
+        World.Housing.Name = device;
         World.Housing.ChipCode = code;
     }
 
@@ -89,6 +89,22 @@ public sealed class SageServerSteps
         var want = JToken.Parse(expected);
         JToken.DeepEquals(actual, want).ShouldBeTrue(
             "GET gave other JSON.\nActual: " + _response.Body + "\nWant: " + want);
+    }
+
+    [Then("the response status is {int}")]
+    public void ThenTheResponseStatusIs(int status)
+    {
+        _response.ShouldNotBeNull("no request ran");
+        _response.Status.ShouldBe(status, "server body: " + _response.Body);
+    }
+
+    [Then("the response reports {string}")]
+    public void ThenTheResponseReports(string message)
+    {
+        _response.ShouldNotBeNull("no request ran");
+        var reported = JToken.Parse(_response.Body)["error"];
+        reported.ShouldNotBeNull("server body: " + _response.Body);
+        reported.ToString().ShouldBe(message, "server body: " + _response.Body);
     }
 
     private static SageCommands CommandsFrom(WorldContext world)

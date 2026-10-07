@@ -84,7 +84,7 @@ Feature: Sage HTTP API
 
   Scenario: Circuit housing read
     Given the housing holds "alias a d0" on "Climate Control"
-    When I GET /sage/circuit-housings/Climate%20Control
+    When I GET /sage/circuit-housings/2200
     Then the response is:
       """
       {"Found":true,"Device":"Climate Control","Code":"alias a d0","Error":null}
@@ -93,11 +93,16 @@ Feature: Sage HTTP API
   Scenario: Computer read
     Given the IC editor holds "alias a d0" on "Lab Computer"
     And the computer points at "Climate Control"
-    When I GET /sage/computer/lab
+    When I GET /sage/computer/1189
     Then the response is:
       """
       {"Computer":"Lab Computer","Device":"Climate Control","SourceCode":"alias a d0","Error":null}
       """
+
+  Scenario: Computer read by label is refused
+    When I GET /sage/computer/lab
+    Then the response status is 400
+    And the response reports "computer must be a thing id."
 
   Scenario: World read
     Given a world
@@ -210,7 +215,7 @@ Feature: Sage HTTP API
       """
 
   Scenario: IC editor write
-    When I PUT /sage/computer/lab with:
+    When I PUT /sage/computer/1189 with:
       """
       {"sourceCode":"alias a d0"}
       """
@@ -220,9 +225,9 @@ Feature: Sage HTTP API
       """
 
   Scenario: IC export
-    When I PUT /sage/computer/lab with:
+    When I PUT /sage/computer/1189 with:
       """
-      {"device":"housing","export":true}
+      {"device":"2200","export":true}
       """
     Then the response is:
       """
@@ -230,9 +235,9 @@ Feature: Sage HTTP API
       """
 
   Scenario: IC import
-    When I PUT /sage/computer/lab with:
+    When I PUT /sage/computer/1189 with:
       """
-      {"device":"housing","import":true}
+      {"device":"2200","import":true}
       """
     Then the response is:
       """
@@ -240,11 +245,19 @@ Feature: Sage HTTP API
       """
 
   Scenario: IC select housing
-    When I PUT /sage/computer/lab with:
+    When I PUT /sage/computer/1189 with:
       """
-      {"device":"housing"}
+      {"device":"2200"}
       """
     Then the response is:
       """
       {"Written":true,"Device":"Light Controller","Lines":0,"Error":null}
       """
+
+  Scenario: IC burn names a housing by label
+    When I PUT /sage/computer/1189 with:
+      """
+      {"device":"Climate Control","export":true}
+      """
+    Then the response status is 400
+    And the response reports "device must be a thing id."

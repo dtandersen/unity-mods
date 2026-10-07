@@ -19,10 +19,10 @@ public sealed class WriteIcTool : ITool
 
     public ToolDefinition Definition { get; } = new ToolDefinition(
         "write_ic",
-        "Place MIPS source in a computer or laptop's IC editor so the stationeer can review and Export it. Takes the computer, by label or thing id, and the full code. Never writes to housings or chips.",
+        "Place MIPS source in a computer or laptop's IC editor so the stationeer can review and Export it. Takes the computer's thing id and the full code. Never writes to housings or chips.",
         new[]
         {
-            new ToolParameter("computer", "The computer or laptop, by label or thing id."),
+            new ToolParameter("computer", "The computer or laptop, by thing id. Read it from search_devices."),
             new ToolParameter("code", "The full MIPS source for its editor, 127 lines max."),
         });
 
@@ -32,6 +32,12 @@ public sealed class WriteIcTool : ITool
         if (string.IsNullOrWhiteSpace(computer))
         {
             return new ToolFailure("Missing required argument 'computer'.");
+        }
+
+        long computerId;
+        if (!ThingId.TryParse(computer, out computerId))
+        {
+            return new ToolFailure(ThingId.NotAThingId("computer", computer));
         }
 
         var code = arguments.Get("code");
@@ -46,7 +52,7 @@ public sealed class WriteIcTool : ITool
             return new ToolFailure($"Code is {lines} lines; the editor holds {MaxCodeLines}.");
         }
 
-        var result = _command.Execute(computer, null, code, false, false);
+        var result = _command.Execute(computerId, null, code, false, false);
         if (result == null || !result.Written)
         {
             return new ToolFailure(result?.Error ?? "Computer not found.");
@@ -56,5 +62,4 @@ public sealed class WriteIcTool : ITool
             result,
             $"Wrote {result.Lines} {(result.Lines == 1 ? "line" : "lines")} to {result.Device}. The stationeer can review it in the editor and press Export.");
     }
-
 }

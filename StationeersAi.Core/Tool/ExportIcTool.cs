@@ -17,11 +17,11 @@ public sealed class ExportIcTool : ITool
 
     public ToolDefinition Definition { get; } = new ToolDefinition(
         "export_ic",
-        "Copy a computer's editor text onto a housing chip and verify the burn by code hash. Takes the computer and the housing, each by label or thing id. Only ask for this when the stationeer agrees.",
+        "Copy a computer's editor text onto a housing chip and verify the burn by code hash. Takes the computer and the housing, each by thing id. Only ask for this when the stationeer agrees.",
         new[]
         {
-            new ToolParameter("computer", "The computer or laptop holding the code, by label or thing id."),
-            new ToolParameter("device", "The housing to burn, by label or thing id."),
+            new ToolParameter("computer", "The computer or laptop holding the code, by thing id. Read it from search_devices."),
+            new ToolParameter("device", "The housing to burn, by thing id. Read it from search_devices."),
             new ToolParameter("import", "Pull the housing chip into the editor instead of burning. Defaults to false.", false),
         });
 
@@ -33,14 +33,26 @@ public sealed class ExportIcTool : ITool
             return new ToolFailure("Missing required argument 'computer'.");
         }
 
+        long computerId;
+        if (!ThingId.TryParse(computer, out computerId))
+        {
+            return new ToolFailure(ThingId.NotAThingId("computer", computer));
+        }
+
         var device = arguments.Get("device");
         if (string.IsNullOrWhiteSpace(device))
         {
             return new ToolFailure("Missing required argument 'device'.");
         }
 
+        long deviceId;
+        if (!ThingId.TryParse(device, out deviceId))
+        {
+            return new ToolFailure(ThingId.NotAThingId("device", device));
+        }
+
         var import = arguments.Get("import");
-        var result = _command.Execute(computer, device, null, !Truthy(import), Truthy(import));
+        var result = _command.Execute(computerId, deviceId, null, !Truthy(import), Truthy(import));
         if (result == null || !result.Written)
         {
             return new ToolFailure(result?.Error ?? "Export failed.");
@@ -50,7 +62,7 @@ public sealed class ExportIcTool : ITool
         {
             return new ToolSuccess<IcWriteResult>(
                 result,
-                $"Pulled {result.Lines} {(result.Lines == 1 ? "line" : "lines")} from {device} into {result.Device}.");
+                $"Pulled {result.Lines} {(result.Lines == 1 ? "line" : "lines")} from housing {deviceId} into {result.Device}.");
         }
 
         return new ToolSuccess<IcWriteResult>(

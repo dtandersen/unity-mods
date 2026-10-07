@@ -9,9 +9,9 @@ using StationeersAi.Repository;
 namespace StationeersAi.Repository;
 
 /// <summary>
-/// Finds the live housing a label or thing id names and builds one
-/// <see cref="StationeersHousing"/> for the single match. Reads Unity's
-/// objects on the main thread.
+/// Finds the live housing carrying a thing id and builds one
+/// <see cref="StationeersHousing"/> for it. Reads Unity's objects on the main
+/// thread.
 /// </summary>
 public sealed class StationeersHousingRepository : IHousingRepository
 {
@@ -25,11 +25,15 @@ public sealed class StationeersHousingRepository : IHousingRepository
         _log = log;
     }
 
-    public HousingLookup Find(string? device)
+    public HousingLookup Find(long thingId)
     {
         try
         {
-            return _threads.RunSync(() => FindInner(device));
+            return _threads.RunSync(() => FindInner(thingId));
+        }
+        catch (ThingNotFound notFound)
+        {
+            return new HousingLookup(null, notFound.Message);
         }
         catch (Exception ex)
         {
@@ -38,47 +42,66 @@ public sealed class StationeersHousingRepository : IHousingRepository
         }
     }
 
-    private HousingLookup FindInner(string? device)
+    private HousingLookup FindInner(long thingId)
     {
-        var housings = ThingMatching.Match(
-            UnityEngine.Object.FindObjectsOfType<CircuitHousing>(),
-            housing => Name(housing),
-            housing => Id(housing),
-            device);
-        if (housings.Count == 0)
+        var housings = All();
+        foreach (var housing in housings)
         {
-            return new HousingLookup(null, $"Housing '{device}' not found.");
+            long id;
+            try
+            {
+                id = housing.ReferenceId;
+            }
+            catch (Exception)
+            {
+                continue;
+            }
+
+            if (id == thingId)
+            {
+                return new HousingLookup(new StationeersHousing(housing, _threads, _log), null);
+            }
         }
 
-        if (housings.Count > 1)
-        {
-            return new HousingLookup(null, $"Several housings match '{device}'.");
-        }
-
-        return new HousingLookup(new StationeersHousing(housings[0], _threads, _log), null);
+        throw new ThingNotFound("Housing", thingId, null, Described(housings));
     }
 
-    private static string? Name(CircuitHousing housing)
+    private static List<CircuitHousing> All()
     {
-        try
+        var housings = new List<CircuitHousing>();
+        foreach (var housing in UnityEngine.Object.FindObjectsOfType<CircuitHousing>())
         {
-            return housing.DisplayName;
+            if (housing != null)
+            {
+                housings.Add(housing);
+            }
         }
-        catch (Exception)
-        {
-            return null;
-        }
+
+        return housings;
     }
 
-    private static long Id(CircuitHousing housing)
+    /// <summary>The housings in the world, each labelled and numbered for a missed lookup.</summary>
+    private static string Described(IReadOnlyList<CircuitHousing> housings)
     {
-        try
+        var listed = new List<string>();
+        foreach (var housing in housings)
         {
-            return housing.ReferenceId;
+            string entry;
+            try
+            {
+                entry = $"{housing.DisplayName} #{housing.ReferenceId}";
+            }
+            catch (Exception)
+            {
+                continue;
+            }
+
+            if (!listed.Contains(entry))
+            {
+                listed.Add(entry);
+            }
         }
-        catch (Exception)
-        {
-            return 0;
-        }
+
+        return listed.Count == 0 ? "none" : string.Join(", ", listed.ToArray());
     }
 }

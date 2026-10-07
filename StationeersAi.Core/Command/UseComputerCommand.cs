@@ -5,7 +5,7 @@ namespace StationeersAi.Command;
 
 /// <summary>
 /// Domain operation: stage editor text, pull chip code, and burn it back.
-/// Resolves the named computer first, so every action works on that one
+/// Resolves the computer by thing id first, so every action works on that one
 /// machine. Writes <paramref name="sourceCode"/> to the screen when present,
 /// pulls the housing chip into the editor when <paramref name="import"/> is
 /// true, then exports only when <paramref name="export"/> is true. Mirrors
@@ -21,7 +21,7 @@ public sealed class UseComputerCommand
         _computers = computers;
     }
 
-    public IcWriteResult Execute(string? computer, string? device, string? sourceCode, bool export, bool import)
+    public IcWriteResult Execute(long computer, long? device, string? sourceCode, bool export, bool import)
     {
         var found = _computers.Find(computer);
         var target = found.Computer;
@@ -42,12 +42,12 @@ public sealed class UseComputerCommand
 
         if (import)
         {
-            if (string.IsNullOrWhiteSpace(device))
+            if (!device.HasValue)
             {
                 return new IcWriteResult(false, null, 0, "device is required to import.");
             }
 
-            staged = target.Import(device);
+            staged = target.Import(device.Value);
             if (staged == null || !staged.Written)
             {
                 return staged ?? new IcWriteResult(false, null, 0, "Import fell through.");
@@ -56,17 +56,17 @@ public sealed class UseComputerCommand
 
         if (export)
         {
-            if (string.IsNullOrWhiteSpace(device))
+            if (!device.HasValue)
             {
                 return new IcWriteResult(false, null, 0, "device is required to export.");
             }
 
-            return target.Export(device);
+            return target.Export(device.Value);
         }
 
-        if (staged == null && device != null)
+        if (staged == null && device.HasValue)
         {
-            return target.Select(device);
+            return target.Select(device.Value);
         }
 
         return staged ?? new IcWriteResult(false, null, 0, "Nothing to do: set sourceCode, device, import, export, or a mix.");

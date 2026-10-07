@@ -7,7 +7,7 @@ Feature: Read IC tool
 
   Scenario: Read the editor
     Given the editor holds "yield"
-    When I read computer "Lab Computer"
+    When I read computer "1189"
     Then the tool succeeds
     And the tool result is:
       """
@@ -17,32 +17,27 @@ Feature: Read IC tool
 
   Scenario: Empty editor
     Given the editor is empty
-    When I read computer "Lab Computer"
+    When I read computer "1189"
     Then the tool succeeds
     And the tool result is:
       """
       (editor is empty)
       """
 
-  Scenario: Read by thing id
+  Scenario: Read by label is refused
     Given the editor holds "yield"
-    When I read computer "1189"
-    Then the tool succeeds
-    And the tool result is:
-      """
-      yield
-      Code hash: 6c96f2ae
-      """
+    When I read computer "Lab Computer"
+    Then the tool fails with "'computer' is not a thing id: 'Lab Computer'. Read it from search_devices."
 
   Scenario: Unknown computer
     Given no computer is found
-    When I read computer "Nope"
-    Then the tool fails with "Computer 'Nope' not found."
+    When I read computer "999"
+    Then the tool fails with "Computer 999 not found."
 
   Scenario: Read the housing chip
     Given the editor holds "yield"
     And the housing holds "move r0 1" on "Climate Control"
-    When I read computer "Lab Computer" housing "Climate Control"
+    When I read computer "1189" housing "2200"
     Then the tool succeeds
     And the tool result is:
       """
@@ -57,5 +52,5 @@ Feature: Read IC tool
   Scenario: Unknown housing
     Given the editor holds "yield"
     And no housing is found
-    When I read computer "Lab Computer" housing "Nope"
-    Then the tool fails with "Housing 'Nope' not found."
+    When I read computer "1189" housing "999"
+    Then the tool fails with "Housing 999 not found."

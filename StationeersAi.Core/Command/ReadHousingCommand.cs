@@ -13,7 +13,7 @@ public sealed class ReadHousingCommand
         _housings = housings;
     }
 
-    public IcReadResult Execute(string? device)
+    public IcReadResult Execute(long device)
     {
         var found = _housings.Find(device);
         var target = found.Housing;
