@@ -25,11 +25,11 @@ public sealed class StationeersMipsReference : IMipsReference
         _log = log;
     }
 
-    public IReadOnlyList<MipsInstruction>? Instructions => Read();
+    public IReadOnlyList<Instruction>? Instructions => Read();
 
-    private IReadOnlyList<MipsInstruction> Read()
+    private IReadOnlyList<Instruction> Read()
     {
-        var instructions = new List<MipsInstruction>();
+        var instructions = new List<Instruction>();
         foreach (ScriptCommand command in Enum.GetValues(typeof(ScriptCommand)))
         {
             try
@@ -39,7 +39,7 @@ public sealed class StationeersMipsReference : IMipsReference
                     continue;
                 }
 
-                instructions.Add(new MipsInstruction(
+                instructions.Add(new Instruction(
                     command.ToString(),
                     ProgrammableChip.StripColorTags(ProgrammableChip.GetCommandExample(command)),
                     ProgrammableChip.GetCommandDescription(command)));

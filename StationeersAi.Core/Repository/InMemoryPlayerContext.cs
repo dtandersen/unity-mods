@@ -10,7 +10,7 @@ public sealed class InMemoryPlayerContext : IPlayerContext
 
     public string? Name { get; set; }
 
-    public PlayerStatus? Status { get; set; }
+    public Player? Status { get; set; }
 
     public IReadOnlyList<ItemStack> Inventory => _inventory;
 

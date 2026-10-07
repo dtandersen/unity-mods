@@ -50,7 +50,7 @@ public sealed class ThingSearchSteps
     public void GivenIFace(string degrees)
     {
         var status = World.Player.Status;
-        World.Player.Status = new PlayerStatus(
+        World.Player.Status = new Player(
             status != null ? status.X : 0,
             status != null ? status.Y : 0,
             status != null ? status.Z : 0,

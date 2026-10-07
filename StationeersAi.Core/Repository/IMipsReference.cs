@@ -7,5 +7,5 @@ namespace StationeersAi.Repository;
 public interface IMipsReference
 {
     /// <summary>Every known instruction, sorted by name.</summary>
-    IReadOnlyList<MipsInstruction>? Instructions { get; }
+    IReadOnlyList<Instruction>? Instructions { get; }
 }

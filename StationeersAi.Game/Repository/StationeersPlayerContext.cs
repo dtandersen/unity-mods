@@ -32,7 +32,7 @@ public sealed class StationeersPlayerContext : IPlayerContext
 
     public string? Name => Read(h => h == null ? null : PlayerName(h), (string?)null);
 
-    public PlayerStatus? Status => Read(h => h == null ? null : PlayerStatus(h), (PlayerStatus?)null);
+    public Player? Status => Read(h => h == null ? null : PlayerStatus(h), (Player?)null);
 
     public IReadOnlyList<ItemStack> Inventory => Read(ReadInventory, new ItemStack[0]);
 
@@ -214,10 +214,10 @@ public sealed class StationeersPlayerContext : IPlayerContext
         return "Engineer";
     }
 
-    private static PlayerStatus PlayerStatus(Human human)
+    private static Player PlayerStatus(Human human)
     {
         var position = SafePosition(human);
-        return new Entity.PlayerStatus(position.x, position.y, position.z, WorldName(), null, RoomOf(human), FacingOf(human));
+        return new Entity.Player(position.x, position.y, position.z, WorldName(), null, RoomOf(human), FacingOf(human));
     }
 
     /// <summary>Compass heading in degrees (0 north, 90 east), or null.</summary>

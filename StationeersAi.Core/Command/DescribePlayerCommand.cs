@@ -13,7 +13,7 @@ public sealed class DescribePlayerCommand
         _player = player;
     }
 
-    public PlayerStatus? Execute()
+    public Player? Execute()
     {
         return _player.Status;
     }

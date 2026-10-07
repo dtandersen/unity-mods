@@ -13,7 +13,7 @@ public interface IPlayerContext
     string? Name { get; }
 
     /// <summary>The player's status, or null when unavailable.</summary>
-    PlayerStatus? Status { get; }
+    Player? Status { get; }
 
     /// <summary>The items the player is carrying (hands, suit, backpack...).</summary>
     IReadOnlyList<ItemStack> Inventory { get; }

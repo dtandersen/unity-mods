@@ -87,7 +87,7 @@ public sealed class DatabaseSteps
     [Given("my position is {string}, {string}, {string} on {string}")]
     public void GivenMyPositionIs(string x, string y, string z, string world)
     {
-        Hooks.GetWorld(_context).Player.Status = new PlayerStatus(
+        Hooks.GetWorld(_context).Player.Status = new Player(
             float.Parse(x, CultureInfo.InvariantCulture),
             float.Parse(y, CultureInfo.InvariantCulture),
             float.Parse(z, CultureInfo.InvariantCulture),

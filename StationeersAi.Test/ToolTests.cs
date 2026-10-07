@@ -164,7 +164,7 @@ public class ToolTests
     {
         var player = new InMemoryPlayerContext
         {
-            Status = new PlayerStatus(1.5f, 2.25f, -3f, "Europa", null, 5, null),
+            Status = new Player(1.5f, 2.25f, -3f, "Europa", null, 5, null),
         };
 
         var result = Call(Tools(player, new InMemoryWorldContext(), new InMemoryIcDevices(), new InMemoryMipsReference()), "describe_player");
@@ -303,8 +303,8 @@ public class ToolTests
     public void List_instructions_lists_names_on_blank()
     {
         var mips = new InMemoryMipsReference();
-        mips.Instructions.Add(new MipsInstruction("l", "l r? device var", "Loads a value."));
-        mips.Instructions.Add(new MipsInstruction("yield", "yield", "Pauses the script."));
+        mips.Instructions.Add(new Instruction("l", "l r? device var", "Loads a value."));
+        mips.Instructions.Add(new Instruction("yield", "yield", "Pauses the script."));
 
         var result = Call(
             Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcDevices(), mips),
@@ -318,7 +318,7 @@ public class ToolTests
     public void List_instructions_describes_one_instruction()
     {
         var mips = new InMemoryMipsReference();
-        mips.Instructions.Add(new MipsInstruction("l", "l r? device var", "Loads a value."));
+        mips.Instructions.Add(new Instruction("l", "l r? device var", "Loads a value."));
 
         var result = Call(
             Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcDevices(), mips),

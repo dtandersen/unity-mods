@@ -6,7 +6,7 @@ namespace StationeersAi.Repository;
 /// <summary>In-memory MIPS reference. Used by tests.</summary>
 public sealed class InMemoryMipsReference : IMipsReference
 {
-    public List<MipsInstruction> Instructions { get; } = new List<MipsInstruction>();
+    public List<Instruction> Instructions { get; } = new List<Instruction>();
 
-    IReadOnlyList<MipsInstruction>? IMipsReference.Instructions => Instructions;
+    IReadOnlyList<Instruction>? IMipsReference.Instructions => Instructions;
 }

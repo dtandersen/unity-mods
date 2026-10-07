@@ -77,7 +77,7 @@ public sealed class SearchThingsTool : ITool
             $"\nShowing {page.Length} of {total}.");
     }
 
-    private static string Bearing(ThingInfo thing, OriginPoint? origin, double? facing)
+    private static string Bearing(ThingInfo thing, Point? origin, double? facing)
     {
         if (origin == null || !facing.HasValue)
         {
@@ -106,7 +106,7 @@ public sealed class SearchThingsTool : ITool
         return rounded == 0 ? "0" : (rounded > 0 ? "+" : string.Empty) + rounded;
     }
 
-    private static double? Distance(ThingInfo thing, OriginPoint? origin)
+    private static double? Distance(ThingInfo thing, Point? origin)
     {
         if (origin == null)
         {
@@ -119,7 +119,7 @@ public sealed class SearchThingsTool : ITool
         return Math.Sqrt(dx * dx + dy * dy + dz * dz);
     }
 
-    private static (bool Parsed, OriginPoint? Value) ParseOrigin(string? value)
+    private static (bool Parsed, Point? Value) ParseOrigin(string? value)
     {
         if (value is null || string.IsNullOrWhiteSpace(value))
         {
@@ -141,7 +141,7 @@ public sealed class SearchThingsTool : ITool
             }
         }
 
-        return (true, new OriginPoint(numbers[0], numbers[1], numbers[2]));
+        return (true, new Point(numbers[0], numbers[1], numbers[2]));
     }
 
     private static (bool Parsed, double? Value, string? Error) ParseDistance(string? value)

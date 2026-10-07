@@ -7,4 +7,4 @@ namespace StationeersAi.Entity;
 /// carries a short human-readable summary (suit, health, hunger, atmosphere)
 /// when the game exposes it, or null.
 /// </summary>
-public sealed record PlayerStatus(float X, float Y, float Z, string? World, string? Details, long? RoomId, double? FacingYaw);
+public sealed record Player(float X, float Y, float Z, string? World, string? Details, long? RoomId, double? FacingYaw);

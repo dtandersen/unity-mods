@@ -42,13 +42,13 @@ public sealed class RoomToolsSteps
     [Given("I stand in room {int}")]
     public void GivenIStandInRoom(int room)
     {
-        World.Player.Status = new PlayerStatus(0, 0, 0, "world", null, room, null);
+        World.Player.Status = new Player(0, 0, 0, "world", null, room, null);
     }
 
     [Given("I stand outside")]
     public void GivenIStandOutside()
     {
-        World.Player.Status = new PlayerStatus(0, 0, 0, "world", null, null, null);
+        World.Player.Status = new Player(0, 0, 0, "world", null, null, null);
     }
 
     [When("I call the {string} tool with room {string}")]

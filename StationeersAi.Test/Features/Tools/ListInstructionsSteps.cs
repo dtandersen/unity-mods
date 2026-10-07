@@ -21,8 +21,8 @@ public sealed class ListInstructionsSteps
     [Given("the MIPS reference knows {string} and {string}")]
     public void GivenTheMipsReferenceKnows(string first, string second)
     {
-        World.Mips.Instructions.Add(new MipsInstruction(first, $"{first} r? device var", $"Does {first}."));
-        World.Mips.Instructions.Add(new MipsInstruction(second, second, $"Does {second}."));
+        World.Mips.Instructions.Add(new Instruction(first, $"{first} r? device var", $"Does {first}."));
+        World.Mips.Instructions.Add(new Instruction(second, second, $"Does {second}."));
     }
 
     [When("I describe the instruction {string}")]

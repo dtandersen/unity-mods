@@ -10,7 +10,7 @@ public sealed class InMemoryThingCatalog : IThingCatalog
 {
     public List<ThingInfo> Things { get; } = new List<ThingInfo>();
 
-    public IReadOnlyList<ThingInfo> Search(string? query, OriginPoint? origin, double? maxDistanceM)
+    public IReadOnlyList<ThingInfo> Search(string? query, Point? origin, double? maxDistanceM)
     {
         return Things
             .Where(thing =>
@@ -21,7 +21,7 @@ public sealed class InMemoryThingCatalog : IThingCatalog
             .ToArray();
     }
 
-    private static double Distance(ThingInfo thing, OriginPoint origin)
+    private static double Distance(ThingInfo thing, Point origin)
     {
         var dx = thing.X - origin.X;
         var dy = thing.Y - origin.Y;

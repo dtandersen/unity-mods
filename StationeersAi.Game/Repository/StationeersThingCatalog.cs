@@ -30,7 +30,7 @@ public sealed class StationeersThingCatalog : IThingCatalog
         _log = log;
     }
 
-    public IReadOnlyList<ThingInfo> Search(string? query, OriginPoint? origin, double? maxDistanceM)
+    public IReadOnlyList<ThingInfo> Search(string? query, Point? origin, double? maxDistanceM)
     {
         try
         {
@@ -43,7 +43,7 @@ public sealed class StationeersThingCatalog : IThingCatalog
         }
     }
 
-    private static IReadOnlyList<ThingInfo> SearchInner(string? query, OriginPoint? origin, double? maxDistanceM)
+    private static IReadOnlyList<ThingInfo> SearchInner(string? query, Point? origin, double? maxDistanceM)
     {
         var originVector = origin != null
             ? new Vector3((float)origin.X, (float)origin.Y, (float)origin.Z)
