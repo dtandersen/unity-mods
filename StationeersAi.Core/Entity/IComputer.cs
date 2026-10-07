@@ -10,8 +10,12 @@ namespace StationeersAi.Entity;
 /// </summary>
 public interface IComputer
 {
-    /// <summary>Writes code to the screen. Never returns null.</summary>
-    IcWriteResult Write(string code);
+    /// <summary>
+    /// Writes code to the screen, and only while the chip under the dropdown
+    /// still hashes to <paramref name="chipHash"/>. Refuses the write when the
+    /// dropdown points at nothing, or at another program. Never returns null.
+    /// </summary>
+    IcWriteResult Write(string code, string chipHash);
 
     /// <summary>Reads the screen text. Never returns null.</summary>
     IcReadResult Read();
@@ -25,6 +29,9 @@ public interface IComputer
     /// <summary>Points the dropdown at housing <paramref name="device"/>. Never returns null.</summary>
     IcWriteResult Select(long device);
 
-    /// <summary>Reads the housing the dropdown points at. Never returns null.</summary>
-    ReadComputerResult Selected();
+    /// <summary>
+    /// Reads the housing under the dropdown and the program burned on its
+    /// chip. Never returns null.
+    /// </summary>
+    IcReadResult Selected();
 }

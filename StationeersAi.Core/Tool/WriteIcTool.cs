@@ -19,10 +19,11 @@ public sealed class WriteIcTool : ITool
 
     public ToolDefinition Definition { get; } = new ToolDefinition(
         "write_ic",
-        "Place MIPS source in a computer or laptop's IC editor so the stationeer can review and Export it. Takes the computer's thing id and the full code. Never writes to housings or chips.",
+        "Place MIPS source in a computer or laptop's IC editor so the stationeer can review and Export it. Takes the computer's thing id, the hash of the chip now under that computer's dropdown, and the full code. The write refuses when the hash is not the chip in front of the editor, so a stale or wrong selection cannot lose a program. Never writes to housings or chips.",
         new[]
         {
             new ToolParameter("computer", "The computer or laptop, by thing id. Read it from search_devices."),
+            new ToolParameter("hash", "The code hash of the chip under the dropdown. Read it from read_ic."),
             new ToolParameter("code", "The full MIPS source for its editor, 127 lines max."),
         });
 
@@ -40,6 +41,12 @@ public sealed class WriteIcTool : ITool
             return new ToolFailure(ThingId.NotAThingId("computer", computer));
         }
 
+        var chipHash = arguments.Get("hash");
+        if (chipHash is null || string.IsNullOrWhiteSpace(chipHash))
+        {
+            return new ToolFailure("Missing required argument 'hash'. Read the chip with read_ic and pass its hash.");
+        }
+
         var code = arguments.Get("code");
         if (code == null)
         {
@@ -52,7 +59,7 @@ public sealed class WriteIcTool : ITool
             return new ToolFailure($"Code is {lines} lines; the editor holds {MaxCodeLines}.");
         }
 
-        var result = _command.Execute(computerId, null, code, false, false);
+        var result = _command.Execute(computerId, null, code, chipHash.Trim(), false, false);
         if (result == null || !result.Written)
         {
             return new ToolFailure(result?.Error ?? "Computer not found.");

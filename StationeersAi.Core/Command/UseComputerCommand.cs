@@ -7,11 +7,12 @@ namespace StationeersAi.Command;
 /// <summary>
 /// Domain operation: stage editor text, pull chip code, and burn it back.
 /// Resolves the computer by thing id first, so every action works on that one
-/// machine. Writes <paramref name="sourceCode"/> to the screen when present,
-/// pulls the housing chip into the editor when <paramref name="import"/> is
-/// true, then exports only when <paramref name="export"/> is true. Mirrors
-/// the monitor flow: source sets the screen, device picks the housing,
-/// export and import move the text.
+/// machine. Writes <paramref name="sourceCode"/> to the screen only after the
+/// chip under the dropdown hashes to <paramref name="chipHash"/>, pulls the
+/// housing chip into the editor when <paramref name="import"/> is true, then
+/// exports only when <paramref name="export"/> is true. Mirrors the monitor
+/// flow: the hash names the chip you mean, source sets the screen, device
+/// picks the housing, export and import move the text.
 /// </summary>
 public sealed class UseComputerCommand
 {
@@ -22,7 +23,7 @@ public sealed class UseComputerCommand
         _devices = devices;
     }
 
-    public IcWriteResult Execute(long computer, long? device, string? sourceCode, bool export, bool import)
+    public IcWriteResult Execute(long computer, long? device, string? sourceCode, string? chipHash, bool export, bool import)
     {
         IComputer target;
         try
@@ -41,7 +42,12 @@ public sealed class UseComputerCommand
         IcWriteResult? staged = null;
         if (sourceCode != null)
         {
-            staged = target.Write(sourceCode);
+            if (chipHash is null || string.IsNullOrWhiteSpace(chipHash))
+            {
+                return new IcWriteResult(false, null, 0, "A chip hash is required to write: name the hash of the chip under the dropdown.");
+            }
+
+            staged = target.Write(sourceCode, chipHash.Trim());
             if (staged == null || !staged.Written)
             {
                 return staged ?? new IcWriteResult(false, null, 0, "Write fell through.");

@@ -233,6 +233,7 @@ public class ToolTests
             Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), computers, new InMemoryMipsReference()),
             "write_ic",
             ("computer", "1189"),
+            ("hash", "811c9dc5"),
             ("code", "alias Device d0\n yield"));
 
         result.IsSuccess.ShouldBeTrue();
@@ -250,6 +251,7 @@ public class ToolTests
             Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), computers, new InMemoryMipsReference()),
             "write_ic",
             ("computer", "1189"),
+            ("hash", "811c9dc5"),
             ("code", "yield"));
 
         result.IsSuccess.ShouldBeTrue();
@@ -273,6 +275,7 @@ public class ToolTests
             Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), computers, new InMemoryMipsReference()),
             "write_ic",
             ("computer", "999"),
+            ("hash", "811c9dc5"),
             ("code", "yield"));
 
         result.IsSuccess.ShouldBeFalse();
@@ -288,6 +291,7 @@ public class ToolTests
             Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), computers, new InMemoryMipsReference()),
             "write_ic",
             ("computer", "Lab Computer"),
+            ("hash", "811c9dc5"),
             ("code", "yield"));
 
         result.IsSuccess.ShouldBeFalse();
@@ -559,9 +563,25 @@ public class ToolTests
         });
         var code = string.Join("\n", System.Linq.Enumerable.Repeat("yield", WriteIcTool.MaxCodeLines + 1));
 
-        var result = Call(tools, "write_ic", ("computer", "1189"), ("code", code));
+        var result = Call(tools, "write_ic", ("computer", "1189"), ("hash", "811c9dc5"), ("code", code));
         result.IsSuccess.ShouldBeFalse();
         result.Content.ShouldContain("128 lines");
+        computers.Computer.Writes.Count.ShouldBe(0);
+    }
+
+    [Test]
+    public void Write_ic_refuses_a_stale_chip_hash()
+    {
+        var computers = new InMemoryIcDevices();
+        computers.Computer.PointedChipCode = "yield";
+        var tools = new ToolHandler(new ITool[]
+        {
+            new WriteIcTool(new UseComputerCommand(computers)),
+        });
+
+        var result = Call(tools, "write_ic", ("computer", "1189"), ("hash", "811c9dc5"), ("code", "yield"));
+        result.IsSuccess.ShouldBeFalse();
+        result.Content.ShouldContain("holds 6c96f2ae");
         computers.Computer.Writes.Count.ShouldBe(0);
     }
 

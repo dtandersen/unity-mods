@@ -6,12 +6,10 @@ using StationeersAi.Game;
 using Logger = StationeersAi.Core.Logger;
 using Assets.Scripts.Objects.Electrical;
 using Assets.Scripts.Objects.Motherboards;
-using StationeersAi.Entity;
 using StationeersAi.Formatting;
 using StationeersAi.Repository;
-using IComputer = StationeersAi.Entity.IComputer;
 
-namespace StationeersAi.Repository;
+namespace StationeersAi.Entity;
 
 /// <summary>
 /// One live IC computer, built by <see cref="StationeersIcDevices"/>
@@ -41,11 +39,11 @@ public sealed class StationeersComputer : IComputer
         _log = log;
     }
 
-    public IcWriteResult Write(string code)
+    public IcWriteResult Write(string code, string chipHash)
     {
         try
         {
-            return _threads.RunSync(() => WriteInner(code ?? string.Empty));
+            return _threads.RunSync(() => WriteInner(code ?? string.Empty, chipHash));
         }
         catch (Exception ex)
         {
@@ -118,7 +116,7 @@ public sealed class StationeersComputer : IComputer
         }
     }
 
-    public ReadComputerResult Selected()
+    public IcReadResult Selected()
     {
         try
         {
@@ -127,12 +125,24 @@ public sealed class StationeersComputer : IComputer
         catch (Exception ex)
         {
             _log.Info(ex.ToString());
-            return new ReadComputerResult(null, null, null, "Select read failed.");
+            return new IcReadResult(false, null, null, "Select read failed.");
         }
     }
 
-    private IcWriteResult WriteInner(string code)
+    private IcWriteResult WriteInner(string code, string chipHash)
     {
+        var pointed = SelectedInner();
+        if (pointed.Error != null)
+        {
+            return new IcWriteResult(false, null, 0, pointed.Error);
+        }
+
+        var refusal = WriteGuard.Refusal(pointed.Device, CodeHash.Hash(pointed.Code), chipHash);
+        if (refusal != null)
+        {
+            return new IcWriteResult(false, null, 0, refusal);
+        }
+
         _motherboard.SetSourceCode(code);
         try
         {
@@ -163,26 +173,52 @@ public sealed class StationeersComputer : IComputer
         return new IcReadResult(true, _name, code ?? string.Empty, null);
     }
 
-    private ReadComputerResult SelectedInner()
+    private IcReadResult SelectedInner()
     {
+        int? selected;
+        IList<ICircuitHolder>? holders;
         try
         {
             var dropdown = Dropdown(_motherboard);
-            var selected = (int?)dropdown?.GetType().GetProperty("SelectedIndex")?.GetValue(dropdown, null);
-            var items = dropdown?.GetType().GetField("_items", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(dropdown) as System.Collections.IList;
-            string? device = null;
-            if (items != null && selected.HasValue && selected.Value >= 0 && selected.Value < items.Count)
-            {
-                device = items[selected.Value]?.GetType().GetProperty("Title")?.GetValue(items[selected.Value], null) as string;
-            }
-
-            return new ReadComputerResult(_name, device, null, null);
+            selected = (int?)dropdown?.GetType().GetProperty("SelectedIndex")?.GetValue(dropdown, null);
+            holders = MotherboardHolders(_motherboard);
         }
         catch (Exception ex)
         {
             _log.Info(ex.ToString());
-            return new ReadComputerResult(null, null, null, "Select read failed.");
+            return new IcReadResult(false, null, null, "Select read failed.");
         }
+
+        if (holders == null)
+        {
+            return new IcReadResult(false, null, null, "Select read failed.");
+        }
+
+        if (!selected.HasValue || selected.Value < 0 || selected.Value >= holders.Count)
+        {
+            return new IcReadResult(false, null, null, null);
+        }
+
+        var housing = holders[selected.Value] as CircuitHousing;
+        if (housing == null)
+        {
+            return new IcReadResult(false, null, null, null);
+        }
+
+        string code;
+        try
+        {
+            var chip = HousingChip(housing);
+            var source = chip?.GetSourceCode();
+            code = source != null ? source.ToString() : string.Empty;
+        }
+        catch (Exception ex)
+        {
+            _log.Info(ex.ToString());
+            return new IcReadResult(false, null, null, "Select read failed.");
+        }
+
+        return new IcReadResult(true, SafeName(housing), code ?? string.Empty, null);
     }
 
     private IcWriteResult SelectInner(long device)

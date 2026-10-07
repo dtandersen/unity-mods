@@ -29,14 +29,44 @@ public sealed class WriteIcSteps
         World.IcDevices.ComputerFound = false;
     }
 
-    [When("I write to computer {string}:")]
-    public void WhenIWriteToComputer(string computer, string code)
+    [Given("the chip under the dropdown holds {string}")]
+    public void GivenTheChipUnderTheDropdownHolds(string code)
+    {
+        World.Computer.PointedDevice = "Climate Control";
+        World.Computer.PointedChipCode = code;
+    }
+
+    [Given("the computer points at nothing")]
+    public void GivenTheComputerPointsAtNothing()
+    {
+        World.Computer.PointedDevice = null;
+    }
+
+    [When("I write to computer {string} with chip hash {string}:")]
+    public void WhenIWriteToComputerWithChipHash(string computer, string hash, string code)
+    {
+        Write(computer, code, hash);
+    }
+
+    [When("I write to computer {string} without a chip hash:")]
+    public void WhenIWriteToComputerWithoutAChipHash(string computer, string code)
+    {
+        Write(computer, code, "");
+    }
+
+    private void Write(string computer, string code, string hash)
     {
         var values = new Dictionary<string, string>
         {
             ["computer"] = computer,
             ["code"] = code.Replace("\r\n", "\n").Trim(),
         };
+
+        if (!string.IsNullOrEmpty(hash))
+        {
+            values["hash"] = hash;
+        }
+
         World.ToolResult = TestComposition.Tools(World).Handle(new ToolCall(
             "call_1",
             "write_ic",

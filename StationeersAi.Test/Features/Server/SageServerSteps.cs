@@ -61,7 +61,7 @@ public sealed class SageServerSteps
     [Given("the computer points at {string}")]
     public void GivenTheComputerPointsAt(string device)
     {
-        World.Computer.SelectionResult = new ReadComputerResult(null, device, null, null);
+        World.Computer.PointedDevice = device;
     }
 
     [When(@"I GET (.+)")]

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using StationeersAi.Entity;
+using StationeersAi.Formatting;
 
-namespace StationeersAi.Repository;
+namespace StationeersAi.Entity;
 
 /// <summary>In-memory IC computer: one screen, one dropdown, one pair of buttons.</summary>
 public sealed class InMemoryComputer : IComputer
@@ -29,11 +29,20 @@ public sealed class InMemoryComputer : IComputer
     /// <summary>The result selections return.</summary>
     public IcWriteResult SelectResult { get; set; } = new IcWriteResult(true, "Light Controller", 0, null);
 
-    /// <summary>The selection reads return.</summary>
-    public ReadComputerResult SelectionResult { get; set; } = new ReadComputerResult(null, null, null, null);
+    /// <summary>The housing the dropdown points at, or null when it points at none.</summary>
+    public string? PointedDevice { get; set; } = "Climate Control";
 
-    public IcWriteResult Write(string code)
+    /// <summary>The program the pointed housing's chip holds.</summary>
+    public string PointedChipCode { get; set; } = string.Empty;
+
+    public IcWriteResult Write(string code, string chipHash)
     {
+        var refusal = WriteGuard.Refusal(PointedDevice, CodeHash.Hash(PointedChipCode), chipHash);
+        if (refusal != null)
+        {
+            return new IcWriteResult(false, null, 0, refusal);
+        }
+
         Writes.Add(code);
         return new IcWriteResult(true, Name, (code ?? string.Empty).Split('\n').Length, null);
     }
@@ -61,8 +70,13 @@ public sealed class InMemoryComputer : IComputer
         return SelectResult;
     }
 
-    public ReadComputerResult Selected()
+    public IcReadResult Selected()
     {
-        return SelectionResult;
+        if (string.IsNullOrEmpty(PointedDevice))
+        {
+            return new IcReadResult(false, null, null, null);
+        }
+
+        return new IcReadResult(true, PointedDevice, PointedChipCode, null);
     }
 }

@@ -52,7 +52,7 @@ public sealed class ExportIcTool : ITool
         }
 
         var import = arguments.Get("import");
-        var result = _command.Execute(computerId, deviceId, null, !Truthy(import), Truthy(import));
+        var result = _command.Execute(computerId, deviceId, null, null, !Truthy(import), Truthy(import));
         if (result == null || !result.Written)
         {
             return new ToolFailure(result?.Error ?? "Export failed.");

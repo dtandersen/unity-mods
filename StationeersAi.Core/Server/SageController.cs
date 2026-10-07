@@ -209,7 +209,7 @@ public sealed class SageController
             return SageResponse.Error(400, "device must be a thing id.");
         }
 
-        var result = _commands.UseComputer().Execute(computerId.Value, deviceId, request.SourceCode, request.Export == true, request.Import == true);
+        var result = _commands.UseComputer().Execute(computerId.Value, deviceId, request.SourceCode, request.Hash, request.Export == true, request.Import == true);
         if (result == null || !result.Written)
         {
             return SageResponse.Error(404, result != null ? result.Error ?? "Export fell through." : "Export fell through.");
@@ -303,6 +303,9 @@ public sealed class SageController
 
         [JsonProperty("sourceCode")]
         public string? SourceCode { get; set; }
+
+        [JsonProperty("hash")]
+        public string? Hash { get; set; }
 
         [JsonProperty("export")]
         public bool? Export { get; set; }

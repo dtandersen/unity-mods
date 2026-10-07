@@ -1,6 +1,4 @@
-using StationeersAi.Entity;
-
-namespace StationeersAi.Repository;
+namespace StationeersAi.Entity;
 
 /// <summary>In-memory IC housing: one chip holding one program.</summary>
 public sealed class InMemoryHousing : IHousing

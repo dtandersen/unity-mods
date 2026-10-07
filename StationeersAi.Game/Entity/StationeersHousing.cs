@@ -1,12 +1,10 @@
 using System;
 using Assets.Scripts.Objects.Electrical;
 using StationeersAi.Core;
-using StationeersAi.Entity;
 using StationeersAi.Game;
 using Logger = StationeersAi.Core.Logger;
-using StationeersAi.Repository;
 
-namespace StationeersAi.Repository;
+namespace StationeersAi.Entity;
 
 /// <summary>
 /// One live IC housing, built by <see cref="StationeersIcDevices"/>

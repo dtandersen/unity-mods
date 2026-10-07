@@ -215,14 +215,23 @@ Feature: Sage HTTP API
       """
 
   Scenario: IC editor write
+    Given the chip under the dropdown holds "yield"
     When I PUT /sage/computer/1189 with:
       """
-      {"sourceCode":"alias a d0"}
+      {"sourceCode":"alias a d0","hash":"6c96f2ae"}
       """
     Then the response is:
       """
       {"Written":true,"Device":"Lab Computer","Lines":1,"Error":null}
       """
+
+  Scenario: IC editor write without a chip hash
+    When I PUT /sage/computer/1189 with:
+      """
+      {"sourceCode":"alias a d0"}
+      """
+    Then the response status is 404
+    And the response reports "A chip hash is required to write: name the hash of the chip under the dropdown."
 
   Scenario: IC export
     When I PUT /sage/computer/1189 with:
