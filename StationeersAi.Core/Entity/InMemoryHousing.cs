@@ -1,3 +1,5 @@
+using StationeersAi.Formatting;
+
 namespace StationeersAi.Entity;
 
 /// <summary>In-memory IC housing: one chip holding one program.</summary>
@@ -9,8 +11,8 @@ public sealed class InMemoryHousing : IHousing
     /// <summary>The text reads return as the chip contents.</summary>
     public string ChipCode { get; set; } = string.Empty;
 
-    public IcReadResult Read()
+    public Program Read()
     {
-        return new IcReadResult(true, Name, ChipCode, null);
+        return new Program(ChipCode, CodeHash.Hash(ChipCode));
     }
 }

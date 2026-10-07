@@ -34,6 +34,11 @@ Feature: Read IC tool
     When I read computer "999"
     Then the tool fails with "Computer 999 not found."
 
+  Scenario: Faulty computer read
+    Given the computer read faults
+    When I read computer "1189"
+    Then the tool fails with "Computer read failed."
+
   Scenario: Read the housing chip
     Given the editor holds "yield"
     And the housing holds "move r0 1" on "Climate Control"
@@ -44,7 +49,7 @@ Feature: Read IC tool
       yield
       Code hash: 6c96f2ae
 
-      Housing Climate Control chip:
+      Housing 2200 chip:
       move r0 1
       Code hash: c26e09e1
       """

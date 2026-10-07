@@ -1,6 +1,7 @@
+using System;
 using StationeersAi.Command;
 using StationeersAi.Entity;
-using StationeersAi.Formatting;
+using StationeersAi.Repository;
 using Caev.Tools;
 
 namespace StationeersAi.Tool;
@@ -40,15 +41,26 @@ public sealed class ReadIcTool : ITool
             return new ToolFailure(ThingId.NotAThingId("computer", computer));
         }
 
-        var viewed = _computer.Execute(computerId);
-        if (viewed == null || viewed.Computer == null)
+        // Commands answer with results. A fault still escaping one becomes
+        // a plain failure for the model, not a dead turn.
+        ReadComputerResult viewed;
+        try
         {
-            return new ToolFailure(viewed?.Error ?? "Computer not found.");
+            viewed = _computer.Execute(computerId);
+        }
+        catch (Exception)
+        {
+            return new ToolFailure("Computer read failed.");
+        }
+
+        if (viewed.Status != Status.SUCCESS)
+        {
+            return new ToolFailure(viewed.Errors.Count > 0 ? string.Join(" ", viewed.Errors) : "Computer read failed.");
         }
 
         var text = string.IsNullOrEmpty(viewed.SourceCode)
             ? "(editor is empty)"
-            : viewed.SourceCode + $"\nCode hash: {CodeHash.Hash(viewed.SourceCode)}";
+            : viewed.SourceCode + $"\nCode hash: {viewed.Hash}";
 
         var device = arguments.Get("device");
         if (!string.IsNullOrWhiteSpace(device))
@@ -59,15 +71,23 @@ public sealed class ReadIcTool : ITool
                 return new ToolFailure(ThingId.NotAThingId("device", device));
             }
 
-            var chip = _housing.Execute(deviceId);
-            if (chip == null || !chip.Found)
+            Program chip;
+            try
             {
-                return new ToolFailure(chip?.Error ?? "Housing not found.");
+                chip = _housing.Execute(deviceId);
+            }
+            catch (ThingNotFound notFound)
+            {
+                return new ToolFailure(notFound.Message);
+            }
+            catch (Exception)
+            {
+                return new ToolFailure("Housing read failed.");
             }
 
-            text += "\n\n" + (string.IsNullOrEmpty(chip.Code)
-                ? $"Housing {chip.Device} chip:\n(chip is empty)"
-                : $"Housing {chip.Device} chip:\n{chip.Code}\nCode hash: {CodeHash.Hash(chip.Code)}");
+            text += "\n\n" + (string.IsNullOrEmpty(chip.SourceCode)
+                ? $"Housing {deviceId} chip:\n(chip is empty)"
+                : $"Housing {deviceId} chip:\n{chip.SourceCode}\nCode hash: {chip.Hash}");
         }
 
         return new ToolSuccess<ReadComputerResult>(viewed, text);

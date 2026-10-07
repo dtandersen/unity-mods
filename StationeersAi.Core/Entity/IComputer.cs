@@ -10,6 +10,9 @@ namespace StationeersAi.Entity;
 /// </summary>
 public interface IComputer
 {
+    /// <summary>The label on the computer, as the stationeer reads it.</summary>
+    string Name { get; }
+
     /// <summary>
     /// Writes code to the screen, and only while the chip under the dropdown
     /// still hashes to <paramref name="chipHash"/>. Refuses the write when the
@@ -17,8 +20,8 @@ public interface IComputer
     /// </summary>
     IcWriteResult Write(string code, string chipHash);
 
-    /// <summary>Reads the screen text. Never returns null.</summary>
-    IcReadResult Read();
+    /// <summary>Reads the screen text and its hash. Throws when the editor cannot be read.</summary>
+    Program Read();
 
     /// <summary>Burns screen text to the chip of housing <paramref name="device"/>, then checks the hash. Never returns null.</summary>
     IcWriteResult Export(long device);
@@ -30,8 +33,8 @@ public interface IComputer
     IcWriteResult Select(long device);
 
     /// <summary>
-    /// Reads the housing under the dropdown and the program burned on its
-    /// chip. Never returns null.
+    /// The thing id of the housing under the dropdown, or 0 when the dropdown
+    /// points at none. Throws when the dropdown cannot be read.
     /// </summary>
-    IcReadResult Selected();
+    long Selected();
 }

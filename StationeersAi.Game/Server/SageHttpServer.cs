@@ -212,7 +212,7 @@ public sealed class SageHttpServer : IDisposable
                 SageResponse response;
                 try
                 {
-                    response = _threads.RunSync(() => new SageRouter(_data()).Handle(captured.Method, captured.Path, captured.Query, captured.Body));
+                    response = _threads.RunSync(() => new SageRouter(_data(), _log).Handle(captured.Method, captured.Path, captured.Query, captured.Body));
                 }
                 catch (TimeoutException)
                 {

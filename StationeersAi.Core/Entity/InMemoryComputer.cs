@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using StationeersAi.Formatting;
 
@@ -32,6 +33,9 @@ public sealed class InMemoryComputer : IComputer
     /// <summary>The housing the dropdown points at, or null when it points at none.</summary>
     public string? PointedDevice { get; set; } = "Climate Control";
 
+    /// <summary>The thing id of the housing the dropdown points at (0 when none).</summary>
+    public long PointedThing { get; set; } = 2200;
+
     /// <summary>The program the pointed housing's chip holds.</summary>
     public string PointedChipCode { get; set; } = string.Empty;
 
@@ -47,9 +51,17 @@ public sealed class InMemoryComputer : IComputer
         return new IcWriteResult(true, Name, (code ?? string.Empty).Split('\n').Length, null);
     }
 
-    public IcReadResult Read()
+    /// <summary>Set to make reads raise, the way a broken editor would.</summary>
+    public Exception? ReadFault { get; set; }
+
+    public Program Read()
     {
-        return new IcReadResult(true, Name, EditorCode, null);
+        if (ReadFault != null)
+        {
+            throw ReadFault;
+        }
+
+        return new Program(EditorCode, CodeHash.Hash(EditorCode));
     }
 
     public IcWriteResult Export(long device)
@@ -70,13 +82,8 @@ public sealed class InMemoryComputer : IComputer
         return SelectResult;
     }
 
-    public IcReadResult Selected()
+    public long Selected()
     {
-        if (string.IsNullOrEmpty(PointedDevice))
-        {
-            return new IcReadResult(false, null, null, null);
-        }
-
-        return new IcReadResult(true, PointedDevice, PointedChipCode, null);
+        return string.IsNullOrEmpty(PointedDevice) ? 0 : PointedThing;
     }
 }

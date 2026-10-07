@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using StationeersAi.Command;
 using StationeersAi.Entity;
+using StationeersAi.Repository;
 
 namespace StationeersAi.Server;
 
@@ -178,7 +180,18 @@ public sealed class SageController
             return SageResponse.Error(400, "device must be a thing id.");
         }
 
-        return SageResponse.Ok(_commands.ReadHousing().Execute(deviceId.Value));
+        try
+        {
+            return SageResponse.Ok(_commands.ReadHousing().Execute(deviceId.Value));
+        }
+        catch (ThingNotFound notFound)
+        {
+            return SageResponse.Error(404, notFound.Message);
+        }
+        catch (Exception)
+        {
+            return SageResponse.Error(500, "Housing read failed.");
+        }
     }
 
     [SageGet("/computer/{computer}", "Read a computer's editor text and housing.")]
@@ -190,7 +203,39 @@ public sealed class SageController
             return SageResponse.Error(400, "computer must be a thing id.");
         }
 
-        return SageResponse.Ok(_commands.ReadComputer().Execute(computerId.Value));
+        var result = _commands.ReadComputer().Execute(computerId.Value);
+        if (result.Status != Status.SUCCESS)
+        {
+            return Failure(result, "Computer read failed.");
+        }
+
+        return SageResponse.Ok(new ComputerReadBody(
+            result.Name ?? string.Empty, result.Device, result.SourceCode ?? string.Empty, result.Hash ?? string.Empty));
+    }
+
+    /// <summary>The wire answer of <c>GET /sage/computer/{computer}</c>, shaped for callers.</summary>
+    public sealed record ComputerReadBody(string Name, long Device, string SourceCode, string Hash);
+
+    /// <summary>
+    /// Maps a failed command answer to HTTP: 404 for a missed id, 400 for a
+    /// bad ask, 500 for anything else, each with the command's sentences.
+    /// </summary>
+    private static SageResponse Failure(BaseResult result, string fault)
+    {
+        switch (result.Status)
+        {
+            case Status.NOT_FOUND:
+                return SageResponse.Error(404, Sentence(result, "Not found."));
+            case Status.BAD_REQUEST:
+                return SageResponse.Error(400, Sentence(result, "Bad request."));
+            default:
+                return SageResponse.Error(500, Sentence(result, fault));
+        }
+    }
+
+    private static string Sentence(BaseResult result, string fallback)
+    {
+        return result.Errors.Count == 0 ? fallback : string.Join(" ", result.Errors);
     }
 
     [SagePut("/computer/{computer}", "Set editor text, pick the housing, and burn.")]
@@ -316,7 +361,7 @@ public sealed class SageController
 
     private sealed class ThingsResult
     {
-        public ThingsResult(IReadOnlyList<ThingInfo> things, OriginPoint? origin, double? facing)
+        public ThingsResult(IReadOnlyList<ThingInfo> things, Point? origin, double? facing)
         {
             Things = things;
             Origin = origin;
@@ -327,7 +372,7 @@ public sealed class SageController
         public IReadOnlyList<ThingInfo> Things { get; }
 
         [JsonProperty("origin")]
-        public OriginPoint? Origin { get; }
+        public Point? Origin { get; }
 
         [JsonProperty("facing")]
         public double? Facing { get; }

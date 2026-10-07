@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using StationeersAi.Core;
 
 namespace StationeersAi.Server;
 
@@ -22,9 +23,12 @@ public sealed class SageRouter
 
     private readonly SageController _controller;
 
-    public SageRouter(SageCommands commands)
+    private readonly Logger _log;
+
+    public SageRouter(SageCommands commands, Logger log)
     {
         _controller = new SageController(commands);
+        _log = log;
     }
 
     public SageResponse Handle(string method, string path, IDictionary<string, string> query, string? body = null)
@@ -65,7 +69,18 @@ public sealed class SageRouter
             }
         }
 
-        return (SageResponse)target.Invoke(_controller, Args(target, query, captured, body))!;
+        try
+        {
+            return (SageResponse)target.Invoke(_controller, Args(target, query, captured, body))!;
+        }
+        catch (TargetInvocationException ex)
+        {
+            // Commands answer with results. Anything still escaping a
+            // controller call is a fault: log it, name it once, ship 500.
+            var inner = ex.InnerException ?? ex;
+            _log.Error(inner);
+            return SageResponse.Error(500, "Command failed.");
+        }
     }
 
     private static MethodInfo? MatchTemplate(string method, string route, out IDictionary<string, string>? captured)

@@ -7,6 +7,6 @@ namespace StationeersAi.Entity;
 /// </summary>
 public interface IHousing
 {
-    /// <summary>Reads the chip text. Never returns null.</summary>
-    IcReadResult Read();
+    /// <summary>Reads the program burned on the chip. Throws when the chip cannot be read.</summary>
+    Program Read();
 }

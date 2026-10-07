@@ -87,7 +87,7 @@ Feature: Sage HTTP API
     When I GET /sage/circuit-housings/2200
     Then the response is:
       """
-      {"Found":true,"Device":"Climate Control","Code":"alias a d0","Error":null}
+      {"SourceCode":"alias a d0","Hash":"8044fec0"}
       """
 
   Scenario: Computer read
@@ -96,8 +96,20 @@ Feature: Sage HTTP API
     When I GET /sage/computer/1189
     Then the response is:
       """
-      {"Computer":"Lab Computer","Device":"Climate Control","SourceCode":"alias a d0","Error":null}
+      {"Name":"Lab Computer","Device":2200,"SourceCode":"alias a d0","Hash":"8044fec0"}
       """
+
+  Scenario: Unknown computer read
+    Given no computer is found
+    When I GET /sage/computer/999
+    Then the response status is 404
+    And the response reports "Computer 999 not found."
+
+  Scenario: Faulty computer read answers 500
+    Given the computer read faults
+    When I GET /sage/computer/1189
+    Then the response status is 500
+    And the response reports "Command failed."
 
   Scenario: Computer read by label is refused
     When I GET /sage/computer/lab

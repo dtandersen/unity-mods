@@ -40,8 +40,8 @@ public sealed class SageServerSteps
     [Given("the MIPS reference contains {string} and {string}")]
     public void GivenTheMipsReferenceContains(string first, string second)
     {
-        World.Mips.Instructions.Add(new MipsInstruction(first, $"{first} r? device var", $"Does {first}."));
-        World.Mips.Instructions.Add(new MipsInstruction(second, second, $"Does {second}."));
+        World.Mips.Instructions.Add(new Instruction(first, $"{first} r? device var", $"Does {first}."));
+        World.Mips.Instructions.Add(new Instruction(second, second, $"Does {second}."));
     }
 
     [Given("the IC editor holds {string} on {string}")]
@@ -62,12 +62,21 @@ public sealed class SageServerSteps
     public void GivenTheComputerPointsAt(string device)
     {
         World.Computer.PointedDevice = device;
+        // The same housing "Climate Control" carries thing id 2200 in the
+        // circuit-housing routes these features exercise.
+        World.Computer.PointedThing = 2200;
+    }
+
+    [Given("the computer read faults")]
+    public void GivenTheComputerReadFaults()
+    {
+        World.Computer.ReadFault = new InvalidOperationException("Editor read failed.");
     }
 
     [When(@"I GET (.+)")]
     public void WhenIGet(string request)
     {
-        var router = new SageRouter(CommandsFrom(World));
+        var router = new SageRouter(CommandsFrom(World), World.Log);
         Parse(request, out var path, out var query);
         _response = router.Handle("GET", path, query);
     }
@@ -75,7 +84,7 @@ public sealed class SageServerSteps
     [When(@"I (POST|PUT) (.+) with:")]
     public void WhenIPostWith(string method, string request, string body)
     {
-        var router = new SageRouter(CommandsFrom(World));
+        var router = new SageRouter(CommandsFrom(World), World.Log);
         Parse(request, out var path, out var query);
         _response = router.Handle(method, path, query, body);
     }

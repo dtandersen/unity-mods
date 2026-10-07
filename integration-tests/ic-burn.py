@@ -70,7 +70,7 @@ def burn(housing, program):
 
 def readback(housing):
     _, res = call("GET", "/sage/circuit-housings/%s" % housing)
-    return res.get("Code") or ""
+    return res.get("SourceCode") or ""
 
 
 print("== labels are refused ==")

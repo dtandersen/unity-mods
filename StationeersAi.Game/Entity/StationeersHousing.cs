@@ -1,6 +1,7 @@
 using System;
 using Assets.Scripts.Objects.Electrical;
 using StationeersAi.Core;
+using StationeersAi.Formatting;
 using StationeersAi.Game;
 using Logger = StationeersAi.Core.Logger;
 
@@ -26,7 +27,7 @@ public sealed class StationeersHousing : IHousing
         _log = log;
     }
 
-    public IcReadResult Read()
+    public Program Read()
     {
         try
         {
@@ -35,36 +36,15 @@ public sealed class StationeersHousing : IHousing
         catch (Exception ex)
         {
             _log.Info(ex.ToString());
-            return new IcReadResult(false, null, null, "Housing read failed.");
+            throw;
         }
     }
 
-    private IcReadResult ReadInner()
+    private Program ReadInner()
     {
-        string code;
-        try
-        {
-            var chip = _housing._ProgrammableChipSlot?.Get<ProgrammableChip>();
-            var source = chip?.GetSourceCode();
-            code = source != null ? source.ToString() : string.Empty;
-        }
-        catch (Exception)
-        {
-            return new IcReadResult(false, null, null, "Housing read failed.");
-        }
-
-        return new IcReadResult(true, Name(_housing), code, null);
-    }
-
-    private static string? Name(CircuitHousing housing)
-    {
-        try
-        {
-            return housing.DisplayName;
-        }
-        catch (Exception)
-        {
-            return null;
-        }
+        var chip = _housing._ProgrammableChipSlot?.Get<ProgrammableChip>();
+        var source = chip?.GetSourceCode();
+        var code = source != null ? source.ToString() : string.Empty;
+        return new Program(code ?? string.Empty, CodeHash.Hash(code));
     }
 }
