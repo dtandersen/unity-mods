@@ -7,11 +7,11 @@ namespace StationeersAi.Command;
 /// <summary>Domain operation: read the burned chip of one housing.</summary>
 public sealed class ReadHousingCommand
 {
-    private readonly IHousingRepository _housings;
+    private readonly IIcDevices _devices;
 
-    public ReadHousingCommand(IHousingRepository housings)
+    public ReadHousingCommand(IIcDevices devices)
     {
-        _housings = housings;
+        _devices = devices;
     }
 
     public IcReadResult Execute(long device)
@@ -19,7 +19,7 @@ public sealed class ReadHousingCommand
         IHousing target;
         try
         {
-            target = _housings.Find(device);
+            target = _devices.FindHousing(device);
         }
         catch (ThingNotFound notFound)
         {

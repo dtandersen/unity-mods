@@ -7,11 +7,11 @@ namespace StationeersAi.Command;
 /// <summary>Domain operation: read one computer's screen text and pointed housing.</summary>
 public sealed class ReadComputerCommand
 {
-    private readonly IComputerRepository _computers;
+    private readonly IIcDevices _devices;
 
-    public ReadComputerCommand(IComputerRepository computers)
+    public ReadComputerCommand(IIcDevices devices)
     {
-        _computers = computers;
+        _devices = devices;
     }
 
     public ReadComputerResult Execute(long computer)
@@ -19,7 +19,7 @@ public sealed class ReadComputerCommand
         IComputer target;
         try
         {
-            target = _computers.Find(computer);
+            target = _devices.FindComputer(computer);
         }
         catch (ThingNotFound notFound)
         {

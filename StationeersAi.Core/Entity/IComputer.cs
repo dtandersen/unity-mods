@@ -1,13 +1,11 @@
-using StationeersAi.Entity;
-
-namespace StationeersAi.Repository;
+namespace StationeersAi.Entity;
 
 /// <summary>
 /// One IC computer: its screen holds editor text, its dropdown picks one
 /// housing on the network, and its import and export buttons move text
-/// between the screen and the housing chip. <see cref="IComputerRepository"/>
-/// builds these from a thing id. Housings are named by thing id too, so the
-/// stationeer must read <see cref="IDeviceCatalog"/> to find one.
+/// between the screen and the housing chip.
+/// <see cref="StationeersAi.Repository.IIcDevices"/> builds one from a thing
+/// id, which the stationeer reads from the device catalogue.
 /// Implementations count lines as <c>code.Split('\n').Length</c>.
 /// </summary>
 public interface IComputer

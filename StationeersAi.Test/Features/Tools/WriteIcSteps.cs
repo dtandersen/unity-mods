@@ -26,7 +26,7 @@ public sealed class WriteIcSteps
     [Given("no computer is found")]
     public void GivenNoComputerIsFound()
     {
-        World.Computers.Found = false;
+        World.IcDevices.ComputerFound = false;
     }
 
     [When("I write to computer {string}:")]

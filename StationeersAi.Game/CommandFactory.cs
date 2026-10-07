@@ -55,14 +55,9 @@ public sealed class CommandFactory
         return new StationeersWorldContext(_executor, _log);
     }
 
-    public IComputerRepository Computers()
+    public IIcDevices IcDevices()
     {
-        return new StationeersComputerRepository(_executor, _log);
-    }
-
-    public IHousingRepository Housings()
-    {
-        return new StationeersHousingRepository(_executor, _log);
+        return new StationeersIcDevices(_executor, _log);
     }
 
     public IMipsReference Mips()
@@ -108,8 +103,7 @@ public sealed class CommandFactory
             Stationpedia(),
             Player(),
             Worlds(),
-            Computers(),
-            Housings(),
+            IcDevices(),
             Mips(),
             Devices(),
             Inspector(),

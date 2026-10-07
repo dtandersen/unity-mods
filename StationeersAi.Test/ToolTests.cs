@@ -13,15 +13,15 @@ public class ToolTests
 {
     private static ToolHandler Tools()
     {
-        return Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryComputerRepository(), new InMemoryMipsReference(), new InMemoryDeviceCatalog());
+        return Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcDevices(), new InMemoryMipsReference(), new InMemoryDeviceCatalog());
     }
 
-    private static ToolHandler Tools(InMemoryPlayerContext player, InMemoryWorldContext world, InMemoryComputerRepository computers, InMemoryMipsReference mips)
+    private static ToolHandler Tools(InMemoryPlayerContext player, InMemoryWorldContext world, InMemoryIcDevices computers, InMemoryMipsReference mips)
     {
         return Tools(player, world, computers, mips, new InMemoryDeviceCatalog());
     }
 
-    private static ToolHandler Tools(InMemoryPlayerContext player, InMemoryWorldContext world, InMemoryComputerRepository computers, InMemoryMipsReference mips, InMemoryDeviceCatalog devices)
+    private static ToolHandler Tools(InMemoryPlayerContext player, InMemoryWorldContext world, InMemoryIcDevices computers, InMemoryMipsReference mips, InMemoryDeviceCatalog devices)
     {
         var items = new InMemoryItemRepository(new[]
         {
@@ -154,7 +154,7 @@ public class ToolTests
         var player = new InMemoryPlayerContext();
         player.Carry(new ItemStack("ItemWelder", "Welder", "85%", "Right hand"));
 
-        var result = Call(Tools(player, new InMemoryWorldContext(), new InMemoryComputerRepository(), new InMemoryMipsReference()), "search_inventory", ("query", "weld"));
+        var result = Call(Tools(player, new InMemoryWorldContext(), new InMemoryIcDevices(), new InMemoryMipsReference()), "search_inventory", ("query", "weld"));
         result.IsSuccess.ShouldBeTrue();
         result.Content.ShouldContain("Welder,85%,Right hand");
     }
@@ -167,7 +167,7 @@ public class ToolTests
             Status = new PlayerStatus(1.5f, 2.25f, -3f, "Europa", null, 5, null),
         };
 
-        var result = Call(Tools(player, new InMemoryWorldContext(), new InMemoryComputerRepository(), new InMemoryMipsReference()), "describe_player");
+        var result = Call(Tools(player, new InMemoryWorldContext(), new InMemoryIcDevices(), new InMemoryMipsReference()), "describe_player");
         result.IsSuccess.ShouldBeTrue();
         result.Content.ShouldContain("Position: (1.5, 2.3, -3.0)");
         result.Content.ShouldContain("World: Europa");
@@ -209,7 +209,7 @@ public class ToolTests
                 new[] { new GasMixEntry("Nitrogen", 90.0), new GasMixEntry("Oxygen", 10.0) }),
         };
 
-        var result = Call(Tools(new InMemoryPlayerContext(), world, new InMemoryComputerRepository(), new InMemoryMipsReference()), "get_world");
+        var result = Call(Tools(new InMemoryPlayerContext(), world, new InMemoryIcDevices(), new InMemoryMipsReference()), "get_world");
         result.IsSuccess.ShouldBeTrue();
         result.Content.ShouldContain("World: Europa");
         result.Content.ShouldContain("Day length: 20m");
@@ -227,7 +227,7 @@ public class ToolTests
     [Test]
     public void Write_ic_places_code_in_the_named_editor()
     {
-        var computers = new InMemoryComputerRepository();
+        var computers = new InMemoryIcDevices();
 
         var result = Call(
             Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), computers, new InMemoryMipsReference()),
@@ -238,13 +238,13 @@ public class ToolTests
         result.IsSuccess.ShouldBeTrue();
         result.Content.ShouldContain("Wrote 2 lines to Lab Computer");
         computers.Computer.Writes.Count.ShouldBe(1);
-        computers.Lookups[0].ShouldBe(1189L);
+        computers.ComputerLookups[0].ShouldBe(1189L);
     }
 
     [Test]
     public void Write_ic_passes_thing_ids_through()
     {
-        var computers = new InMemoryComputerRepository();
+        var computers = new InMemoryIcDevices();
 
         var result = Call(
             Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), computers, new InMemoryMipsReference()),
@@ -253,7 +253,7 @@ public class ToolTests
             ("code", "yield"));
 
         result.IsSuccess.ShouldBeTrue();
-        computers.Lookups[0].ShouldBe(1189L);
+        computers.ComputerLookups[0].ShouldBe(1189L);
     }
 
     [Test]
@@ -267,7 +267,7 @@ public class ToolTests
     [Test]
     public void Write_ic_unknown_computer_fails()
     {
-        var computers = new InMemoryComputerRepository { Found = false };
+        var computers = new InMemoryIcDevices { ComputerFound = false };
 
         var result = Call(
             Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), computers, new InMemoryMipsReference()),
@@ -282,7 +282,7 @@ public class ToolTests
     [Test]
     public void Write_ic_refuses_a_computer_label()
     {
-        var computers = new InMemoryComputerRepository();
+        var computers = new InMemoryIcDevices();
 
         var result = Call(
             Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), computers, new InMemoryMipsReference()),
@@ -292,7 +292,7 @@ public class ToolTests
 
         result.IsSuccess.ShouldBeFalse();
         result.Content.ShouldContain("is not a thing id");
-        computers.Lookups.Count.ShouldBe(0);
+        computers.ComputerLookups.Count.ShouldBe(0);
     }
 
     [Test]
@@ -303,7 +303,7 @@ public class ToolTests
         mips.Instructions.Add(new MipsInstruction("yield", "yield", "Pauses the script."));
 
         var result = Call(
-            Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryComputerRepository(), mips),
+            Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcDevices(), mips),
             "list_instructions");
 
         result.IsSuccess.ShouldBeTrue();
@@ -317,7 +317,7 @@ public class ToolTests
         mips.Instructions.Add(new MipsInstruction("l", "l r? device var", "Loads a value."));
 
         var result = Call(
-            Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryComputerRepository(), mips),
+            Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcDevices(), mips),
             "list_instructions",
             ("instruction", "L"));
 
@@ -341,7 +341,7 @@ public class ToolTests
         devices.Devices.Add(new DeviceInfo("Gas Sensor", "StructureGasSensor", 102, 0, true, 5));
 
         var result = Call(
-            Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryComputerRepository(), new InMemoryMipsReference(), devices),
+            Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcDevices(), new InMemoryMipsReference(), devices),
             "search_devices",
             ("query", "vent"));
 
@@ -356,7 +356,7 @@ public class ToolTests
         var devices = new InMemoryDeviceCatalog();
 
         var result = Call(
-            Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryComputerRepository(), new InMemoryMipsReference(), devices),
+            Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcDevices(), new InMemoryMipsReference(), devices),
             "search_devices",
             ("network", "7"));
 
@@ -372,7 +372,7 @@ public class ToolTests
         devices.Devices.Add(new DeviceInfo("Gas Sensor", "StructureGasSensor", 102, 0, true, 5));
 
         var result = Call(
-            Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryComputerRepository(), new InMemoryMipsReference(), devices),
+            Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcDevices(), new InMemoryMipsReference(), devices),
             "search_devices",
             ("network", "7"));
 
@@ -389,7 +389,7 @@ public class ToolTests
         devices.Devices.Add(new DeviceInfo("Iron Pipe", "StructurePipe", 103, 0, false, 0));
 
         var smart = Call(
-            Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryComputerRepository(), new InMemoryMipsReference(), devices),
+            Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcDevices(), new InMemoryMipsReference(), devices),
             "search_devices",
             ("logic", "true"));
         smart.IsSuccess.ShouldBeTrue();
@@ -398,7 +398,7 @@ public class ToolTests
         devices.LastLogic.ShouldBe(true);
 
         var dumb = Call(
-            Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryComputerRepository(), new InMemoryMipsReference(), devices),
+            Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcDevices(), new InMemoryMipsReference(), devices),
             "search_devices",
             ("logic", "no"));
         dumb.IsSuccess.ShouldBeTrue();
@@ -422,7 +422,7 @@ public class ToolTests
         devices.Devices.Add(new DeviceInfo("Iron Pipe", "StructurePipe", 103, 0, false, 0));
 
         var result = Call(
-            Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryComputerRepository(), new InMemoryMipsReference(), devices),
+            Tools(new InMemoryPlayerContext(), new InMemoryWorldContext(), new InMemoryIcDevices(), new InMemoryMipsReference(), devices),
             "search_devices",
             ("room", "5"));
 
@@ -552,7 +552,7 @@ public class ToolTests
     [Test]
     public void Write_ic_rejects_code_over_the_line_cap()
     {
-        var computers = new InMemoryComputerRepository();
+        var computers = new InMemoryIcDevices();
         var tools = new ToolHandler(new ITool[]
         {
             new WriteIcTool(new UseComputerCommand(computers)),
@@ -568,7 +568,7 @@ public class ToolTests
     [Test]
     public void Export_ic_burns_and_verifies()
     {
-        var computers = new InMemoryComputerRepository();
+        var computers = new InMemoryIcDevices();
         var tools = new ToolHandler(new ITool[]
         {
             new ExportIcTool(new UseComputerCommand(computers)),
@@ -577,7 +577,7 @@ public class ToolTests
         var result = Call(tools, "export_ic", ("computer", "1189"), ("device", "2200"));
         result.IsSuccess.ShouldBeTrue();
         result.Content.ShouldContain("Exported 37 lines to Climate Control. Chip hash matches the editor.");
-        computers.Lookups[0].ShouldBe(1189L);
+        computers.ComputerLookups[0].ShouldBe(1189L);
         computers.Computer.Exports.Count.ShouldBe(1);
         computers.Computer.Exports[0].ShouldBe(2200L);
     }
@@ -587,7 +587,7 @@ public class ToolTests
     {
         var tools = new ToolHandler(new ITool[]
         {
-            new ExportIcTool(new UseComputerCommand(new InMemoryComputerRepository())),
+            new ExportIcTool(new UseComputerCommand(new InMemoryIcDevices())),
         });
 
         var result = Call(tools, "export_ic", ("computer", "1189"));
@@ -600,7 +600,7 @@ public class ToolTests
     {
         var tools = new ToolHandler(new ITool[]
         {
-            new ExportIcTool(new UseComputerCommand(new InMemoryComputerRepository
+            new ExportIcTool(new UseComputerCommand(new InMemoryIcDevices
             {
                 Computer = { Result = new IcWriteResult(false, null, 0, "Chip reports IncorrectVariable at line 12.") },
             })),

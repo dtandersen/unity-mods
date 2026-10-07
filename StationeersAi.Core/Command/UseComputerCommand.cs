@@ -15,11 +15,11 @@ namespace StationeersAi.Command;
 /// </summary>
 public sealed class UseComputerCommand
 {
-    private readonly IComputerRepository _computers;
+    private readonly IIcDevices _devices;
 
-    public UseComputerCommand(IComputerRepository computers)
+    public UseComputerCommand(IIcDevices devices)
     {
-        _computers = computers;
+        _devices = devices;
     }
 
     public IcWriteResult Execute(long computer, long? device, string? sourceCode, bool export, bool import)
@@ -27,7 +27,7 @@ public sealed class UseComputerCommand
         IComputer target;
         try
         {
-            target = _computers.Find(computer);
+            target = _devices.FindComputer(computer);
         }
         catch (ThingNotFound notFound)
         {

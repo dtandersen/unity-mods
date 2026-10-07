@@ -9,11 +9,12 @@ using Assets.Scripts.Objects.Motherboards;
 using StationeersAi.Entity;
 using StationeersAi.Formatting;
 using StationeersAi.Repository;
+using IComputer = StationeersAi.Entity.IComputer;
 
 namespace StationeersAi.Repository;
 
 /// <summary>
-/// One live IC computer, built by <see cref="StationeersComputerRepository"/>
+/// One live IC computer, built by <see cref="StationeersIcDevices"/>
 /// from the motherboard it names. The screen reads and writes editor text on
 /// that motherboard, the dropdown picks a housing from the motherboard's
 /// holder list, and the buttons move text between the editor and the chip —

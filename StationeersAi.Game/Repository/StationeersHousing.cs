@@ -9,7 +9,7 @@ using StationeersAi.Repository;
 namespace StationeersAi.Repository;
 
 /// <summary>
-/// One live IC housing, built by <see cref="StationeersHousingRepository"/>
+/// One live IC housing, built by <see cref="StationeersIcDevices"/>
 /// from the housing it names. Reads the program burned on the chip it holds.
 /// Runs on Unity's main thread: the chip belongs to Unity state.
 /// </summary>

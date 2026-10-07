@@ -32,7 +32,7 @@ public sealed class ReadIcSteps
     [Given("no housing is found")]
     public void GivenNoHousingIsFound()
     {
-        World.Housings.Found = false;
+        World.IcDevices.HousingFound = false;
     }
 
     [When("I read computer {string}")]

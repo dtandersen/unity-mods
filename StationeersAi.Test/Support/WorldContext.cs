@@ -28,15 +28,13 @@ public sealed class WorldContext : IDisposable
 
     public InMemoryWorldContext Worlds { get; } = new InMemoryWorldContext();
 
-    public InMemoryComputerRepository Computers { get; } = new InMemoryComputerRepository();
+    public InMemoryIcDevices IcDevices { get; } = new InMemoryIcDevices();
 
     /// <summary>The one computer lookups resolve to.</summary>
-    public InMemoryComputer Computer => Computers.Computer;
-
-    public InMemoryHousingRepository Housings { get; } = new InMemoryHousingRepository();
+    public InMemoryComputer Computer => IcDevices.Computer;
 
     /// <summary>The one housing lookups resolve to.</summary>
-    public InMemoryHousing Housing => Housings.Housing;
+    public InMemoryHousing Housing => IcDevices.Housing;
 
     public InMemoryMipsReference Mips { get; } = new InMemoryMipsReference();
 
