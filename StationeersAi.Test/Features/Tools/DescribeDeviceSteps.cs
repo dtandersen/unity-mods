@@ -18,7 +18,7 @@ public sealed class DescribeDeviceSteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     [Given("the device {string} exists")]
     public void GivenTheDeviceExists(string name)

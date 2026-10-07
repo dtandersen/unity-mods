@@ -22,7 +22,7 @@ public sealed class SageAssistantSteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     [Given("the AI model will request the tool {string} with query {string}")]
     public void GivenTheAiModelWillRequestTheToolWithQuery(string tool, string query)

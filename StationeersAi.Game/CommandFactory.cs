@@ -55,19 +55,14 @@ public sealed class CommandFactory
         return new StationeersWorldContext(_executor, _log);
     }
 
-    public IIcEditor IcEditor()
+    public IComputerRepository Computers()
     {
-        return new StationeersIcEditor(_executor, _log);
+        return new StationeersComputerRepository(_executor, _log);
     }
 
-    public IIcExport IcExport()
+    public IHousingRepository Housings()
     {
-        return new StationeersIcExport(_executor, _log);
-    }
-
-    public IIcHousing IcHousing()
-    {
-        return new StationeersIcHousing(_executor, _log);
+        return new StationeersHousingRepository(_executor, _log);
     }
 
     public IMipsReference Mips()
@@ -113,9 +108,8 @@ public sealed class CommandFactory
             Stationpedia(),
             Player(),
             Worlds(),
-            IcEditor(),
-            IcExport(),
-            IcHousing(),
+            Computers(),
+            Housings(),
             Mips(),
             Devices(),
             Inspector(),

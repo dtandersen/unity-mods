@@ -15,18 +15,18 @@ public sealed class ExportIcSteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     [Given("the export succeeds")]
     public void GivenTheExportSucceeds()
     {
-        World.Export.Result = new IcWriteResult(true, "Climate Control", 37, null);
+        World.Computer.Result = new IcWriteResult(true, "Climate Control", 37, null);
     }
 
     [Given("the export fails with {string}")]
     public void GivenTheExportFailsWith(string error)
     {
-        World.Export.Result = new IcWriteResult(false, null, 0, error);
+        World.Computer.Result = new IcWriteResult(false, null, 0, error);
     }
 
     [When("I export from computer {string} to {string}")]
@@ -45,13 +45,13 @@ public sealed class ExportIcSteps
     [Given("the import succeeds")]
     public void GivenTheImportSucceeds()
     {
-        World.Export.ImportResult = new IcWriteResult(true, "Lab Computer", 3, null);
+        World.Computer.ImportResult = new IcWriteResult(true, "Lab Computer", 3, null);
     }
 
     [Given("the import fails with {string}")]
     public void GivenTheImportFailsWith(string error)
     {
-        World.Export.ImportResult = new IcWriteResult(false, null, 0, error);
+        World.Computer.ImportResult = new IcWriteResult(false, null, 0, error);
     }
 
     [When("I import from housing {string} into {string}")]

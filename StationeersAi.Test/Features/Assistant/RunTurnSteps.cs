@@ -23,7 +23,7 @@ public sealed class RunTurnSteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     [When("the turn runs {string}")]
     public async Task WhenTheTurnRuns(string prompt)

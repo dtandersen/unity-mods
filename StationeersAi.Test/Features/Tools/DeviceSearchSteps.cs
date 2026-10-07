@@ -18,7 +18,7 @@ public sealed class DeviceSearchSteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     [Given("the world has devices")]
     public void GivenTheWorldHasDevices()

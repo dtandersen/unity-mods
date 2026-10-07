@@ -1,0 +1,68 @@
+using System.Collections.Generic;
+using StationeersAi.Entity;
+
+namespace StationeersAi.Repository;
+
+/// <summary>In-memory IC computer: one screen, one dropdown, one pair of buttons.</summary>
+public sealed class InMemoryComputer : IComputer
+{
+    public readonly List<string?> Writes = new List<string?>();
+
+    public readonly List<string?> Exports = new List<string?>();
+
+    public readonly List<string?> Imports = new List<string?>();
+
+    public readonly List<string?> Selections = new List<string?>();
+
+    /// <summary>The name write and read results report as the computer.</summary>
+    public string Name { get; set; } = "Lab Computer";
+
+    /// <summary>The text reads return as the screen contents.</summary>
+    public string EditorCode { get; set; } = string.Empty;
+
+    /// <summary>The result exports return.</summary>
+    public IcWriteResult Result { get; set; } = new IcWriteResult(true, "Climate Control", 37, null);
+
+    /// <summary>The result imports return.</summary>
+    public IcWriteResult ImportResult { get; set; } = new IcWriteResult(true, "Lab Computer", 3, null);
+
+    /// <summary>The result selections return.</summary>
+    public IcWriteResult SelectResult { get; set; } = new IcWriteResult(true, "Light Controller", 0, null);
+
+    /// <summary>The selection reads return.</summary>
+    public ReadComputerResult SelectionResult { get; set; } = new ReadComputerResult(null, null, null, null);
+
+    public IcWriteResult Write(string code)
+    {
+        Writes.Add(code);
+        return new IcWriteResult(true, Name, (code ?? string.Empty).Split('\n').Length, null);
+    }
+
+    public IcReadResult Read()
+    {
+        return new IcReadResult(true, Name, EditorCode, null);
+    }
+
+    public IcWriteResult Export(string? device)
+    {
+        Exports.Add(device);
+        return Result;
+    }
+
+    public IcWriteResult Import(string? device)
+    {
+        Imports.Add(device);
+        return ImportResult;
+    }
+
+    public IcWriteResult Select(string? device)
+    {
+        Selections.Add(device);
+        return SelectResult;
+    }
+
+    public ReadComputerResult Selected()
+    {
+        return SelectionResult;
+    }
+}

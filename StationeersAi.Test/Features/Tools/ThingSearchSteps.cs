@@ -17,7 +17,7 @@ public sealed class ThingSearchSteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     [Given("the {string} holds:")]
     public void GivenTheThingHolds(string name, Table table)

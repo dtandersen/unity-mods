@@ -17,7 +17,7 @@ public sealed class ChatPresentationSteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     [Given("game data is not loaded")]
     public void GivenGameDataIsNotLoaded()

@@ -14,7 +14,7 @@ public sealed class WindowModelSteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     [Given("the window history holds {int} lines")]
     public void GivenTheWindowHistoryHolds(int count)

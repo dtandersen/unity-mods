@@ -17,7 +17,7 @@ public sealed class RoomToolsSteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     [Given("a {word} room {int} at {word} C and {word} kPa in {int} L holding:")]
     public void GivenARoomHolding(string type, int room, string temperature, string pressure, int volume, Table gases)

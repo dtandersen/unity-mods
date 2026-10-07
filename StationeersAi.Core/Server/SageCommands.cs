@@ -18,9 +18,8 @@ public sealed class SageCommands
     private readonly IStationpediaRepository _stationpedia;
     private readonly IPlayerContext _player;
     private readonly IWorldContext _worlds;
-    private readonly IIcEditor _ic;
-    private readonly IIcExport _export;
-    private readonly IIcHousing _housing;
+    private readonly IComputerRepository _computers;
+    private readonly IHousingRepository _housings;
     private readonly IMipsReference _mips;
     private readonly IDeviceCatalog _devices;
     private readonly IDeviceInspector _inspector;
@@ -35,9 +34,8 @@ public sealed class SageCommands
         IStationpediaRepository stationpedia,
         IPlayerContext player,
         IWorldContext worlds,
-        IIcEditor ic,
-        IIcExport export,
-        IIcHousing housing,
+        IComputerRepository computers,
+        IHousingRepository housings,
         IMipsReference mips,
         IDeviceCatalog devices,
         IDeviceInspector inspector,
@@ -51,9 +49,8 @@ public sealed class SageCommands
         _stationpedia = stationpedia;
         _player = player;
         _worlds = worlds;
-        _ic = ic;
-        _export = export;
-        _housing = housing;
+        _computers = computers;
+        _housings = housings;
         _mips = mips;
         _devices = devices;
         _inspector = inspector;
@@ -104,17 +101,17 @@ public sealed class SageCommands
 
     public ReadComputerCommand ReadComputer()
     {
-        return new ReadComputerCommand(_ic, _export);
+        return new ReadComputerCommand(_computers);
     }
 
     public ReadHousingCommand ReadHousing()
     {
-        return new ReadHousingCommand(_housing);
+        return new ReadHousingCommand(_housings);
     }
 
     public UseComputerCommand UseComputer()
     {
-        return new UseComputerCommand(_ic, _export);
+        return new UseComputerCommand(_computers);
     }
 
     public ListInstructionsCommand ListInstructions()

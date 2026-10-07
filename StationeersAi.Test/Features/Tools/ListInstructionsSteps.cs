@@ -16,7 +16,7 @@ public sealed class ListInstructionsSteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     [Given("the MIPS reference knows {string} and {string}")]
     public void GivenTheMipsReferenceKnows(string first, string second)

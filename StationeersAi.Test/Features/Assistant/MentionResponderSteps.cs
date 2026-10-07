@@ -16,7 +16,7 @@ public sealed class MentionResponderSteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     [When("the player mentions {string}")]
     public async Task WhenThePlayerMentions(string message)

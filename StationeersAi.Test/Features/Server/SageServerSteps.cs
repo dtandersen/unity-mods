@@ -20,7 +20,7 @@ public sealed class SageServerSteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     [Given("live devices exist:")]
     public void GivenLiveDevicesExist(Table table)
@@ -47,21 +47,21 @@ public sealed class SageServerSteps
     [Given("the IC editor holds {string} on {string}")]
     public void GivenTheIcEditorHolds(string code, string computer)
     {
-        World.Ic.ResolveAs = computer;
-        World.Ic.EditorCode = code;
+        World.Computers.ResolveAs = computer;
+        World.Computer.EditorCode = code;
     }
 
     [Given("the housing holds {string} on {string}")]
     public void GivenTheHousingHolds(string code, string device)
     {
-        World.Housing.ResolveAs = device;
-        World.Housing.HousingCode = code;
+        World.Housings.ResolveAs = device;
+        World.Housing.ChipCode = code;
     }
 
     [Given("the computer points at {string}")]
     public void GivenTheComputerPointsAt(string device)
     {
-        World.Export.SelectionResult = new ReadComputerResult(null, device, null, null);
+        World.Computer.SelectionResult = new ReadComputerResult(null, device, null, null);
     }
 
     [When(@"I GET (.+)")]
@@ -91,7 +91,7 @@ public sealed class SageServerSteps
             "GET gave other JSON.\nActual: " + _response.Body + "\nWant: " + want);
     }
 
-    private static SageCommands CommandsFrom(World world)
+    private static SageCommands CommandsFrom(WorldContext world)
     {
         return new SageCommands(
             world.Items,
@@ -100,9 +100,8 @@ public sealed class SageServerSteps
             world.Stationpedia,
             world.Player,
             world.Worlds,
-            world.Ic,
-            world.Export,
-            world.Housing,
+            world.Computers,
+            world.Housings,
             world.Mips,
             world.Devices,
             world.Inspector,

@@ -3,18 +3,25 @@ using StationeersAi.Repository;
 
 namespace StationeersAi.Command;
 
-/// <summary>Domain operation: read a housing's burned chip code.</summary>
+/// <summary>Domain operation: read the burned chip of one housing.</summary>
 public sealed class ReadHousingCommand
 {
-    private readonly IIcHousing _housing;
+    private readonly IHousingRepository _housings;
 
-    public ReadHousingCommand(IIcHousing housing)
+    public ReadHousingCommand(IHousingRepository housings)
     {
-        _housing = housing;
+        _housings = housings;
     }
 
     public IcReadResult Execute(string? device)
     {
-        return _housing.Read(device);
+        var found = _housings.Find(device);
+        var target = found.Housing;
+        if (target == null)
+        {
+            return new IcReadResult(false, null, null, found.Error ?? "Housing not found.");
+        }
+
+        return target.Read();
     }
 }

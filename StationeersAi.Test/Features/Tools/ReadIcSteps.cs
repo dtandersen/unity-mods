@@ -15,24 +15,24 @@ public sealed class ReadIcSteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     [Given("the editor holds {string}")]
     public void GivenTheEditorHolds(string code)
     {
-        World.Ic.EditorCode = code;
+        World.Computer.EditorCode = code;
     }
 
     [Given("the editor is empty")]
     public void GivenTheEditorIsEmpty()
     {
-        World.Ic.EditorCode = string.Empty;
+        World.Computer.EditorCode = string.Empty;
     }
 
     [Given("no housing is found")]
     public void GivenNoHousingIsFound()
     {
-        World.Housing.ResolveAs = null;
+        World.Housings.ResolveAs = null;
     }
 
     [When("I read computer {string}")]

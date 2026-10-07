@@ -15,18 +15,18 @@ public sealed class WriteIcSteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     [Given("a computer {string}")]
     public void GivenAComputer(string name)
     {
-        World.Ic.ResolveAs = name;
+        World.Computers.ResolveAs = name;
     }
 
     [Given("no computer is found")]
     public void GivenNoComputerIsFound()
     {
-        World.Ic.ResolveAs = null;
+        World.Computers.ResolveAs = null;
     }
 
     [When("I write to computer {string}:")]

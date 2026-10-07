@@ -14,7 +14,7 @@ namespace StationeersAi.Test.Support;
 /// </summary>
 internal static class TestComposition
 {
-    public static ToolHandler Tools(World world)
+    public static ToolHandler Tools(WorldContext world)
     {
         return new ToolHandler(new ITool[]
         {
@@ -26,9 +26,9 @@ internal static class TestComposition
             new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(world.Player))),
             new DescribePlayerTool(new DescribePlayerCommand(world.Player)),
             new GetWorldTool(new GetWorldCommand(world.Worlds)),
-            new WriteIcTool(new UseComputerCommand(world.Ic, world.Export)),
-            new ReadIcTool(new ReadComputerCommand(world.Ic, world.Export), new ReadHousingCommand(world.Housing)),
-            new ExportIcTool(new UseComputerCommand(world.Ic, world.Export)),
+            new WriteIcTool(new UseComputerCommand(world.Computers)),
+            new ReadIcTool(new ReadComputerCommand(world.Computers), new ReadHousingCommand(world.Housings)),
+            new ExportIcTool(new UseComputerCommand(world.Computers)),
             new ListInstructionsTool(new ListInstructionsCommand(world.Mips)),
             new SearchDevicesTool(new SearchDevicesCommand(world.Devices)),
             new DescribeDeviceTool(new DescribeDeviceCommand(world.Inspector, world.Devices)),
@@ -37,17 +37,17 @@ internal static class TestComposition
         });
     }
 
-    public static AiAssistant Assistant(World world)
+    public static AiAssistant Assistant(WorldContext world)
     {
         return new AiAssistant(world.Ai, Tools(world), systemPrompt: null, maxIterations: 5, log: world.Log, activity: null);
     }
 
-    public static AiAssistant Assistant(World world, IAssistantActivity activity)
+    public static AiAssistant Assistant(WorldContext world, IAssistantActivity activity)
     {
         return new AiAssistant(world.Ai, Tools(world), null, 5, world.Log, activity);
     }
 
-    public static MentionResponder Responder(World world)
+    public static MentionResponder Responder(WorldContext world)
     {
         return new MentionResponder(
             world.Chat,

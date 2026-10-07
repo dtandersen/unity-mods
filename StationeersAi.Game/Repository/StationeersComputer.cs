@@ -5,37 +5,72 @@ using StationeersAi.Core;
 using StationeersAi.Game;
 using Logger = StationeersAi.Core.Logger;
 using Assets.Scripts.Objects.Electrical;
+using Assets.Scripts.Objects.Motherboards;
 using StationeersAi.Entity;
 using StationeersAi.Formatting;
 using StationeersAi.Repository;
-using UnityEngine;
 
 namespace StationeersAi.Repository;
 
 /// <summary>
-/// Burns a computer's editor text onto a housing chip through the computer
-/// motherboard, the same path the monitor Export button takes. The target
-/// must sit in the motherboard's holder list, so only housings on the
-/// computer's network can receive the burn. Verifies by comparing code hashes.
-/// Runs on Unity's main thread: the burn compiles on the chip and touches
-/// Unity state.
+/// One live IC computer, built by <see cref="StationeersComputerRepository"/>
+/// from the motherboard it names. The screen reads and writes editor text on
+/// that motherboard, the dropdown picks a housing from the motherboard's
+/// holder list, and the buttons move text between the editor and the chip —
+/// <c>Export</c> burns and verifies the burn by comparing code hashes,
+/// <c>Import</c> pulls chip text back. Only housings on the computer's
+/// network appear in the holder list. Runs on Unity's main thread: the burn
+/// compiles on the chip and touches Unity state.
 /// </summary>
-public sealed class StationeersIcExport : IIcExport
+public sealed class StationeersComputer : IComputer
 {
+    private readonly ProgrammableChipMotherboard _motherboard;
+
+    private readonly string _name;
+
     private readonly IMainThread _threads;
 
     private readonly Logger _log;
 
-    public StationeersIcExport(IMainThread mainThread, Logger log)
+    public StationeersComputer(ProgrammableChipMotherboard motherboard, string name, IMainThread threads, Logger log)
     {
-        _threads = mainThread;
+        _motherboard = motherboard;
+        _name = name;
+        _threads = threads;
         _log = log;
     }
-    public IcWriteResult Export(string? computer, string? device)
+
+    public IcWriteResult Write(string code)
     {
         try
         {
-            return _threads.RunSync(() => ExportInner(computer, device));
+            return _threads.RunSync(() => WriteInner(code ?? string.Empty));
+        }
+        catch (Exception ex)
+        {
+            _log.Info(ex.ToString());
+            return new IcWriteResult(false, null, 0, "Editor write failed.");
+        }
+    }
+
+    public IcReadResult Read()
+    {
+        try
+        {
+            return _threads.RunSync(ReadInner);
+        }
+        catch (Exception ex)
+        {
+            _log.Info(ex.ToString());
+            return new IcReadResult(false, null, null, "Editor read failed.");
+        }
+    }
+
+    public IcWriteResult Export(string? device)
+    {
+        try
+        {
+            return _threads.RunSync(() => ExportInner(device));
         }
         catch (Exception ex)
         {
@@ -44,11 +79,11 @@ public sealed class StationeersIcExport : IIcExport
         }
     }
 
-    public IcWriteResult Import(string? computer, string? device)
+    public IcWriteResult Import(string? device)
     {
         try
         {
-            return _threads.RunSync(() => ImportInner(computer, device));
+            return _threads.RunSync(() => ImportInner(device));
         }
         catch (Exception ex)
         {
@@ -57,11 +92,11 @@ public sealed class StationeersIcExport : IIcExport
         }
     }
 
-    public IcWriteResult Select(string? computer, string? device)
+    public IcWriteResult Select(string? device)
     {
         try
         {
-            return _threads.RunSync(() => SelectInner(computer, device));
+            return _threads.RunSync(() => SelectInner(device));
         }
         catch (Exception ex)
         {
@@ -70,11 +105,11 @@ public sealed class StationeersIcExport : IIcExport
         }
     }
 
-    public ReadComputerResult Selected(string? computer)
+    public ReadComputerResult Selected()
     {
         try
         {
-            return _threads.RunSync(() => SelectedInner(computer));
+            return _threads.RunSync(SelectedInner);
         }
         catch (Exception ex)
         {
@@ -83,24 +118,43 @@ public sealed class StationeersIcExport : IIcExport
         }
     }
 
-    private ReadComputerResult SelectedInner(string? computer)
+    private IcWriteResult WriteInner(string code)
     {
-        var boards = ComputerBoards.Match(computer);
-        if (boards.Count == 0)
-        {
-            return new ReadComputerResult(null, null, null, $"Computer '{computer}' not found. Available: {ComputerBoards.Available()}");
-        }
-
-        if (boards.Count > 1)
-        {
-            return new ReadComputerResult(null, null, null, $"Several computers match '{computer}': {ComputerBoards.Names(boards)}");
-        }
-
-        var motherboard = boards[0].Motherboard;
+        _motherboard.SetSourceCode(code);
         try
         {
-            var field = motherboard.GetType().GetField("_dropdown", BindingFlags.Instance | BindingFlags.NonPublic);
-            var dropdown = field?.GetValue(motherboard);
+            _motherboard.SendUpdate();
+        }
+        catch (Exception ex)
+        {
+            _log.Info(ex.ToString());
+        }
+
+        return new IcWriteResult(true, _name, code.Split('\n').Length, null);
+    }
+
+    private IcReadResult ReadInner()
+    {
+        string code;
+        try
+        {
+            var source = _motherboard.GetSourceCode();
+            code = source != null ? source.ToString() : string.Empty;
+        }
+        catch (Exception ex)
+        {
+            _log.Info(ex.ToString());
+            return new IcReadResult(false, null, null, "Editor read failed.");
+        }
+
+        return new IcReadResult(true, _name, code ?? string.Empty, null);
+    }
+
+    private ReadComputerResult SelectedInner()
+    {
+        try
+        {
+            var dropdown = Dropdown(_motherboard);
             var selected = (int?)dropdown?.GetType().GetProperty("SelectedIndex")?.GetValue(dropdown, null);
             var items = dropdown?.GetType().GetField("_items", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(dropdown) as System.Collections.IList;
             string? device = null;
@@ -109,7 +163,7 @@ public sealed class StationeersIcExport : IIcExport
                 device = items[selected.Value]?.GetType().GetProperty("Title")?.GetValue(items[selected.Value], null) as string;
             }
 
-            return new ReadComputerResult(boards[0].Name, device, null, null);
+            return new ReadComputerResult(_name, device, null, null);
         }
         catch (Exception ex)
         {
@@ -118,21 +172,9 @@ public sealed class StationeersIcExport : IIcExport
         }
     }
 
-    private IcWriteResult SelectInner(string? computer, string? device)
+    private IcWriteResult SelectInner(string? device)
     {
-        var boards = ComputerBoards.Match(computer);
-        if (boards.Count == 0)
-        {
-            return new IcWriteResult(false, null, 0, $"Computer '{computer}' not found. Available: {ComputerBoards.Available()}");
-        }
-
-        if (boards.Count > 1)
-        {
-            return new IcWriteResult(false, null, 0, $"Several computers match '{computer}': {ComputerBoards.Names(boards)}");
-        }
-
-        var motherboard = boards[0].Motherboard;
-        var selection = MatchNetworked(motherboard, device);
+        var selection = MatchNetworked(_motherboard, device);
         if (selection.Error != null)
         {
             return selection.Error;
@@ -140,7 +182,7 @@ public sealed class StationeersIcExport : IIcExport
 
         try
         {
-            SelectHolder(motherboard, selection.Index);
+            SelectHolder(_motherboard, selection.Index);
         }
         catch (Exception ex)
         {
@@ -158,21 +200,9 @@ public sealed class StationeersIcExport : IIcExport
         return new IcWriteResult(true, name ?? "housing", 0, null);
     }
 
-    private IcWriteResult ImportInner(string? computer, string? device)
+    private IcWriteResult ImportInner(string? device)
     {
-        var boards = ComputerBoards.Match(computer);
-        if (boards.Count == 0)
-        {
-            return new IcWriteResult(false, null, 0, $"Computer '{computer}' not found. Available: {ComputerBoards.Available()}");
-        }
-
-        if (boards.Count > 1)
-        {
-            return new IcWriteResult(false, null, 0, $"Several computers match '{computer}': {ComputerBoards.Names(boards)}");
-        }
-
-        var motherboard = boards[0].Motherboard;
-        var selection = MatchNetworked(motherboard, device);
+        var selection = MatchNetworked(_motherboard, device);
         if (selection.Error != null)
         {
             return selection.Error;
@@ -180,8 +210,8 @@ public sealed class StationeersIcExport : IIcExport
 
         try
         {
-            SelectHolder(motherboard, selection.Index);
-            motherboard.Import();
+            SelectHolder(_motherboard, selection.Index);
+            _motherboard.Import();
         }
         catch (Exception ex)
         {
@@ -192,7 +222,7 @@ public sealed class StationeersIcExport : IIcExport
         string text;
         try
         {
-            var source = motherboard.GetSourceCode();
+            var source = _motherboard.GetSourceCode();
             text = source != null ? source.ToString() : string.Empty;
         }
         catch (Exception ex)
@@ -201,7 +231,78 @@ public sealed class StationeersIcExport : IIcExport
             return new IcWriteResult(false, null, 0, "Editor read failed.");
         }
 
-        return new IcWriteResult(true, boards[0].Name, text.Split('\n').Length, null);
+        return new IcWriteResult(true, _name, text.Split('\n').Length, null);
+    }
+
+    private IcWriteResult ExportInner(string? device)
+    {
+        string text;
+        try
+        {
+            var source = _motherboard.GetSourceCode();
+            text = source != null ? source.ToString() : string.Empty;
+        }
+        catch (Exception ex)
+        {
+            _log.Info(ex.ToString());
+            return new IcWriteResult(false, null, 0, "Editor read failed.");
+        }
+
+        if (string.IsNullOrEmpty(text))
+        {
+            return new IcWriteResult(false, null, 0, "Editor is empty; nothing to export.");
+        }
+
+        var selection = MatchNetworked(_motherboard, device);
+        if (selection.Error != null)
+        {
+            return selection.Error;
+        }
+
+        var target = selection.Housing;
+        if (target == null)
+        {
+            return new IcWriteResult(false, null, 0, "Export failed.");
+        }
+
+        try
+        {
+            SelectHolder(_motherboard, selection.Index);
+            _motherboard.Export();
+        }
+        catch (Exception ex)
+        {
+            _log.Info(ex.ToString());
+            return new IcWriteResult(false, null, 0, "Export failed.");
+        }
+
+        var chip = HousingChip(target);
+        if (chip != null && chip.CompilationError)
+        {
+            var type = ChipErrorReading.CompileErrorType(chip) ?? "compile error";
+            var line = ChipErrorReading.CompileErrorLine(chip);
+            return new IcWriteResult(false, null, 0, $"Chip reports {type}" + (line == null ? "." : $" at line {line}."));
+        }
+
+        string? burned = null;
+        try
+        {
+            if (chip != null)
+            {
+                burned = chip.GetSourceCode().ToString();
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.Info(ex.ToString());
+        }
+
+        if (burned == null || CodeHash.Hash(burned) != CodeHash.Hash(text))
+        {
+            return new IcWriteResult(false, null, 0, "Chip hash does not match the editor.");
+        }
+
+        return new IcWriteResult(true, SafeName(target) ?? "housing", text.Split('\n').Length, null);
     }
 
     /// <summary>
@@ -216,7 +317,7 @@ public sealed class StationeersIcExport : IIcExport
         public IcWriteResult? Error;
     }
 
-    private NetworkSelection MatchNetworked(object motherboard, string? device)
+    private NetworkSelection MatchNetworked(ProgrammableChipMotherboard motherboard, string? device)
     {
         var selection = new NetworkSelection();
         var holders = MotherboardHolders(motherboard);
@@ -264,94 +365,25 @@ public sealed class StationeersIcExport : IIcExport
         return selection;
     }
 
-    private IcWriteResult ExportInner(string? computer, string? device)
+    /// <summary>The motherboard's dropdown, read by reflection; the game keeps it private.</summary>
+    private static object? Dropdown(object motherboard)
     {
-        var boards = ComputerBoards.Match(computer);
-        if (boards.Count == 0)
-        {
-            return new IcWriteResult(false, null, 0, $"Computer '{computer}' not found. Available: {ComputerBoards.Available()}");
-        }
-
-        if (boards.Count > 1)
-        {
-            return new IcWriteResult(false, null, 0, $"Several computers match '{computer}': {ComputerBoards.Names(boards)}");
-        }
-
-        string text;
         try
         {
-            var source = boards[0].Motherboard.GetSourceCode();
-            text = source != null ? source.ToString() : string.Empty;
+            var field = motherboard.GetType().GetField("_dropdown", BindingFlags.Instance | BindingFlags.NonPublic);
+            return field?.GetValue(motherboard);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _log.Info(ex.ToString());
-            return new IcWriteResult(false, null, 0, "Editor read failed.");
+            return null;
         }
-
-        if (string.IsNullOrEmpty(text))
-        {
-            return new IcWriteResult(false, null, 0, "Editor is empty; nothing to export.");
-        }
-
-        var motherboard = boards[0].Motherboard;
-        var selection = MatchNetworked(motherboard, device);
-        if (selection.Error != null)
-        {
-            return selection.Error;
-        }
-
-        var target = selection.Housing;
-        if (target == null)
-        {
-            return new IcWriteResult(false, null, 0, "Export failed.");
-        }
-
-        try
-        {
-            SelectHolder(motherboard, selection.Index);
-            motherboard.Export();
-        }
-        catch (Exception ex)
-        {
-            _log.Info(ex.ToString());
-            return new IcWriteResult(false, null, 0, "Export failed.");
-        }
-
-        var chip = HousingChip(target);
-        if (chip != null && chip.CompilationError)
-        {
-            var type = ChipErrorReading.CompileErrorType(chip) ?? "compile error";
-            var line = ChipErrorReading.CompileErrorLine(chip);
-            return new IcWriteResult(false, null, 0, $"Chip reports {type}" + (line == null ? "." : $" at line {line}."));
-        }
-
-        string? burned = null;
-        try
-        {
-            if (chip != null)
-            {
-                burned = chip.GetSourceCode().ToString();
-            }
-        }
-        catch (Exception ex)
-        {
-            _log.Info(ex.ToString());
-        }
-
-        if (burned == null || CodeHash.Hash(burned) != CodeHash.Hash(text))
-        {
-            return new IcWriteResult(false, null, 0, "Chip hash does not match the editor.");
-        }
-
-        return new IcWriteResult(true, SafeName(target) ?? "housing", text.Split('\n').Length, null);
     }
 
     /// <summary>
     /// The motherboard's holder list: only housings on the computer's
     /// network. Read by reflection; the game keeps it private.
     /// </summary>
-    private static IList<ICircuitHolder>? MotherboardHolders(object motherboard)
+    private static IList<ICircuitHolder>? MotherboardHolders(ProgrammableChipMotherboard motherboard)
     {
         try
         {
@@ -370,10 +402,9 @@ public sealed class StationeersIcExport : IIcExport
     /// the visible text updates in <c>ItemClicked</c>, which also pops the
     /// dropdown open, so the label is set straight instead.
     /// </summary>
-    private void SelectHolder(object motherboard, int index)
+    private void SelectHolder(ProgrammableChipMotherboard motherboard, int index)
     {
-        var field = motherboard.GetType().GetField("_dropdown", BindingFlags.Instance | BindingFlags.NonPublic);
-        var dropdown = field?.GetValue(motherboard);
+        var dropdown = Dropdown(motherboard);
         if (dropdown == null)
         {
             throw new InvalidOperationException("Motherboard dropdown is missing.");

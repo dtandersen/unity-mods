@@ -19,7 +19,7 @@ public sealed class ToolsSteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     [When("I call the {string} tool with query {string}")]
     public void WhenICallTheToolWithQuery(string tool, string query)

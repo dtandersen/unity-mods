@@ -20,7 +20,7 @@ public sealed class SagePresenterSteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     private SagePresenter EnsurePresenter()
     {

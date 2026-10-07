@@ -14,7 +14,7 @@ namespace StationeersAi.Test.Support;
 /// Shared state for a scenario. Built once per scenario by <see cref="Hooks"/>
 /// and shared by all step bindings.
 /// </summary>
-public sealed class World : IDisposable
+public sealed class WorldContext : IDisposable
 {
     public InMemoryItemRepository Items { get; } = new InMemoryItemRepository(Array.Empty<Item>());
 
@@ -28,11 +28,15 @@ public sealed class World : IDisposable
 
     public InMemoryWorldContext Worlds { get; } = new InMemoryWorldContext();
 
-    public InMemoryIcEditor Ic { get; } = new InMemoryIcEditor();
+    public InMemoryComputerRepository Computers { get; } = new InMemoryComputerRepository();
 
-    public InMemoryIcExport Export { get; } = new InMemoryIcExport();
+    /// <summary>The one computer lookups resolve to.</summary>
+    public InMemoryComputer Computer => Computers.Computer;
 
-    public InMemoryIcHousing Housing { get; } = new InMemoryIcHousing();
+    public InMemoryHousingRepository Housings { get; } = new InMemoryHousingRepository();
+
+    /// <summary>The one housing lookups resolve to.</summary>
+    public InMemoryHousing Housing => Housings.Housing;
 
     public InMemoryMipsReference Mips { get; } = new InMemoryMipsReference();
 

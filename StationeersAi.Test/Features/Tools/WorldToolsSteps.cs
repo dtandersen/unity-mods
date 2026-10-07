@@ -14,7 +14,7 @@ public sealed class WorldToolsSteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     [Given("a world")]
     public void GivenAWorld()

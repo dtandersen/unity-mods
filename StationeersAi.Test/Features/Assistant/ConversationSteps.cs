@@ -17,7 +17,7 @@ public sealed class ConversationSteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     [Given("a conversation with a limit of {int} bytes")]
     public void GivenAConversationWithALimit(int limit)

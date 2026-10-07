@@ -17,17 +17,17 @@ public sealed class Hooks
     [BeforeScenario]
     public void CreateWorld()
     {
-        _context.Set(new World(), WorldKey);
+        _context.Set(new WorldContext(), WorldKey);
     }
 
     [AfterScenario]
     public void DisposeWorld()
     {
-        _context.Get<World>(WorldKey).Dispose();
+        _context.Get<WorldContext>(WorldKey).Dispose();
     }
 
-    public static World GetWorld(ScenarioContext context)
+    public static WorldContext GetWorld(ScenarioContext context)
     {
-        return context.Get<World>(WorldKey);
+        return context.Get<WorldContext>(WorldKey);
     }
 }

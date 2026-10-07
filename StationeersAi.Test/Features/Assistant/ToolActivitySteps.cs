@@ -16,7 +16,7 @@ public sealed class ToolActivitySteps
         _context = context;
     }
 
-    private World World => Hooks.GetWorld(_context);
+    private WorldContext World => Hooks.GetWorld(_context);
 
     [When("I ask the assistant {string} reporting activity")]
     public async Task WhenIAskTheAssistantReportingActivity(string prompt)
