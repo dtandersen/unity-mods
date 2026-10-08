@@ -47,6 +47,7 @@ Sage can call these tools:
 | `export_ic` | Burn editor text to a housing chip, hash-verified, by thing id |
 | `import_ic` | Pull the chip under the dropdown into a computer's editor |
 | `select_ic` | Point a computer's dropdown at one housing on its network |
+| `read_slots` | List what one thing holds, slot by slot |
 | `list_instructions` | IC10 instruction usage and descriptions |
 | `search_devices` | Live devices: labels, types, networks |
 | `describe_device` | One device: ports, settings, slots |

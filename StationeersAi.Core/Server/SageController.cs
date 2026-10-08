@@ -223,7 +223,7 @@ public sealed class SageController
     }
 
     [SagePut("/computer/{computer}", "Write a computer's editor screen, guarded by the selected chip's hash.")]
-    public SageResponse WriteComputer(ComputerScreenRequest request)
+    public SageResponse WriteComputer(ComputerWriteRequest request)
     {
         if (request.SourceCode is null)
         {
@@ -244,7 +244,7 @@ public sealed class SageController
     }
 
     [SagePut("/computer/{computer}/export", "Burn a computer's editor text onto a housing chip, hash-verified.")]
-    public SageResponse ExportComputer(ChipMoveRequest request)
+    public SageResponse ExportComputer(ComputerExportRequest request)
     {
         if (!request.Device.HasValue)
         {
@@ -257,7 +257,7 @@ public sealed class SageController
     }
 
     [SagePut("/computer/{computer}/select", "Point a computer's dropdown at one housing on its network.")]
-    public SageResponse SelectComputer(ChipMoveRequest request)
+    public SageResponse SelectComputer(ComputerSelectRequest request)
     {
         if (!request.Device.HasValue)
         {

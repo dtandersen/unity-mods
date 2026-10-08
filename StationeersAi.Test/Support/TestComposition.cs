@@ -35,6 +35,7 @@ internal static class TestComposition
             new SearchDevicesTool(new SearchDevicesCommand(world.Devices)),
             new DescribeDeviceTool(new DescribeDeviceCommand(world.Inspector, world.Devices)),
             new SearchThingsTool(new SearchThingsCommand(world.Things, world.Player)),
+            new ReadSlotsTool(new ReadThingSlotsCommand(world.ThingSlots)),
             new ReadRoomTool(new ReadRoomCommand(world.RoomInspector, world.Player)),
         });
     }

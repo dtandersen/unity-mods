@@ -118,6 +118,7 @@ public sealed class SageAssistantFactory
             new SearchDevicesTool(commands.SearchDevices()),
             new DescribeDeviceTool(commands.DescribeDevice()),
             new SearchThingsTool(commands.SearchThings()),
+            new ReadSlotsTool(commands.ReadThingSlots()),
             new ReadRoomTool(commands.ReadRoom()),
         });
 
