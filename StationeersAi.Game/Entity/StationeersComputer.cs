@@ -79,13 +79,9 @@ public sealed class StationeersComputer : IComputer
         }, "Export failed.");
     }
 
-    public void Import(long device)
+    public void Import()
     {
-        Press(() =>
-        {
-            SelectHolder(_motherboard, MatchNetworked(device));
-            _motherboard.Import();
-        }, "Import failed.");
+        Press(_motherboard.Import, "Import failed.");
     }
 
     public void Select(long device)

@@ -265,7 +265,7 @@ Feature: Sage HTTP API
       """
     When I PUT /sage/computer/1189/import with:
       """
-      {"device":"2200"}
+      {}
       """
     Then the response is:
       """
@@ -289,3 +289,19 @@ Feature: Sage HTTP API
       """
     Then the response status is 400
     And the response reports "device must be a thing id."
+
+  Scenario: Screen write without text to write
+    When I PUT /sage/computer/1189 with:
+      """
+      {"hash":"6c96f2ae"}
+      """
+    Then the response status is 400
+    And the response reports "sourceCode is required."
+
+  Scenario: A body that is not json is refused
+    When I PUT /sage/computer/1189 with:
+      """
+      sourceCode = yield
+      """
+    Then the response status is 400
+    And the response reports "body is not valid json."

@@ -1,6 +1,10 @@
+using StationeersAi.Client.Model;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Reflection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using StationeersAi.Core;
 
 namespace StationeersAi.Server;
@@ -73,6 +77,12 @@ public sealed class SageRouter
         {
             return (SageResponse)target.Invoke(_controller, Args(target, query, captured, body))!;
         }
+        catch (RequestRejected rejected)
+        {
+            // The router could not shape the ask into the model: name what
+            // failed to convert and answer 400.
+            return SageResponse.Error(400, rejected.Message);
+        }
         catch (TargetInvocationException ex)
         {
             // Commands answer with results. Anything still escaping a
@@ -136,6 +146,13 @@ public sealed class SageRouter
         for (var i = 0; i < pars.Length; i++)
         {
             var name = pars[i].Name ?? string.Empty;
+            var type = pars[i].ParameterType;
+            if (type != typeof(string))
+            {
+                args[i] = BuildModel(type, captured, query, body);
+                continue;
+            }
+
             if (name.Equals("body", StringComparison.OrdinalIgnoreCase))
             {
                 args[i] = body;
@@ -156,6 +173,220 @@ public sealed class SageRouter
         }
 
         return args;
+    }
+
+    /// <summary>Where the router reads a request-model property from.</summary>
+    private enum BindSource
+    {
+        Route,
+        Query,
+        Body,
+    }
+
+    /// <summary>One property of a request model: its key, its kind, and its home.</summary>
+    private sealed class PropertyBinding
+    {
+        public string Key = string.Empty;
+        public PropertyInfo Property = null!;
+        public Type Underlying = null!;
+        public BindSource Source;
+        public bool Optional;
+        public bool Thing;
+    }
+
+    private static readonly Dictionary<Type, PropertyBinding[]> ModelBindings = new Dictionary<Type, PropertyBinding[]>();
+
+    private static readonly object ModelBindingsLock = new object();
+
+    /// <summary>
+    /// Fills a request model from the matched path, the query, and the JSON
+    /// body. A value that will not convert to the declared type raises
+    /// <see cref="RequestRejected"/>, and the router answers 400 with its
+    /// name: a thing id names itself, the rest say they are no number.
+    /// </summary>
+    private static object BuildModel(Type modelType, IDictionary<string, string>? captured, IDictionary<string, string> query, string? body)
+    {
+        var model = Activator.CreateInstance(modelType)
+            ?? throw new InvalidOperationException("A request model needs a public default constructor.");
+
+        PropertyBinding[] bindings;
+        lock (ModelBindingsLock)
+        {
+            if (!ModelBindings.TryGetValue(modelType, out bindings!))
+            {
+                bindings = ReadBindings(modelType);
+                ModelBindings[modelType] = bindings;
+            }
+        }
+
+        JObject? json = null;
+        foreach (var binding in bindings)
+        {
+            string? value;
+            if (binding.Source == BindSource.Route)
+            {
+                string? fromPath;
+                value = captured != null && captured.TryGetValue(binding.Key, out fromPath) ? fromPath : null;
+            }
+            else if (binding.Source == BindSource.Query)
+            {
+                value = Q(query, binding.Key);
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(body))
+                {
+                    continue;
+                }
+
+                if (json == null)
+                {
+                    json = ParseJson(body);
+                }
+
+                var token = json.GetValue(binding.Key, StringComparison.OrdinalIgnoreCase);
+                if (token == null || token.Type == JTokenType.Null)
+                {
+                    continue;
+                }
+
+                value = token.ToString();
+            }
+
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                if (!binding.Optional && binding.Source == BindSource.Route)
+                {
+                    throw new RequestRejected(Refusal(binding));
+                }
+
+                continue;
+            }
+
+            binding.Property.SetValue(model, Convert(value, binding));
+        }
+
+        return model;
+    }
+
+    private static JObject ParseJson(string body)
+    {
+        try
+        {
+            return JObject.Parse(body);
+        }
+        catch (JsonException)
+        {
+            throw new RequestRejected("body is not valid json.");
+        }
+    }
+
+    private static object Convert(string value, PropertyBinding binding)
+    {
+        if (binding.Underlying == typeof(string))
+        {
+            return value;
+        }
+
+        if (binding.Underlying == typeof(long))
+        {
+            long whole;
+            if (long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out whole))
+            {
+                return whole;
+            }
+        }
+        else if (binding.Underlying == typeof(double))
+        {
+            double number;
+            if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out number))
+            {
+                return number;
+            }
+        }
+        else if (binding.Underlying == typeof(bool))
+        {
+            bool flag;
+            if (bool.TryParse(value, out flag))
+            {
+                return flag;
+            }
+
+            if (value == "1")
+            {
+                return true;
+            }
+
+            if (value == "0")
+            {
+                return false;
+            }
+        }
+        else
+        {
+            throw new InvalidOperationException("A request model property must be string, long, double, or bool: " + binding.Underlying.Name);
+        }
+
+        throw new RequestRejected(Refusal(binding));
+    }
+
+    private static string Refusal(PropertyBinding binding)
+    {
+        if (binding.Thing)
+        {
+            return binding.Key + " must be a thing id.";
+        }
+
+        if (binding.Underlying == typeof(bool))
+        {
+            return binding.Key + " must be true or false.";
+        }
+
+        return binding.Key + " must be a number.";
+    }
+
+    private static PropertyBinding[] ReadBindings(Type modelType)
+    {
+        var bindings = new List<PropertyBinding>();
+        foreach (var property in modelType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            var bind = (BindAttribute?)Attribute.GetCustomAttribute(property, typeof(BindAttribute));
+            if (bind == null)
+            {
+                continue;
+            }
+
+            var underlying = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+            bindings.Add(new PropertyBinding
+            {
+                Key = bind.Name ?? CamelName(property.Name),
+                Property = property,
+                Underlying = underlying,
+                Source = bind is FromRouteAttribute ? BindSource.Route : bind is FromQueryAttribute ? BindSource.Query : BindSource.Body,
+                Optional = underlying == typeof(string) || Nullable.GetUnderlyingType(property.PropertyType) != null,
+                Thing = Attribute.IsDefined(property, typeof(ThingIdAttribute)),
+            });
+        }
+
+        return bindings.ToArray();
+    }
+
+    private static string CamelName(string name)
+    {
+        if (name.Length == 0)
+        {
+            return name;
+        }
+
+        return char.ToLowerInvariant(name[0]) + name.Substring(1);
+    }
+
+    /// <summary>A value the caller sent that the route cannot read.</summary>
+    private sealed class RequestRejected : Exception
+    {
+        public RequestRejected(string message) : base(message)
+        {
+        }
     }
 
     private static IReadOnlyDictionary<string, MethodInfo> FindLiteralRoutes()

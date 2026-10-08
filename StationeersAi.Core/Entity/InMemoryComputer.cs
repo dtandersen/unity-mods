@@ -17,8 +17,6 @@ public sealed class InMemoryComputer : IComputer
 
     public readonly List<long> Exports = new List<long>();
 
-    public readonly List<long> Imports = new List<long>();
-
     public readonly List<long> Selections = new List<long>();
 
     /// <summary>The name reads and write answers report as the computer.</summary>
@@ -68,10 +66,13 @@ public sealed class InMemoryComputer : IComputer
         }
     }
 
-    public void Import(long device)
+    public void Import()
     {
-        Imports.Add(device);
-        EditorCode = OnNetwork(device).ChipCode;
+        var housing = NetworkedHousing;
+        if (housing != null && PointedThing == housing.Thing)
+        {
+            EditorCode = housing.ChipCode;
+        }
     }
 
     public void Select(long device)

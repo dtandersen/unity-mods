@@ -28,8 +28,12 @@ public interface IComputer
     /// </summary>
     void Export(long device);
 
-    /// <summary>Pulls the chip text of housing <paramref name="device"/> into the screen. Throws when it cannot.</summary>
-    void Import(long device);
+    /// <summary>
+    /// Pulls the chip the dropdown points at into the screen, the game's
+    /// own button: it takes no target, and refuses to guess when the
+    /// dropdown points at nothing. Throws when the button cannot be pressed.
+    /// </summary>
+    void Import();
 
     /// <summary>Points the dropdown at housing <paramref name="device"/>. Throws when it cannot.</summary>
     void Select(long device);

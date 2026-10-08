@@ -1,15 +1,18 @@
+using StationeersAi.Entity;
 using StationeersAi.Repository;
 
 namespace StationeersAi.Command;
 
-/// <summary>The housing to pull from and the computer whose screen takes the text.</summary>
-public sealed record ImportChipRequest(long Computer, long Device);
+/// <summary>The computer whose screen takes the pointed chip's text.</summary>
+public sealed record ImportChipRequest(long Computer);
 
 /// <summary>
-/// Domain operation: pull the chip text of one housing into the computer's
-/// screen. The answer counts what ended up on the screen, read back after
-/// the button. A missed id becomes <see cref="Status.NOT_FOUND"/>; a
-/// machine that fails outright raises.
+/// Domain operation: pull the chip the dropdown points at into the
+/// computer's screen. The ask names no housing because the game's button
+/// reads no housing: it takes what the dropdown points at, and this refuses
+/// when the dropdown points at nothing. The answer counts what landed on
+/// the screen, read back after the button. A missed id becomes
+/// <see cref="Status.NOT_FOUND"/>; a machine that fails outright raises.
 /// </summary>
 public sealed class ImportChipCommand : Command<ImportChipRequest, ComputerActionResult>
 {
@@ -25,7 +28,12 @@ public sealed class ImportChipCommand : Command<ImportChipRequest, ComputerActio
         try
         {
             var target = _devices.FindComputer(request.Computer);
-            target.Import(request.Device);
+            if (target.Selected() == 0)
+            {
+                return ComputerAnswers.Refuse("The computer points at no housing. Pick the housing first.");
+            }
+
+            target.Import();
             var screen = target.Read();
             return ComputerAnswers.Accept(target.Name, ComputerAnswers.LineCount(screen.SourceCode));
         }

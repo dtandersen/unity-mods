@@ -16,11 +16,10 @@ public sealed class ImportIcTool : ITool
 
     public ToolDefinition Definition { get; } = new ToolDefinition(
         "import_ic",
-        "Pull a housing chip's burned program into a computer's editor, overwriting the screen text. Takes the housing and the computer, each by thing id. Burns nothing; read_ic shows what landed on the screen.",
+        "Pull the chip under a computer's dropdown into its editor, overwriting the screen text. Point the dropdown first with select_ic: the game's button takes no target. Burns nothing; read_ic shows what landed on the screen.",
         new[]
         {
             new ToolParameter("computer", "The computer or laptop whose screen takes the text, by thing id. Read it from search_devices."),
-            new ToolParameter("device", "The housing to pull from, by thing id. Read it from search_devices."),
         });
 
     public ToolResult Execute(ToolArguments arguments)
@@ -37,22 +36,10 @@ public sealed class ImportIcTool : ITool
             return new ToolFailure(ThingId.NotAThingId("computer", computer));
         }
 
-        var device = arguments.Get("device");
-        if (string.IsNullOrWhiteSpace(device))
-        {
-            return new ToolFailure("Missing required argument 'device'.");
-        }
-
-        long deviceId;
-        if (!ThingId.TryParse(device, out deviceId))
-        {
-            return new ToolFailure(ThingId.NotAThingId("device", device));
-        }
-
         ComputerActionResult result;
         try
         {
-            result = _command.Execute(new ImportChipRequest(computerId, deviceId));
+            result = _command.Execute(new ImportChipRequest(computerId));
         }
         catch (Exception)
         {
@@ -66,6 +53,6 @@ public sealed class ImportIcTool : ITool
 
         return new ToolSuccess<ComputerActionResult>(
             result,
-            $"Pulled {result.Lines} {(result.Lines == 1 ? "line" : "lines")} from housing {deviceId} into {result.Device}.");
+            $"Pulled {result.Lines} {(result.Lines == 1 ? "line" : "lines")} into {result.Device}.");
     }
 }

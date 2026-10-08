@@ -1,3 +1,4 @@
+using StationeersAi.Client.Model;
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
@@ -70,13 +71,13 @@ public sealed class SageController
     }
 
     [SageGet("/devices", "Search devices by name, network, or room.")]
-    public SageResponse Devices(string? q, string? network, string? logic, string? room)
+    public SageResponse Devices(DeviceSearchRequest request)
     {
         return SageResponse.Ok(_commands.SearchDevices().Execute(new SearchDevicesRequest(
-            q,
-            Long(network),
-            Bool(logic),
-            Long(room))).Devices);
+            request.Query,
+            request.Network,
+            request.Logic,
+            request.Room)).Devices);
     }
 
     [SageGet("/devices/{device}", "Read one device's values and settings.")]
@@ -92,21 +93,9 @@ public sealed class SageController
     }
 
     [SageGet("/things", "Search nearby things by name.")]
-    public SageResponse Things(string? q, string? maxDistance)
+    public SageResponse Things(ThingSearchRequest request)
     {
-        double? distance = null;
-        if (!string.IsNullOrWhiteSpace(maxDistance))
-        {
-            double parsed;
-            if (!double.TryParse(maxDistance, out parsed))
-            {
-                return SageResponse.Error(400, "maxDistance must be a number.");
-            }
-
-            distance = parsed;
-        }
-
-        var result = _commands.SearchThings().Execute(new SearchThingsRequest(q, null, distance));
+        var result = _commands.SearchThings().Execute(new SearchThingsRequest(request.Query, null, request.MaxDistance));
         return SageResponse.Ok(new ThingsResult(result.Things, result.Origin, result.Facing));
     }
 
@@ -124,15 +113,9 @@ public sealed class SageController
 
     [SageGet("/rooms", "Read the air of the room the player stands in.")]
     [SageGet("/rooms/{id}", "Read the air and size of one room.")]
-    public SageResponse Rooms(string? id)
+    public SageResponse Rooms(RoomReadRequest request)
     {
-        long? roomId = Long(id);
-        if (!string.IsNullOrWhiteSpace(id) && !roomId.HasValue)
-        {
-            return SageResponse.Error(400, "id must be a number.");
-        }
-
-        var room = _commands.ReadRoom().Execute(new ReadRoomRequest(roomId));
+        var room = _commands.ReadRoom().Execute(new ReadRoomRequest(request.Id));
         if (room.Status != Status.SUCCESS)
         {
             return Failure(room, "Room not found.");
@@ -190,15 +173,9 @@ public sealed class SageController
     }
 
     [SageGet("/circuit-housings/{device}", "Read the code from an IC10 circuit housing.")]
-    public SageResponse ReadHousing(string? device)
+    public SageResponse ReadHousing(CircuitHousingReadRequest request)
     {
-        var deviceId = Long(device);
-        if (!deviceId.HasValue)
-        {
-            return SageResponse.Error(400, "device must be a thing id.");
-        }
-
-        var result = _commands.ReadHousing().Execute(new ReadHousingRequest(deviceId.Value));
+        var result = _commands.ReadHousing().Execute(new ReadHousingRequest(request.Device));
         if (result.Status != Status.SUCCESS)
         {
             return Failure(result, "Housing read failed.");
@@ -208,15 +185,9 @@ public sealed class SageController
     }
 
     [SageGet("/computer/{computer}", "Read a computer's editor text and housing.")]
-    public SageResponse ReadComputer(string? computer)
+    public SageResponse ReadComputer(ComputerReadRequest request)
     {
-        var computerId = Long(computer);
-        if (!computerId.HasValue)
-        {
-            return SageResponse.Error(400, "computer must be a thing id.");
-        }
-
-        var result = _commands.ReadComputer().Execute(computerId.Value);
+        var result = _commands.ReadComputer().Execute(request.Computer);
         if (result.Status != Status.SUCCESS)
         {
             return Failure(result, "Computer read failed.");
@@ -252,91 +223,49 @@ public sealed class SageController
     }
 
     [SagePut("/computer/{computer}", "Write a computer's editor screen, guarded by the pointed chip's hash.")]
-    public SageResponse WriteComputer(string? body, string? computer)
+    public SageResponse WriteComputer(ComputerScreenRequest request)
     {
-        var computerId = Long(computer);
-        if (!computerId.HasValue)
-        {
-            return SageResponse.Error(400, "computer must be a thing id.");
-        }
-
-        var request = ParseBody(body);
         if (request.SourceCode is null)
         {
             return SageResponse.Error(400, "sourceCode is required.");
         }
 
         return Answer(
-            _commands.WriteComputer().Execute(new WriteComputerRequest(computerId.Value, request.SourceCode, request.Hash)),
+            _commands.WriteComputer().Execute(new WriteComputerRequest(request.Computer, request.SourceCode, request.Hash)),
             "Computer write failed.");
     }
 
-    [SagePut("/computer/{computer}/import", "Pull a housing chip into a computer's editor.")]
-    public SageResponse ImportComputer(string? body, string? computer)
+    [SagePut("/computer/{computer}/import", "Pull the pointed housing chip into a computer's editor.")]
+    public SageResponse ImportComputer(ComputerImportRequest request)
     {
-        var computerId = Long(computer);
-        if (!computerId.HasValue)
-        {
-            return SageResponse.Error(400, "computer must be a thing id.");
-        }
-
-        var request = ParseBody(body);
-        var deviceId = Long(request.Device);
-        if (!deviceId.HasValue)
-        {
-            return string.IsNullOrWhiteSpace(request.Device)
-                ? SageResponse.Error(400, "device is required to import.")
-                : SageResponse.Error(400, "device must be a thing id.");
-        }
-
         return Answer(
-            _commands.ImportChip().Execute(new ImportChipRequest(computerId.Value, deviceId.Value)),
+            _commands.ImportChip().Execute(new ImportChipRequest(request.Computer)),
             "Import failed.");
     }
 
     [SagePut("/computer/{computer}/export", "Burn a computer's editor text onto a housing chip, hash-verified.")]
-    public SageResponse ExportComputer(string? body, string? computer)
+    public SageResponse ExportComputer(ChipMoveRequest request)
     {
-        var computerId = Long(computer);
-        if (!computerId.HasValue)
+        if (!request.Device.HasValue)
         {
-            return SageResponse.Error(400, "computer must be a thing id.");
-        }
-
-        var request = ParseBody(body);
-        var deviceId = Long(request.Device);
-        if (!deviceId.HasValue)
-        {
-            return string.IsNullOrWhiteSpace(request.Device)
-                ? SageResponse.Error(400, "device is required to export.")
-                : SageResponse.Error(400, "device must be a thing id.");
+            return SageResponse.Error(400, "device is required to export.");
         }
 
         return Answer(
-            _commands.ExportChip().Execute(new ExportChipRequest(computerId.Value, deviceId.Value)),
+            _commands.ExportChip().Execute(new ExportChipRequest(request.Computer, request.Device.Value)),
             "Export failed.");
     }
 
     [SagePut("/computer/{computer}/select", "Point a computer's dropdown at one housing on its network.")]
-    public SageResponse SelectComputer(string? body, string? computer)
+    public SageResponse SelectComputer(ChipMoveRequest request)
     {
-        var computerId = Long(computer);
-        if (!computerId.HasValue)
+        if (!request.Device.HasValue)
         {
-            return SageResponse.Error(400, "computer must be a thing id.");
-        }
-
-        var request = ParseBody(body);
-        var deviceId = Long(request.Device);
-        if (!deviceId.HasValue)
-        {
-            return string.IsNullOrWhiteSpace(request.Device)
-                ? SageResponse.Error(400, "device is required to select.")
-                : SageResponse.Error(400, "device must be a thing id.");
+            return SageResponse.Error(400, "device is required to select.");
         }
 
         return Answer(
-            _commands.SelectHousing().Execute(new SelectHousingRequest(computerId.Value, deviceId.Value)),
+            _commands.SelectHousing().Execute(new SelectHousingRequest(request.Computer, request.Device.Value)),
             "Select failed.");
     }
 
@@ -368,89 +297,6 @@ public sealed class SageController
             !value.Equals("false", StringComparison.OrdinalIgnoreCase) &&
             !value.Equals("no", StringComparison.OrdinalIgnoreCase) &&
             !value.Equals("off", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static IcRequest ParseBody(string? body)
-    {
-        if (body is null || string.IsNullOrWhiteSpace(body))
-        {
-            return new IcRequest();
-        }
-
-        try
-        {
-            return JsonConvert.DeserializeObject<IcRequest>(body) ?? new IcRequest();
-        }
-        catch (JsonException)
-        {
-            return new IcRequest();
-        }
-    }
-
-    private static long? Long(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return null;
-        }
-
-        long parsed;
-        if (long.TryParse(value, out parsed))
-        {
-            return parsed;
-        }
-
-        return null;
-    }
-
-    private static bool? Bool(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return null;
-        }
-
-        bool parsed;
-        if (bool.TryParse(value, out parsed))
-        {
-            return parsed;
-        }
-
-        if (value == "1")
-        {
-            return true;
-        }
-
-        if (value == "0")
-        {
-            return false;
-        }
-
-        return null;
-    }
-
-    private sealed class IcRequest
-    {
-        [JsonProperty("computer")]
-        public string? Computer { get; set; }
-
-        [JsonProperty("device")]
-        public string? Device { get; set; }
-
-        [JsonProperty("code")]
-        public string? Code { get; set; }
-
-        [JsonProperty("sourceCode")]
-        public string? SourceCode { get; set; }
-
-        [JsonProperty("hash")]
-        public string? Hash { get; set; }
-
-        [JsonProperty("export")]
-        public bool? Export { get; set; }
-
-        [JsonProperty("import")]
-        public bool? Import { get; set; }
     }
 
     private sealed class ThingsResult

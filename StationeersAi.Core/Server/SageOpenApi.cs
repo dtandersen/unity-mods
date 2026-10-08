@@ -1,3 +1,4 @@
+using StationeersAi.Client.Model;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -50,23 +51,66 @@ public static class SageOpenApi
         var pathNames = new HashSet<string>(Placeholders(route.Route), StringComparer.OrdinalIgnoreCase);
         var pars = new JArray();
         var takesBody = false;
+        var bodyProps = new JObject();
         foreach (var par in method.GetParameters())
         {
             var name = par.Name ?? string.Empty;
-            if (name.Equals("body", StringComparison.OrdinalIgnoreCase))
+            if (par.ParameterType == typeof(string))
             {
-                takesBody = true;
-            }
-            else
-            {
-                var inPath = pathNames.Contains(name);
-                pars.Add(new JObject
+                if (name.Equals("body", StringComparison.OrdinalIgnoreCase))
                 {
-                    ["name"] = name,
-                    ["in"] = inPath ? "path" : "query",
-                    ["required"] = inPath,
-                    ["schema"] = new JObject { ["type"] = "string" },
-                });
+                    takesBody = true;
+                }
+                else
+                {
+                    var inPath = pathNames.Contains(name);
+                    pars.Add(new JObject
+                    {
+                        ["name"] = name,
+                        ["in"] = inPath ? "path" : "query",
+                        ["required"] = inPath,
+                        ["schema"] = new JObject { ["type"] = "string" },
+                    });
+                }
+
+                continue;
+            }
+
+            // A request model: its properties are the parameters.
+            foreach (var property in par.ParameterType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                var bind = (BindAttribute?)Attribute.GetCustomAttribute(property, typeof(BindAttribute));
+                if (bind == null)
+                {
+                    continue;
+                }
+
+                var key = bind.Name ?? OperationId(property.Name);
+                if (bind is FromRouteAttribute)
+                {
+                    pars.Add(new JObject
+                    {
+                        ["name"] = key,
+                        ["in"] = "path",
+                        ["required"] = true,
+                        ["schema"] = new JObject { ["type"] = JsonKind(property) },
+                    });
+                }
+                else if (bind is FromQueryAttribute)
+                {
+                    pars.Add(new JObject
+                    {
+                        ["name"] = key,
+                        ["in"] = "query",
+                        ["required"] = false,
+                        ["schema"] = new JObject { ["type"] = JsonKind(property) },
+                    });
+                }
+                else
+                {
+                    takesBody = true;
+                    bodyProps[key] = new JObject { ["type"] = JsonKind(property) };
+                }
             }
         }
 
@@ -91,6 +135,12 @@ public static class SageOpenApi
 
         if (takesBody)
         {
+            var schema = new JObject { ["type"] = "object" };
+            if (bodyProps.Count > 0)
+            {
+                schema["properties"] = bodyProps;
+            }
+
             op["requestBody"] = new JObject
             {
                 ["required"] = false,
@@ -98,13 +148,35 @@ public static class SageOpenApi
                 {
                     ["application/json"] = new JObject
                     {
-                        ["schema"] = new JObject { ["type"] = "object" },
+                        ["schema"] = schema,
                     },
                 },
             };
         }
 
         return op;
+    }
+
+    /// <summary>The OpenAPI type a request-model property carries.</summary>
+    private static string JsonKind(PropertyInfo property)
+    {
+        var type = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+        if (type == typeof(long) || type == typeof(int))
+        {
+            return "integer";
+        }
+
+        if (type == typeof(double))
+        {
+            return "number";
+        }
+
+        if (type == typeof(bool))
+        {
+            return "boolean";
+        }
+
+        return "string";
     }
 
     private static string OperationId(string name)
