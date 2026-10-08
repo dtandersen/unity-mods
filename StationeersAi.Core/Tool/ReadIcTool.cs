@@ -74,11 +74,13 @@ public sealed class ReadIcTool : ITool
             Program chip;
             try
             {
-                chip = _housing.Execute(deviceId);
-            }
-            catch (ThingNotFound notFound)
-            {
-                return new ToolFailure(notFound.Message);
+                var answer = _housing.Execute(new ReadHousingRequest(deviceId));
+                if (answer.Status != Status.SUCCESS)
+                {
+                    return new ToolFailure(ToolAnswer.Line(answer, "Housing read failed."));
+                }
+
+                chip = answer.Program!;
             }
             catch (Exception)
             {

@@ -4,8 +4,15 @@ using StationeersAi.Repository;
 
 namespace StationeersAi.Command;
 
-/// <summary>Domain operation: list what a container thing holds.</summary>
-public sealed class ReadThingSlotsCommand
+/// <summary>Ask what one thing holds, by label or reference id.</summary>
+public sealed record ReadThingSlotsRequest(string? Thing);
+
+/// <summary>The thing's slots, or why the thing was not read.</summary>
+public sealed record SlotsResult(
+    Status Status, List<string> Errors, IReadOnlyList<ThingSlot>? Slots) : BaseResult(Status, Errors);
+
+/// <summary>Domain operation: list the slots of one thing.</summary>
+public sealed class ReadThingSlotsCommand : Command<ReadThingSlotsRequest, SlotsResult>
 {
     private readonly IThingSlots _contents;
 
@@ -14,8 +21,14 @@ public sealed class ReadThingSlotsCommand
         _contents = contents;
     }
 
-    public IReadOnlyList<ThingSlot>? Execute(string? thing)
+    public SlotsResult Execute(ReadThingSlotsRequest request)
     {
-        return _contents.Read(thing);
+        var slots = _contents.Read(request.Thing);
+        return slots == null
+            ? new SlotsResult(
+                Status.NOT_FOUND,
+                new List<string> { $"Thing '{request.Thing}' not found." },
+                null)
+            : new SlotsResult(Status.SUCCESS, new List<string>(), slots);
     }
 }

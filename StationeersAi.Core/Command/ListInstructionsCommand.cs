@@ -6,8 +6,19 @@ using StationeersAi.Repository;
 
 namespace StationeersAi.Command;
 
-/// <summary>Domain operation: list IC10 instructions by mnemonic.</summary>
-public sealed class ListInstructionsCommand
+/// <summary>Ask for one mnemonic, or for the whole list when it is blank.</summary>
+public sealed record ListInstructionsRequest(string? Instruction);
+
+/// <summary>The instruction entries found, or why none were.</summary>
+public sealed record InstructionsResult(
+    Status Status, List<string> Errors, IReadOnlyList<Instruction> Instructions) : BaseResult(Status, Errors);
+
+/// <summary>
+/// Domain operation: all instructions when the ask is blank, else the one
+/// matching the mnemonic; a named instruction that no entry matches raises
+/// <see cref="Status.NOT_FOUND"/>.
+/// </summary>
+public sealed class ListInstructionsCommand : Command<ListInstructionsRequest, InstructionsResult>
 {
     private readonly IMipsReference _reference;
 
@@ -16,20 +27,25 @@ public sealed class ListInstructionsCommand
         _reference = reference;
     }
 
-    /// <summary>
-    /// All instructions when <paramref name="instruction"/> is blank, else
-    /// the one matching mnemonic (empty when unknown).
-    /// </summary>
-    public IReadOnlyList<Instruction> Execute(string? instruction)
+    public InstructionsResult Execute(ListInstructionsRequest request)
     {
         var instructions = _reference.Instructions ?? Array.Empty<Instruction>();
-        if (instruction is null || string.IsNullOrWhiteSpace(instruction))
+        if (request.Instruction is null || string.IsNullOrWhiteSpace(request.Instruction))
         {
-            return instructions;
+            return new InstructionsResult(Status.SUCCESS, new List<string>(), instructions);
         }
 
-        return instructions
-            .Where(entry => entry.Name.Equals(instruction.Trim(), StringComparison.OrdinalIgnoreCase))
+        var match = instructions
+            .Where(entry => entry.Name.Equals(request.Instruction.Trim(), StringComparison.OrdinalIgnoreCase))
             .ToArray();
+        if (match.Length == 0)
+        {
+            return new InstructionsResult(
+                Status.NOT_FOUND,
+                new List<string> { $"Unknown MIPS instruction '{request.Instruction}'." },
+                Array.Empty<Instruction>());
+        }
+
+        return new InstructionsResult(Status.SUCCESS, new List<string>(), match);
     }
 }

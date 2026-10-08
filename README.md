@@ -45,6 +45,8 @@ Sage can call these tools:
 | `write_ic` | Place MIPS source in a computer's editor, after naming the pointed chip's hash |
 | `read_ic` | Read a computer's editor text, by thing id |
 | `export_ic` | Burn editor text to a housing chip, hash-verified, by thing id |
+| `import_ic` | Pull a housing chip into a computer's editor, by thing id |
+| `select_ic` | Point a computer's dropdown at one housing on its network |
 | `list_instructions` | IC10 instruction usage and descriptions |
 | `search_devices` | Live devices: labels, types, networks |
 | `describe_device` | One device: ports, settings, slots |

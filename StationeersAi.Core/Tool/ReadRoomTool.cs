@@ -40,13 +40,13 @@ public sealed class ReadRoomTool : ITool
             roomId = id;
         }
 
-        var info = _command.Execute(roomId);
-        if (info == null)
+        var answer = _command.Execute(new ReadRoomRequest(roomId));
+        if (answer.Status != Status.SUCCESS)
         {
-            return new ToolFailure(roomId.HasValue
-                ? $"Room {roomId.Value} was not found."
-                : "You are outside a room.");
+            return new ToolFailure(ToolAnswer.Line(answer, "Room not found."));
         }
+
+        var info = answer.Room!;
 
         return new ToolSuccess<ReadRoomResult>(
             new ReadRoomResult(info),

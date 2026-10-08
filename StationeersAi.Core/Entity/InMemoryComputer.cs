@@ -1,10 +1,16 @@
 using System;
 using System.Collections.Generic;
 using StationeersAi.Formatting;
+using StationeersAi.Repository;
+using StationeersAi.Repository;
 
 namespace StationeersAi.Entity;
 
-/// <summary>In-memory IC computer: one screen, one dropdown, one pair of buttons.</summary>
+/// <summary>
+/// In-memory IC computer: one screen, one dropdown, one pair of buttons.
+/// The buttons act on <see cref="NetworkedHousing"/> the way the game's do,
+/// so reading the entities afterwards tells the truth about a burn.
+/// </summary>
 public sealed class InMemoryComputer : IComputer
 {
     public readonly List<string?> Writes = new List<string?>();
@@ -15,20 +21,14 @@ public sealed class InMemoryComputer : IComputer
 
     public readonly List<long> Selections = new List<long>();
 
-    /// <summary>The name write and read results report as the computer.</summary>
+    /// <summary>The name reads and write answers report as the computer.</summary>
     public string Name { get; set; } = "Lab Computer";
 
     /// <summary>The text reads return as the screen contents.</summary>
     public string EditorCode { get; set; } = string.Empty;
 
-    /// <summary>The result exports return.</summary>
-    public IcWriteResult Result { get; set; } = new IcWriteResult(true, "Climate Control", 37, null);
-
-    /// <summary>The result imports return.</summary>
-    public IcWriteResult ImportResult { get; set; } = new IcWriteResult(true, "Lab Computer", 3, null);
-
-    /// <summary>The result selections return.</summary>
-    public IcWriteResult SelectResult { get; set; } = new IcWriteResult(true, "Light Controller", 0, null);
+    /// <summary>The housing on this computer's network, or null when it holds none.</summary>
+    public InMemoryHousing? NetworkedHousing { get; set; }
 
     /// <summary>The housing the dropdown points at, or null when it points at none.</summary>
     public string? PointedDevice { get; set; } = "Climate Control";
@@ -36,23 +36,11 @@ public sealed class InMemoryComputer : IComputer
     /// <summary>The thing id of the housing the dropdown points at (0 when none).</summary>
     public long PointedThing { get; set; } = 2200;
 
-    /// <summary>The program the pointed housing's chip holds.</summary>
-    public string PointedChipCode { get; set; } = string.Empty;
-
-    public IcWriteResult Write(string code, string chipHash)
+    public void Write(string code)
     {
-        var refusal = WriteGuard.Refusal(PointedDevice, CodeHash.Hash(PointedChipCode), chipHash);
-        if (refusal != null)
-        {
-            return new IcWriteResult(false, null, 0, refusal);
-        }
-
         Writes.Add(code);
-        return new IcWriteResult(true, Name, (code ?? string.Empty).Split('\n').Length, null);
+        EditorCode = code ?? string.Empty;
     }
-
-    /// <summary>Set to make reads raise, the way a broken editor would.</summary>
-    public Exception? ReadFault { get; set; }
 
     public Program Read()
     {
@@ -64,26 +52,51 @@ public sealed class InMemoryComputer : IComputer
         return new Program(EditorCode, CodeHash.Hash(EditorCode));
     }
 
-    public IcWriteResult Export(long device)
+    /// <summary>Set false so exports leave the chip untouched: a burn that silently fails.</summary>
+    public bool BurnTakes { get; set; } = true;
+
+    /// <summary>Set to make reads raise, the way a broken editor would.</summary>
+    public Exception? ReadFault { get; set; }
+
+    public void Export(long device)
     {
         Exports.Add(device);
-        return Result;
+        var housing = OnNetwork(device);
+        if (housing.CompileError == null && BurnTakes)
+        {
+            housing.ChipCode = EditorCode;
+        }
     }
 
-    public IcWriteResult Import(long device)
+    public void Import(long device)
     {
         Imports.Add(device);
-        return ImportResult;
+        EditorCode = OnNetwork(device).ChipCode;
     }
 
-    public IcWriteResult Select(long device)
+    public void Select(long device)
     {
         Selections.Add(device);
-        return SelectResult;
+        var housing = OnNetwork(device);
+        PointedDevice = housing.Name;
+        PointedThing = housing.Thing;
     }
 
     public long Selected()
     {
         return string.IsNullOrEmpty(PointedDevice) ? 0 : PointedThing;
+    }
+
+    /// <summary>The networked housing, raising the game's own sentence when the id is not on it.</summary>
+    private InMemoryHousing OnNetwork(long device)
+    {
+        var housing = NetworkedHousing;
+        if (housing == null || housing.Thing != device)
+        {
+            var listed = housing == null ? "none" : $"{housing.Name} #{housing.Thing}";
+            throw new ThingNotFound("Housing", device, " on this computer's network", listed);
+        }
+
+        return housing;
     }
 }

@@ -25,7 +25,7 @@ public sealed class SearchInventoryTool : ITool
     public ToolResult Execute(ToolArguments arguments)
     {
         var query = arguments.Get("query");
-        var stacks = _command.Execute(query)
+        var stacks = _command.Execute(new SearchInventoryRequest(query)).Items
             .OrderBy(stack => stack.Name, StringComparer.OrdinalIgnoreCase)
             .Take(ToolLimits.MaxResults)
             .ToArray();

@@ -24,7 +24,13 @@ public sealed class SageController
     [SageGet("/players", "Describe the player's health, suit, and position.")]
     public SageResponse DescribePlayer()
     {
-        return SageResponse.Ok(_commands.DescribePlayer().Execute());
+        var result = _commands.DescribePlayer().Execute(new NoRequest());
+        if (result.Status != Status.SUCCESS)
+        {
+            return Failure(result, "Player status is unavailable.");
+        }
+
+        return SageResponse.Ok(result.Player);
     }
 
     [SageGet("/INDEX.md", "Read this API description as text.")]
@@ -48,35 +54,41 @@ public sealed class SageController
     [SageGet("/world", "Read the loaded world name and mode.")]
     public SageResponse World()
     {
-        return SageResponse.Ok(_commands.GetWorld().Execute());
+        var result = _commands.GetWorld().Execute(new NoRequest());
+        if (result.Status != Status.SUCCESS)
+        {
+            return Failure(result, "World info is unavailable.");
+        }
+
+        return SageResponse.Ok(result.World);
     }
 
     [SageGet("/inventory", "Search what the player carries and wears.")]
     public SageResponse Inventory(string? q)
     {
-        return SageResponse.Ok(_commands.SearchInventory().Execute(q));
+        return SageResponse.Ok(_commands.SearchInventory().Execute(new SearchInventoryRequest(q)).Items);
     }
 
     [SageGet("/devices", "Search devices by name, network, or room.")]
     public SageResponse Devices(string? q, string? network, string? logic, string? room)
     {
-        return SageResponse.Ok(_commands.SearchDevices().Execute(
+        return SageResponse.Ok(_commands.SearchDevices().Execute(new SearchDevicesRequest(
             q,
             Long(network),
             Bool(logic),
-            Long(room)));
+            Long(room))).Devices);
     }
 
     [SageGet("/devices/{device}", "Read one device's values and settings.")]
     public SageResponse DescribeDevice(string? device)
     {
-        var details = _commands.DescribeDevice().Execute(device);
-        if (details == null)
+        var result = _commands.DescribeDevice().Execute(new DescribeDeviceRequest(device));
+        if (result.Status != Status.SUCCESS)
         {
-            return SageResponse.Error(404, "Device '" + device + "' not found.");
+            return Failure(result, "Device not found.");
         }
 
-        return SageResponse.Ok(details);
+        return SageResponse.Ok(result.Details);
     }
 
     [SageGet("/things", "Search nearby things by name.")]
@@ -94,20 +106,20 @@ public sealed class SageController
             distance = parsed;
         }
 
-        var result = _commands.SearchThings().Search(q, null, distance);
+        var result = _commands.SearchThings().Execute(new SearchThingsRequest(q, null, distance));
         return SageResponse.Ok(new ThingsResult(result.Things, result.Origin, result.Facing));
     }
 
     [SageGet("/things/{thing}/slots", "List the slots of one thing.")]
     public SageResponse Slots(string? thing)
     {
-        var slots = _commands.ReadThingSlots().Execute(thing);
-        if (slots == null)
+        var result = _commands.ReadThingSlots().Execute(new ReadThingSlotsRequest(thing));
+        if (result.Status != Status.SUCCESS)
         {
-            return SageResponse.Error(404, "Thing '" + thing + "' not found.");
+            return Failure(result, "Thing not found.");
         }
 
-        return SageResponse.Ok(slots);
+        return SageResponse.Ok(result.Slots);
     }
 
     [SageGet("/rooms", "Read the air of the room the player stands in.")]
@@ -120,55 +132,61 @@ public sealed class SageController
             return SageResponse.Error(400, "id must be a number.");
         }
 
-        var room = _commands.ReadRoom().Execute(roomId);
-        if (room == null)
+        var room = _commands.ReadRoom().Execute(new ReadRoomRequest(roomId));
+        if (room.Status != Status.SUCCESS)
         {
-            return SageResponse.Error(404, "Room not found.");
+            return Failure(room, "Room not found.");
         }
 
-        return SageResponse.Ok(room);
+        return SageResponse.Ok(room.Room);
     }
 
     [SageGet("/items", "Search items by name.")]
     public SageResponse Items(string? q)
     {
-        return SageResponse.Ok(_commands.SearchItems().Execute(q));
+        return SageResponse.Ok(_commands.SearchItems().Execute(new SearchItemsRequest(q)).Items);
     }
 
     [SageGet("/structures", "Search structures by name.")]
     public SageResponse Structures(string? q)
     {
-        return SageResponse.Ok(_commands.SearchStructures().Execute(q));
+        return SageResponse.Ok(_commands.SearchStructures().Execute(new SearchStructuresRequest(q)).Structures);
     }
 
     [SageGet("/recipes", "Search recipes by name.")]
     public SageResponse Recipes(string? q)
     {
-        return SageResponse.Ok(_commands.SearchRecipes().Execute(q));
+        return SageResponse.Ok(_commands.SearchRecipes().Execute(new SearchRecipesRequest(q)).Recipes);
     }
 
     [SageGet("/stationpedia", "Search help pages by name.")]
     public SageResponse Stationpedia(string? q)
     {
-        return SageResponse.Ok(_commands.SearchStationpedia().Execute(q));
+        return SageResponse.Ok(_commands.SearchStationpedia().Execute(new SearchStationpediaRequest(q)).Pages);
     }
 
     [SageGet("/stationpedia/{key}", "Read one help page.")]
     public SageResponse ReadStationpedia(string? key)
     {
-        var page = _commands.ReadStationpedia().Execute(key);
-        if (page == null)
+        var result = _commands.ReadStationpedia().Execute(new ReadStationpediaRequest(key));
+        if (result.Status != Status.SUCCESS)
         {
-            return SageResponse.Error(404, "Page '" + key + "' not found.");
+            return Failure(result, "Page not found.");
         }
 
-        return SageResponse.Ok(page);
+        return SageResponse.Ok(result.Page);
     }
 
     [SageGet("/instructions", "List the IC10 instructions.")]
     public SageResponse ListInstructions(string? instruction)
     {
-        return SageResponse.Ok(_commands.ListInstructions().Execute(instruction));
+        var result = _commands.ListInstructions().Execute(new ListInstructionsRequest(instruction));
+        if (result.Status != Status.SUCCESS)
+        {
+            return Failure(result, "No instructions.");
+        }
+
+        return SageResponse.Ok(result.Instructions);
     }
 
     [SageGet("/circuit-housings/{device}", "Read the code from an IC10 circuit housing.")]
@@ -180,18 +198,13 @@ public sealed class SageController
             return SageResponse.Error(400, "device must be a thing id.");
         }
 
-        try
+        var result = _commands.ReadHousing().Execute(new ReadHousingRequest(deviceId.Value));
+        if (result.Status != Status.SUCCESS)
         {
-            return SageResponse.Ok(_commands.ReadHousing().Execute(deviceId.Value));
+            return Failure(result, "Housing read failed.");
         }
-        catch (ThingNotFound notFound)
-        {
-            return SageResponse.Error(404, notFound.Message);
-        }
-        catch (Exception)
-        {
-            return SageResponse.Error(500, "Housing read failed.");
-        }
+
+        return SageResponse.Ok(result.Program);
     }
 
     [SageGet("/computer/{computer}", "Read a computer's editor text and housing.")]
@@ -238,8 +251,28 @@ public sealed class SageController
         return result.Errors.Count == 0 ? fallback : string.Join(" ", result.Errors);
     }
 
-    [SagePut("/computer/{computer}", "Set editor text, pick the housing, and burn.")]
-    public SageResponse UseComputer(string? body, string? computer)
+    [SagePut("/computer/{computer}", "Write a computer's editor screen, guarded by the pointed chip's hash.")]
+    public SageResponse WriteComputer(string? body, string? computer)
+    {
+        var computerId = Long(computer);
+        if (!computerId.HasValue)
+        {
+            return SageResponse.Error(400, "computer must be a thing id.");
+        }
+
+        var request = ParseBody(body);
+        if (request.SourceCode is null)
+        {
+            return SageResponse.Error(400, "sourceCode is required.");
+        }
+
+        return Answer(
+            _commands.WriteComputer().Execute(new WriteComputerRequest(computerId.Value, request.SourceCode, request.Hash)),
+            "Computer write failed.");
+    }
+
+    [SagePut("/computer/{computer}/import", "Pull a housing chip into a computer's editor.")]
+    public SageResponse ImportComputer(string? body, string? computer)
     {
         var computerId = Long(computer);
         if (!computerId.HasValue)
@@ -249,19 +282,80 @@ public sealed class SageController
 
         var request = ParseBody(body);
         var deviceId = Long(request.Device);
-        if (!deviceId.HasValue && !string.IsNullOrWhiteSpace(request.Device))
+        if (!deviceId.HasValue)
         {
-            return SageResponse.Error(400, "device must be a thing id.");
+            return string.IsNullOrWhiteSpace(request.Device)
+                ? SageResponse.Error(400, "device is required to import.")
+                : SageResponse.Error(400, "device must be a thing id.");
         }
 
-        var result = _commands.UseComputer().Execute(computerId.Value, deviceId, request.SourceCode, request.Hash, request.Export == true, request.Import == true);
-        if (result == null || !result.Written)
-        {
-            return SageResponse.Error(404, result != null ? result.Error ?? "Export fell through." : "Export fell through.");
-        }
-
-        return SageResponse.Ok(result);
+        return Answer(
+            _commands.ImportChip().Execute(new ImportChipRequest(computerId.Value, deviceId.Value)),
+            "Import failed.");
     }
+
+    [SagePut("/computer/{computer}/export", "Burn a computer's editor text onto a housing chip, hash-verified.")]
+    public SageResponse ExportComputer(string? body, string? computer)
+    {
+        var computerId = Long(computer);
+        if (!computerId.HasValue)
+        {
+            return SageResponse.Error(400, "computer must be a thing id.");
+        }
+
+        var request = ParseBody(body);
+        var deviceId = Long(request.Device);
+        if (!deviceId.HasValue)
+        {
+            return string.IsNullOrWhiteSpace(request.Device)
+                ? SageResponse.Error(400, "device is required to export.")
+                : SageResponse.Error(400, "device must be a thing id.");
+        }
+
+        return Answer(
+            _commands.ExportChip().Execute(new ExportChipRequest(computerId.Value, deviceId.Value)),
+            "Export failed.");
+    }
+
+    [SagePut("/computer/{computer}/select", "Point a computer's dropdown at one housing on its network.")]
+    public SageResponse SelectComputer(string? body, string? computer)
+    {
+        var computerId = Long(computer);
+        if (!computerId.HasValue)
+        {
+            return SageResponse.Error(400, "computer must be a thing id.");
+        }
+
+        var request = ParseBody(body);
+        var deviceId = Long(request.Device);
+        if (!deviceId.HasValue)
+        {
+            return string.IsNullOrWhiteSpace(request.Device)
+                ? SageResponse.Error(400, "device is required to select.")
+                : SageResponse.Error(400, "device must be a thing id.");
+        }
+
+        return Answer(
+            _commands.SelectHousing().Execute(new SelectHousingRequest(computerId.Value, deviceId.Value)),
+            "Select failed.");
+    }
+
+    /// <summary>
+    /// One button's answer to HTTP: success ships what ended up where, the
+    /// rest ship the command's sentences through <see cref="Failure"/>.
+    /// </summary>
+    private SageResponse Answer(ComputerActionResult result, string fault)
+    {
+        if (result.Status != Status.SUCCESS)
+        {
+            return Failure(result, fault);
+        }
+
+        return SageResponse.Ok(new ComputerWriteBody(result.Device ?? "computer", result.Lines));
+    }
+
+    /// <summary>The wire answer of <c>PUT /sage/computer/{computer}</c>: what holds how many lines.</summary>
+    public sealed record ComputerWriteBody(string Device, int Lines);
 
     private static bool Truthy(string? value)
     {

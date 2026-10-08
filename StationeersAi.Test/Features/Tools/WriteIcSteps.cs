@@ -33,7 +33,7 @@ public sealed class WriteIcSteps
     public void GivenTheChipUnderTheDropdownHolds(string code)
     {
         World.Computer.PointedDevice = "Climate Control";
-        World.Computer.PointedChipCode = code;
+        World.Housing.ChipCode = code;
     }
 
     [Given("the computer points at nothing")]

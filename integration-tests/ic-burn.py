@@ -62,8 +62,17 @@ print("computer:", computer, names[computer], "| housings:", h1, names[h1], "/",
 
 
 def burn(housing, program):
+    # Stationeer's own order: point the dropdown, read the chip to name its
+    # hash, put the program on the screen, then burn and check the answer.
+    status, res = call("PUT", "/sage/computer/%s/select" % computer, {"device": str(housing)})
+    if status != 200:
+        return status, res
+    _, chip = call("GET", "/sage/circuit-housings/%s" % housing)
     status, res = call("PUT", "/sage/computer/%s" % computer,
-                       {"sourceCode": program, "device": str(housing), "export": True})
+                       {"sourceCode": program, "hash": chip.get("Hash")})
+    if status != 200:
+        return status, res
+    status, res = call("PUT", "/sage/computer/%s/export" % computer, {"device": str(housing)})
     print(res)
     return status, res
 
@@ -74,8 +83,7 @@ def readback(housing):
 
 
 print("== labels are refused ==")
-status, res = call("PUT", "/sage/computer/%s" % computer,
-                   {"sourceCode": PROGRAM_A, "device": names[h1], "export": True})
+status, res = call("PUT", "/sage/computer/%s/export" % computer, {"device": names[h1]})
 check("burn by housing label refused", status, 400)
 status, _ = call("GET", "/sage/computer/%s" % urllib.parse.quote(names[computer]))
 check("read by computer label refused", status, 400)
@@ -83,12 +91,12 @@ check("read by computer label refused", status, 400)
 
 print("== A -> %s ==" % h1)
 status, res = burn(h1, PROGRAM_A)
-check("burn A written", res.get("Written"), True)
+check("burn A ok", status, 200)
 check("read-back A matches", sha(readback(h1)), sha(PROGRAM_A))
 
 print("== B -> %s ==" % h2)
 status, res = burn(h2, PROGRAM_B)
-check("burn B written", res.get("Written"), True)
+check("burn B ok", status, 200)
 check("read-back B matches", sha(readback(h2)), sha(PROGRAM_B))
 
 check("housings differ", readback(h1) != readback(h2), True)

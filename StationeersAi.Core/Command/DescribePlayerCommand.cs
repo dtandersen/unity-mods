@@ -1,10 +1,14 @@
+using System.Collections.Generic;
 using StationeersAi.Entity;
 using StationeersAi.Repository;
 
 namespace StationeersAi.Command;
 
-/// <summary>Domain operation: describe the player's current status.</summary>
-public sealed class DescribePlayerCommand
+/// <summary>What the player looks like right now, or why the mod cannot say.</summary>
+public sealed record PlayerResult(Status Status, List<string> Errors, Player? Player) : BaseResult(Status, Errors);
+
+/// <summary>Domain operation: read the player's status.</summary>
+public sealed class DescribePlayerCommand : Command<NoRequest, PlayerResult>
 {
     private readonly IPlayerContext _player;
 
@@ -13,8 +17,11 @@ public sealed class DescribePlayerCommand
         _player = player;
     }
 
-    public Player? Execute()
+    public PlayerResult Execute(NoRequest request)
     {
-        return _player.Status;
+        var status = _player.Status;
+        return status == null
+            ? new PlayerResult(Status.NOT_FOUND, new List<string> { "Player status is unavailable." }, null)
+            : new PlayerResult(Status.SUCCESS, new List<string>(), status);
     }
 }

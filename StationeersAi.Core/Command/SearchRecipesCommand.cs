@@ -4,8 +4,15 @@ using StationeersAi.Query;
 
 namespace StationeersAi.Command;
 
-/// <summary>Domain operation: find recipes by name.</summary>
-public sealed class SearchRecipesCommand
+/// <summary>Ask for recipes by name fragment.</summary>
+public sealed record SearchRecipesRequest(string? Query);
+
+/// <summary>The recipes that matched; empty when none did.</summary>
+public sealed record RecipesResult(
+    Status Status, List<string> Errors, IReadOnlyList<Recipe> Recipes) : BaseResult(Status, Errors);
+
+/// <summary>Domain operation: search the recipe catalogue.</summary>
+public sealed class SearchRecipesCommand : Command<SearchRecipesRequest, RecipesResult>
 {
     private readonly RecipeIndex _recipes;
 
@@ -14,8 +21,8 @@ public sealed class SearchRecipesCommand
         _recipes = recipes;
     }
 
-    public IReadOnlyList<Recipe> Execute(string? query)
+    public RecipesResult Execute(SearchRecipesRequest request)
     {
-        return _recipes.Search(query);
+        return new RecipesResult(Status.SUCCESS, new List<string>(), _recipes.Search(request.Query));
     }
 }

@@ -42,7 +42,7 @@ public sealed class SearchThingsTool : ITool
             return new ToolFailure(distance.Error ?? "Unknown error");
         }
 
-        var search = _command.Search(arguments.Get("query"), origin.Value, distance.Value);
+        var search = _command.Execute(new SearchThingsRequest(arguments.Get("query"), origin.Value, distance.Value));
         var total = search.Things.Count;
         if (total == 0)
         {

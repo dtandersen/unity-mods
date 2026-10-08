@@ -30,7 +30,7 @@ public sealed class SearchStationpediaTool : ITool
             return new ToolFailure("Missing required argument 'query'.");
         }
 
-        var entries = _command.Execute(query)
+        var entries = _command.Execute(new SearchStationpediaRequest(query)).Pages
             .OrderBy(entry => entry.Title, StringComparer.OrdinalIgnoreCase)
             .Take(ToolLimits.MaxResults)
             .ToArray();

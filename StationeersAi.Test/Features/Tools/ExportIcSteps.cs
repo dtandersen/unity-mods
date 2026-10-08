@@ -1,5 +1,5 @@
+using System.Linq;
 using Reqnroll;
-using StationeersAi.Entity;
 using StationeersAi.Test.Support;
 using Caev.Tools;
 
@@ -20,13 +20,21 @@ public sealed class ExportIcSteps
     [Given("the export succeeds")]
     public void GivenTheExportSucceeds()
     {
-        World.Computer.Result = new IcWriteResult(true, "Climate Control", 37, null);
+        World.Computer.EditorCode = string.Join("\n", Enumerable.Repeat("yield", 37));
     }
 
-    [Given("the export fails with {string}")]
-    public void GivenTheExportFailsWith(string error)
+    [Given("the chip reports {string}")]
+    public void GivenTheChipReports(string error)
     {
-        World.Computer.Result = new IcWriteResult(false, null, 0, error);
+        World.Computer.EditorCode = "yield";
+        World.Housing.CompileError = error;
+    }
+
+    [Given("the burn does not take")]
+    public void GivenTheBurnDoesNotTake()
+    {
+        World.Computer.EditorCode = "yield";
+        World.Computer.BurnTakes = false;
     }
 
     [When("I export from computer {string} to {string}")]
@@ -42,29 +50,10 @@ public sealed class ExportIcSteps
             })));
     }
 
-    [Given("the import succeeds")]
-    public void GivenTheImportSucceeds()
+    [Given("the chip of housing {string} holds:")]
+    public void GivenTheChipOfHousingHolds(string device, string program)
     {
-        World.Computer.ImportResult = new IcWriteResult(true, "Lab Computer", 3, null);
-    }
-
-    [Given("the import fails with {string}")]
-    public void GivenTheImportFailsWith(string error)
-    {
-        World.Computer.ImportResult = new IcWriteResult(false, null, 0, error);
-    }
-
-    [When("I import from housing {string} into {string}")]
-    public void WhenIImportFromHousingInto(string device, string computer)
-    {
-        World.ToolResult = TestComposition.Tools(World).Handle(new ToolCall(
-            "call_1",
-            "export_ic",
-            new ToolArguments(new System.Collections.Generic.Dictionary<string, string>
-            {
-                ["computer"] = computer,
-                ["device"] = device,
-                ["import"] = "true",
-            })));
+        World.Housing.Name = device;
+        World.Housing.ChipCode = program;
     }
 }

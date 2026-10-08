@@ -234,7 +234,7 @@ Feature: Sage HTTP API
       """
     Then the response is:
       """
-      {"Written":true,"Device":"Lab Computer","Lines":1,"Error":null}
+      {"Device":"Lab Computer","Lines":1}
       """
 
   Scenario: IC editor write without a chip hash
@@ -242,43 +242,50 @@ Feature: Sage HTTP API
       """
       {"sourceCode":"alias a d0"}
       """
-    Then the response status is 404
+    Then the response status is 400
     And the response reports "A chip hash is required to write: name the hash of the chip under the dropdown."
 
   Scenario: IC export
-    When I PUT /sage/computer/1189 with:
-      """
-      {"device":"2200","export":true}
-      """
-    Then the response is:
-      """
-      {"Written":true,"Device":"Climate Control","Lines":37,"Error":null}
-      """
-
-  Scenario: IC import
-    When I PUT /sage/computer/1189 with:
-      """
-      {"device":"2200","import":true}
-      """
-    Then the response is:
-      """
-      {"Written":true,"Device":"Lab Computer","Lines":3,"Error":null}
-      """
-
-  Scenario: IC select housing
-    When I PUT /sage/computer/1189 with:
+    Given the export succeeds
+    When I PUT /sage/computer/1189/export with:
       """
       {"device":"2200"}
       """
     Then the response is:
       """
-      {"Written":true,"Device":"Light Controller","Lines":0,"Error":null}
+      {"Device":"Climate Control","Lines":37}
+      """
+
+  Scenario: IC import
+    Given the chip of housing "Climate Control" holds:
+      """
+      move r0 1
+      wait
+      yield
+      """
+    When I PUT /sage/computer/1189/import with:
+      """
+      {"device":"2200"}
+      """
+    Then the response is:
+      """
+      {"Device":"Lab Computer","Lines":3}
+      """
+
+  Scenario: IC select housing
+    When I PUT /sage/computer/1189/select with:
+      """
+      {"device":"2200"}
+      """
+    Then the response is:
+      """
+      {"Device":"Climate Control","Lines":0}
       """
 
   Scenario: IC burn names a housing by label
-    When I PUT /sage/computer/1189 with:
+    When I PUT /sage/computer/1189/export with:
       """
-      {"device":"Climate Control","export":true}
+      {"device":"Climate Control"}
       """
     Then the response status is 400
     And the response reports "device must be a thing id."

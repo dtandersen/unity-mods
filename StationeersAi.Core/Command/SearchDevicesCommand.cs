@@ -4,8 +4,15 @@ using StationeersAi.Repository;
 
 namespace StationeersAi.Command;
 
-/// <summary>Domain operation: find live logic devices.</summary>
-public sealed class SearchDevicesCommand
+/// <summary>Ask for devices by name fragment, network, logic, and room.</summary>
+public sealed record SearchDevicesRequest(string? Query, long? Network, bool? Logic, long? Room);
+
+/// <summary>The devices that matched; empty when none did.</summary>
+public sealed record DevicesResult(
+    Status Status, List<string> Errors, IReadOnlyList<DeviceInfo> Devices) : BaseResult(Status, Errors);
+
+/// <summary>Domain operation: search the device catalogue.</summary>
+public sealed class SearchDevicesCommand : Command<SearchDevicesRequest, DevicesResult>
 {
     private readonly IDeviceCatalog _devices;
 
@@ -14,8 +21,11 @@ public sealed class SearchDevicesCommand
         _devices = devices;
     }
 
-    public IReadOnlyList<DeviceInfo> Execute(string? query, long? network, bool? logic, long? room)
+    public DevicesResult Execute(SearchDevicesRequest request)
     {
-        return _devices.Search(query, network, logic, room);
+        return new DevicesResult(
+            Status.SUCCESS,
+            new List<string>(),
+            _devices.Search(request.Query, request.Network, request.Logic, request.Room));
     }
 }

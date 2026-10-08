@@ -1,16 +1,15 @@
 using System;
 using StationeersAi.Command;
-using StationeersAi.Entity;
 using Caev.Tools;
 
 namespace StationeersAi.Tool;
 
-/// <summary>Tool: export a computer's editor text to a housing chip.</summary>
+/// <summary>Tool: burn a computer's editor text onto a housing chip.</summary>
 public sealed class ExportIcTool : ITool
 {
-    private readonly UseComputerCommand _command;
+    private readonly ExportChipCommand _command;
 
-    public ExportIcTool(UseComputerCommand command)
+    public ExportIcTool(ExportChipCommand command)
     {
         _command = command;
     }
@@ -22,7 +21,6 @@ public sealed class ExportIcTool : ITool
         {
             new ToolParameter("computer", "The computer or laptop holding the code, by thing id. Read it from search_devices."),
             new ToolParameter("device", "The housing to burn, by thing id. Read it from search_devices."),
-            new ToolParameter("import", "Pull the housing chip into the editor instead of burning. Defaults to false.", false),
         });
 
     public ToolResult Execute(ToolArguments arguments)
@@ -51,35 +49,23 @@ public sealed class ExportIcTool : ITool
             return new ToolFailure(ThingId.NotAThingId("device", device));
         }
 
-        var import = arguments.Get("import");
-        var result = _command.Execute(computerId, deviceId, null, null, !Truthy(import), Truthy(import));
-        if (result == null || !result.Written)
+        ComputerActionResult result;
+        try
         {
-            return new ToolFailure(result?.Error ?? "Export failed.");
+            result = _command.Execute(new ExportChipRequest(computerId, deviceId));
+        }
+        catch (Exception)
+        {
+            return new ToolFailure("Export failed.");
         }
 
-        if (Truthy(import))
+        if (result.Status != Status.SUCCESS)
         {
-            return new ToolSuccess<IcWriteResult>(
-                result,
-                $"Pulled {result.Lines} {(result.Lines == 1 ? "line" : "lines")} from housing {deviceId} into {result.Device}.");
+            return new ToolFailure(ToolAnswer.Line(result, "Export failed."));
         }
 
-        return new ToolSuccess<IcWriteResult>(
+        return new ToolSuccess<ComputerActionResult>(
             result,
             $"Exported {result.Lines} {(result.Lines == 1 ? "line" : "lines")} to {result.Device}. Chip hash matches the editor.");
-    }
-
-    private static bool Truthy(string? value)
-    {
-        if (value is null || string.IsNullOrWhiteSpace(value))
-        {
-            return false;
-        }
-
-        return !value.Equals("0", StringComparison.OrdinalIgnoreCase) &&
-            !value.Equals("false", StringComparison.OrdinalIgnoreCase) &&
-            !value.Equals("no", StringComparison.OrdinalIgnoreCase) &&
-            !value.Equals("off", StringComparison.OrdinalIgnoreCase);
     }
 }

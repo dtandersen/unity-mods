@@ -55,7 +55,7 @@ public sealed class SearchDevicesTool : ITool
             return new ToolFailure($"Offset '{arguments.Get("offset")}' is not a number.");
         }
 
-        var matches = _command.Execute(arguments.Get("query"), network.Value, logic.Value, room.Value)
+        var matches = _command.Execute(new SearchDevicesRequest(arguments.Get("query"), network.Value, logic.Value, room.Value)).Devices
             .OrderByDescending(device => device.Logic)
             .ThenBy(device => device.Name, StringComparer.OrdinalIgnoreCase)
             .ToArray();

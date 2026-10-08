@@ -15,11 +15,11 @@ namespace StationeersAi.Entity;
 /// One live IC computer, built by <see cref="StationeersIcDevices"/>
 /// from the motherboard it names. The screen reads and writes editor text on
 /// that motherboard, the dropdown picks a housing from the motherboard's
-/// holder list, and the buttons move text between the editor and the chip —
-/// <c>Export</c> burns and verifies the burn by comparing code hashes,
-/// <c>Import</c> pulls chip text back. Only housings on the computer's
-/// network appear in the holder list. Runs on Unity's main thread: the burn
-/// compiles on the chip and touches Unity state.
+/// holder list, and the buttons move text between the editor and the chip,
+/// doing only what the game's own buttons do — press, and let the chip's
+/// state tell how it went. Only housings on the computer's network appear in
+/// the holder list. Runs on Unity's main thread: the burn compiles on the
+/// chip and touches Unity state.
 /// </summary>
 public sealed class StationeersComputer : IComputer
 {
@@ -41,17 +41,20 @@ public sealed class StationeersComputer : IComputer
 
     public string Name => _name;
 
-    public IcWriteResult Write(string code, string chipHash)
+    public void Write(string code)
     {
-        try
+        Press(() =>
         {
-            return _threads.RunSync(() => WriteInner(code ?? string.Empty, chipHash));
-        }
-        catch (Exception ex)
-        {
-            _log.Info(ex.ToString());
-            return new IcWriteResult(false, null, 0, "Editor write failed.");
-        }
+            _motherboard.SetSourceCode(code ?? string.Empty);
+            try
+            {
+                _motherboard.SendUpdate();
+            }
+            catch (Exception ex)
+            {
+                _log.Info(ex.ToString());
+            }
+        }, "Editor write failed.");
     }
 
     public Program Read()
@@ -67,55 +70,27 @@ public sealed class StationeersComputer : IComputer
         }
     }
 
-    public IcWriteResult Export(long device)
+    public void Export(long device)
     {
-        try
+        Press(() =>
         {
-            return _threads.RunSync(() => ExportInner(device));
-        }
-        catch (ThingNotFound notFound)
-        {
-            return new IcWriteResult(false, null, 0, notFound.Message);
-        }
-        catch (Exception ex)
-        {
-            _log.Info(ex.ToString());
-            return new IcWriteResult(false, null, 0, "Export failed.");
-        }
+            SelectHolder(_motherboard, MatchNetworked(device));
+            _motherboard.Export();
+        }, "Export failed.");
     }
 
-    public IcWriteResult Import(long device)
+    public void Import(long device)
     {
-        try
+        Press(() =>
         {
-            return _threads.RunSync(() => ImportInner(device));
-        }
-        catch (ThingNotFound notFound)
-        {
-            return new IcWriteResult(false, null, 0, notFound.Message);
-        }
-        catch (Exception ex)
-        {
-            _log.Info(ex.ToString());
-            return new IcWriteResult(false, null, 0, "Import failed.");
-        }
+            SelectHolder(_motherboard, MatchNetworked(device));
+            _motherboard.Import();
+        }, "Import failed.");
     }
 
-    public IcWriteResult Select(long device)
+    public void Select(long device)
     {
-        try
-        {
-            return _threads.RunSync(() => SelectInner(device));
-        }
-        catch (ThingNotFound notFound)
-        {
-            return new IcWriteResult(false, null, 0, notFound.Message);
-        }
-        catch (Exception ex)
-        {
-            _log.Info(ex.ToString());
-            return new IcWriteResult(false, null, 0, "Select failed.");
-        }
+        Press(() => SelectHolder(_motherboard, MatchNetworked(device)), "Select failed.");
     }
 
     public long Selected()
@@ -135,30 +110,25 @@ public sealed class StationeersComputer : IComputer
         }
     }
 
-    private IcWriteResult WriteInner(string code, string chipHash)
+    private void Press(Action action, string fault)
     {
-        var pointed = PointedHousing();
-        var chip = pointed == null ? null : ChipProgram(pointed);
-        var refusal = WriteGuard.Refusal(
-            pointed == null ? null : SafeName(pointed),
-            chip == null ? string.Empty : chip.Hash,
-            chipHash);
-        if (refusal != null)
-        {
-            return new IcWriteResult(false, null, 0, refusal);
-        }
-
-        _motherboard.SetSourceCode(code);
         try
         {
-            _motherboard.SendUpdate();
+            _threads.RunSync(() =>
+            {
+                action();
+                return true;
+            });
+        }
+        catch (ThingNotFound)
+        {
+            throw;
         }
         catch (Exception ex)
         {
             _log.Info(ex.ToString());
+            throw new InvalidOperationException(fault, ex);
         }
-
-        return new IcWriteResult(true, _name, code.Split('\n').Length, null);
     }
 
     private Program ReadInner()
@@ -187,180 +157,18 @@ public sealed class StationeersComputer : IComputer
         return holders[selected.Value] as CircuitHousing;
     }
 
-    /// <summary>The program burned on the chip of one housing.</summary>
-    private Program ChipProgram(CircuitHousing housing)
-    {
-        var chip = HousingChip(housing);
-        string code;
-        try
-        {
-            var source = chip?.GetSourceCode();
-            code = source != null ? source.ToString() : string.Empty;
-        }
-        catch (Exception ex)
-        {
-            _log.Info(ex.ToString());
-            throw new InvalidOperationException("Select read failed.");
-        }
-
-        code = code ?? string.Empty;
-        return new Program(code, CodeHash.Hash(code));
-    }
-
-    private IcWriteResult SelectInner(long device)
-    {
-        var selection = MatchNetworked(_motherboard, device);
-        if (selection.Error != null)
-        {
-            return selection.Error;
-        }
-
-        try
-        {
-            SelectHolder(_motherboard, selection.Index);
-        }
-        catch (Exception ex)
-        {
-            _log.Info(ex.ToString());
-            return new IcWriteResult(false, null, 0, "Select failed.");
-        }
-
-        var housing = selection.Housing;
-        if (housing == null)
-        {
-            return new IcWriteResult(false, null, 0, "Select failed.");
-        }
-
-        var name = SafeName(housing);
-        return new IcWriteResult(true, name ?? "housing", 0, null);
-    }
-
-    private IcWriteResult ImportInner(long device)
-    {
-        var selection = MatchNetworked(_motherboard, device);
-        if (selection.Error != null)
-        {
-            return selection.Error;
-        }
-
-        try
-        {
-            SelectHolder(_motherboard, selection.Index);
-            _motherboard.Import();
-        }
-        catch (Exception ex)
-        {
-            _log.Info(ex.ToString());
-            return new IcWriteResult(false, null, 0, "Import failed.");
-        }
-
-        string text;
-        try
-        {
-            var source = _motherboard.GetSourceCode();
-            text = source != null ? source.ToString() : string.Empty;
-        }
-        catch (Exception ex)
-        {
-            _log.Info(ex.ToString());
-            return new IcWriteResult(false, null, 0, "Editor read failed.");
-        }
-
-        return new IcWriteResult(true, _name, text.Split('\n').Length, null);
-    }
-
-    private IcWriteResult ExportInner(long device)
-    {
-        string text;
-        try
-        {
-            var source = _motherboard.GetSourceCode();
-            text = source != null ? source.ToString() : string.Empty;
-        }
-        catch (Exception ex)
-        {
-            _log.Info(ex.ToString());
-            return new IcWriteResult(false, null, 0, "Editor read failed.");
-        }
-
-        if (string.IsNullOrEmpty(text))
-        {
-            return new IcWriteResult(false, null, 0, "Editor is empty; nothing to export.");
-        }
-
-        var selection = MatchNetworked(_motherboard, device);
-        if (selection.Error != null)
-        {
-            return selection.Error;
-        }
-
-        var target = selection.Housing;
-        if (target == null)
-        {
-            return new IcWriteResult(false, null, 0, "Export failed.");
-        }
-
-        try
-        {
-            SelectHolder(_motherboard, selection.Index);
-            _motherboard.Export();
-        }
-        catch (Exception ex)
-        {
-            _log.Info(ex.ToString());
-            return new IcWriteResult(false, null, 0, "Export failed.");
-        }
-
-        var chip = HousingChip(target);
-        if (chip != null && chip.CompilationError)
-        {
-            var type = ChipErrorReading.CompileErrorType(chip) ?? "compile error";
-            var line = ChipErrorReading.CompileErrorLine(chip);
-            return new IcWriteResult(false, null, 0, $"Chip reports {type}" + (line == null ? "." : $" at line {line}."));
-        }
-
-        string? burned = null;
-        try
-        {
-            if (chip != null)
-            {
-                burned = chip.GetSourceCode().ToString();
-            }
-        }
-        catch (Exception ex)
-        {
-            _log.Info(ex.ToString());
-        }
-
-        if (burned == null || CodeHash.Hash(burned) != CodeHash.Hash(text))
-        {
-            return new IcWriteResult(false, null, 0, "Chip hash does not match the editor.");
-        }
-
-        return new IcWriteResult(true, SafeName(target) ?? "housing", text.Split('\n').Length, null);
-    }
-
     /// <summary>
-    /// Finds the holder carrying thing id <paramref name="device"/> inside
-    /// the motherboard's holder list: only housings on the computer's
-    /// network. Carries the holder index for the dropdown, and refuses when
-    /// no holder carries that id.
+    /// The holder index of the one carrying thing id <paramref name="device"/>
+    /// inside the motherboard's holder list: only housings on the computer's
+    /// network. Raises <see cref="ThingNotFound"/> with what was there when no
+    /// holder carries that id, including when the network holds none.
     /// </summary>
-    private sealed class NetworkSelection
+    private int MatchNetworked(long device)
     {
-        public int Index;
-        public CircuitHousing? Housing;
-        public IcWriteResult? Error;
-    }
-
-    private NetworkSelection MatchNetworked(ProgrammableChipMotherboard motherboard, long device)
-    {
-        var selection = new NetworkSelection();
-        var holders = MotherboardHolders(motherboard);
+        var holders = MotherboardHolders(_motherboard);
         if (holders == null)
         {
-            selection.Error = new IcWriteResult(false, null, 0, "Export failed.");
-            return selection;
+            throw new InvalidOperationException("Motherboard holder list is missing.");
         }
 
         var networked = new List<CircuitHousing>();
@@ -371,12 +179,6 @@ public sealed class StationeersComputer : IComputer
             {
                 networked.Add(housing);
             }
-        }
-
-        if (networked.Count == 0)
-        {
-            selection.Error = new IcWriteResult(false, null, 0, "No housings on this computer's network.");
-            return selection;
         }
 
         for (var index = 0; index < networked.Count; index++)
@@ -394,9 +196,7 @@ public sealed class StationeersComputer : IComputer
 
             if (id == device)
             {
-                selection.Index = holders.IndexOf(housing);
-                selection.Housing = housing;
-                return selection;
+                return holders.IndexOf(housing);
             }
         }
 
@@ -482,18 +282,6 @@ public sealed class StationeersComputer : IComputer
         }
 
         return listed.Count == 0 ? "none" : string.Join(", ", listed.ToArray());
-    }
-
-    private static ProgrammableChip? HousingChip(CircuitHousing housing)
-    {
-        try
-        {
-            return housing?._ProgrammableChipSlot?.Get<ProgrammableChip>();
-        }
-        catch (Exception)
-        {
-            return null;
-        }
     }
 
     private static string? SafeName(CircuitHousing housing)

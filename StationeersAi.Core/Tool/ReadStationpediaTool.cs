@@ -26,11 +26,13 @@ public sealed class ReadStationpediaTool : ITool
             return new ToolFailure("Missing required argument 'key'.");
         }
 
-        var entry = _command.Execute(key);
-        if (entry == null)
+        var answer = _command.Execute(new ReadStationpediaRequest(key));
+        if (answer.Status != Status.SUCCESS)
         {
-            return new ToolFailure($"No Stationpedia page found for key '{key}'.");
+            return new ToolFailure(ToolAnswer.Line(answer, "Page not found."));
         }
+
+        var entry = answer.Page!;
 
         var text = string.IsNullOrWhiteSpace(entry.Text)
             ? (entry.Description ?? string.Empty)

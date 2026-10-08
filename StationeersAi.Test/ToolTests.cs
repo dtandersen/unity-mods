@@ -52,7 +52,7 @@ public class ToolTests
             new SearchInventoryTool(new SearchInventoryCommand(new InventoryIndex(player))),
             new DescribePlayerTool(new DescribePlayerCommand(player)),
             new GetWorldTool(new GetWorldCommand(world)),
-            new WriteIcTool(new UseComputerCommand(computers)),
+            new WriteIcTool(new WriteComputerCommand(computers)),
             new ListInstructionsTool(new ListInstructionsCommand(mips)),
             new SearchDevicesTool(new SearchDevicesCommand(devices)),
         });
@@ -559,7 +559,7 @@ public class ToolTests
         var computers = new InMemoryIcDevices();
         var tools = new ToolHandler(new ITool[]
         {
-            new WriteIcTool(new UseComputerCommand(computers)),
+            new WriteIcTool(new WriteComputerCommand(computers)),
         });
         var code = string.Join("\n", System.Linq.Enumerable.Repeat("yield", WriteIcTool.MaxCodeLines + 1));
 
@@ -573,10 +573,10 @@ public class ToolTests
     public void Write_ic_refuses_a_stale_chip_hash()
     {
         var computers = new InMemoryIcDevices();
-        computers.Computer.PointedChipCode = "yield";
+        computers.Housing.ChipCode = "yield";
         var tools = new ToolHandler(new ITool[]
         {
-            new WriteIcTool(new UseComputerCommand(computers)),
+            new WriteIcTool(new WriteComputerCommand(computers)),
         });
 
         var result = Call(tools, "write_ic", ("computer", "1189"), ("hash", "811c9dc5"), ("code", "yield"));
@@ -589,9 +589,10 @@ public class ToolTests
     public void Export_ic_burns_and_verifies()
     {
         var computers = new InMemoryIcDevices();
+        computers.Computer.EditorCode = string.Join("\n", System.Linq.Enumerable.Repeat("yield", 37));
         var tools = new ToolHandler(new ITool[]
         {
-            new ExportIcTool(new UseComputerCommand(computers)),
+            new ExportIcTool(new ExportChipCommand(computers)),
         });
 
         var result = Call(tools, "export_ic", ("computer", "1189"), ("device", "2200"));
@@ -607,7 +608,7 @@ public class ToolTests
     {
         var tools = new ToolHandler(new ITool[]
         {
-            new ExportIcTool(new UseComputerCommand(new InMemoryIcDevices())),
+            new ExportIcTool(new ExportChipCommand(new InMemoryIcDevices())),
         });
 
         var result = Call(tools, "export_ic", ("computer", "1189"));
@@ -618,17 +619,15 @@ public class ToolTests
     [Test]
     public void Export_ic_failed_burn_fails()
     {
+        var computers = new InMemoryIcDevices { Computer = { EditorCode = "yield", BurnTakes = false } };
         var tools = new ToolHandler(new ITool[]
         {
-            new ExportIcTool(new UseComputerCommand(new InMemoryIcDevices
-            {
-                Computer = { Result = new IcWriteResult(false, null, 0, "Chip reports IncorrectVariable at line 12.") },
-            })),
+            new ExportIcTool(new ExportChipCommand(computers)),
         });
 
         var result = Call(tools, "export_ic", ("computer", "1189"), ("device", "2200"));
         result.IsSuccess.ShouldBeFalse();
-        result.Content.ShouldContain("IncorrectVariable");
+        result.Content.ShouldContain("Chip hash does not match the editor.");
     }
 
     [Test]

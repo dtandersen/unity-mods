@@ -30,7 +30,7 @@ public sealed class SearchStructuresTool : ITool
             return new ToolFailure("Missing required argument 'query'.");
         }
 
-        var structures = _command.Execute(query)
+        var structures = _command.Execute(new SearchStructuresRequest(query)).Structures
             .OrderBy(structure => structure.Name, StringComparer.OrdinalIgnoreCase)
             .Take(ToolLimits.MaxResults)
             .ToArray();

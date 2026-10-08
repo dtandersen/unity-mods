@@ -16,6 +16,9 @@ public enum Status
 /// </summary>
 public abstract record BaseResult(Status Status, List<string> Errors);
 
+/// <summary>The ask for a command that takes nothing.</summary>
+public sealed record NoRequest();
+
 /// <summary>One domain operation. It answers with a result and never throws.</summary>
 public interface Command<REQ, RES> where RES : BaseResult
 {

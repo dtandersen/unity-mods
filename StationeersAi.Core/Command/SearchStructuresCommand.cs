@@ -4,8 +4,15 @@ using StationeersAi.Query;
 
 namespace StationeersAi.Command;
 
-/// <summary>Domain operation: find structures by name.</summary>
-public sealed class SearchStructuresCommand
+/// <summary>Ask for structures by name fragment.</summary>
+public sealed record SearchStructuresRequest(string? Query);
+
+/// <summary>The structures that matched; empty when none did.</summary>
+public sealed record StructuresResult(
+    Status Status, List<string> Errors, IReadOnlyList<Structure> Structures) : BaseResult(Status, Errors);
+
+/// <summary>Domain operation: search the structure catalogue.</summary>
+public sealed class SearchStructuresCommand : Command<SearchStructuresRequest, StructuresResult>
 {
     private readonly StructureIndex _structures;
 
@@ -14,8 +21,8 @@ public sealed class SearchStructuresCommand
         _structures = structures;
     }
 
-    public IReadOnlyList<Structure> Execute(string? query)
+    public StructuresResult Execute(SearchStructuresRequest request)
     {
-        return _structures.Search(query);
+        return new StructuresResult(Status.SUCCESS, new List<string>(), _structures.Search(request.Query));
     }
 }

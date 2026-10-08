@@ -24,11 +24,13 @@ public sealed class GetWorldTool : ITool
 
     public ToolResult Execute(ToolArguments arguments)
     {
-        var info = _command.Execute();
-        if (info == null)
+        var answer = _command.Execute(new NoRequest());
+        if (answer.Status != Status.SUCCESS)
         {
-            return new ToolFailure("World info is unavailable.");
+            return new ToolFailure(ToolAnswer.Line(answer, "World info is unavailable."));
         }
+
+        var info = answer.World!;
 
         return new ToolSuccess<GetWorldResult>(
             new GetWorldResult(info),

@@ -22,11 +22,13 @@ public sealed class ListInstructionsTool : ITool
     public ToolResult Execute(ToolArguments arguments)
     {
         var instruction = arguments.Get("instruction");
-        var instructions = _command.Execute(instruction);
-        if (instructions.Count == 0)
+        var answer = _command.Execute(new ListInstructionsRequest(instruction));
+        if (answer.Status != Status.SUCCESS)
         {
-            return new ToolFailure($"Unknown MIPS instruction '{instruction}'.");
+            return new ToolFailure(ToolAnswer.Line(answer, "Unknown MIPS instruction."));
         }
+
+        var instructions = answer.Instructions;
 
         if (string.IsNullOrWhiteSpace(instruction))
         {

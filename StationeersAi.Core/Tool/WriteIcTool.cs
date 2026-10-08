@@ -1,3 +1,4 @@
+using System;
 using StationeersAi.Command;
 using StationeersAi.Entity;
 using Caev.Tools;
@@ -10,9 +11,9 @@ public sealed class WriteIcTool : ITool
     /// <summary>The editor's line cap (line indices 0-127).</summary>
     public const int MaxCodeLines = 127;
 
-    private readonly UseComputerCommand _command;
+    private readonly WriteComputerCommand _command;
 
-    public WriteIcTool(UseComputerCommand command)
+    public WriteIcTool(WriteComputerCommand command)
     {
         _command = command;
     }
@@ -59,13 +60,22 @@ public sealed class WriteIcTool : ITool
             return new ToolFailure($"Code is {lines} lines; the editor holds {MaxCodeLines}.");
         }
 
-        var result = _command.Execute(computerId, null, code, chipHash.Trim(), false, false);
-        if (result == null || !result.Written)
+        ComputerActionResult result;
+        try
         {
-            return new ToolFailure(result?.Error ?? "Computer not found.");
+            result = _command.Execute(new WriteComputerRequest(computerId, code, chipHash.Trim()));
+        }
+        catch (Exception)
+        {
+            return new ToolFailure("Computer write failed.");
         }
 
-        return new ToolSuccess<IcWriteResult>(
+        if (result.Status != Status.SUCCESS)
+        {
+            return new ToolFailure(ToolAnswer.Line(result, "Computer not found."));
+        }
+
+        return new ToolSuccess<ComputerActionResult>(
             result,
             $"Wrote {result.Lines} {(result.Lines == 1 ? "line" : "lines")} to {result.Device}. The stationeer can review it in the editor and press Export.");
     }

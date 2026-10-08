@@ -106,9 +106,24 @@ public sealed class SageCommands
         return new ReadHousingCommand(_icDevices);
     }
 
-    public UseComputerCommand UseComputer()
+    public WriteComputerCommand WriteComputer()
     {
-        return new UseComputerCommand(_icDevices);
+        return new WriteComputerCommand(_icDevices);
+    }
+
+    public ImportChipCommand ImportChip()
+    {
+        return new ImportChipCommand(_icDevices);
+    }
+
+    public ExportChipCommand ExportChip()
+    {
+        return new ExportChipCommand(_icDevices);
+    }
+
+    public SelectHousingCommand SelectHousing()
+    {
+        return new SelectHousingCommand(_icDevices);
     }
 
     public ListInstructionsCommand ListInstructions()

@@ -20,11 +20,13 @@ public sealed class DescribePlayerTool : ITool
 
     public ToolResult Execute(ToolArguments arguments)
     {
-        var status = _command.Execute();
-        if (status == null)
+        var answer = _command.Execute(new NoRequest());
+        if (answer.Status != Status.SUCCESS)
         {
-            return new ToolFailure("Player status is unavailable.");
+            return new ToolFailure(ToolAnswer.Line(answer, "Player status is unavailable."));
         }
+
+        var status = answer.Player!;
 
         var content = $"Position: ({status.X:0.0}, {status.Y:0.0}, {status.Z:0.0})\nWorld: {status.World ?? "unknown"}\nRoom: {(status.RoomId.HasValue ? status.RoomId.Value.ToString() : "outside")}";
         if (!string.IsNullOrWhiteSpace(status.Details))

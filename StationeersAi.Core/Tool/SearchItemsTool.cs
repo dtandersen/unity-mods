@@ -30,7 +30,7 @@ public sealed class SearchItemsTool : ITool
             return new ToolFailure("Missing required argument 'query'.");
         }
 
-        var items = _command.Execute(query)
+        var items = _command.Execute(new SearchItemsRequest(query)).Items
             .OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
             .Take(ToolLimits.MaxResults)
             .ToArray();

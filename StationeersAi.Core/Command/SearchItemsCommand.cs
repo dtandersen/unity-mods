@@ -1,13 +1,17 @@
 using System.Collections.Generic;
-using System.Linq;
 using StationeersAi.Entity;
 using StationeersAi.Query;
-using StationeersAi.Repository;
 
 namespace StationeersAi.Command;
 
-/// <summary>Domain operation: find items by name.</summary>
-public sealed class SearchItemsCommand
+/// <summary>Ask for items by name fragment.</summary>
+public sealed record SearchItemsRequest(string? Query);
+
+/// <summary>The items that matched; empty when none did.</summary>
+public sealed record ItemsResult(Status Status, List<string> Errors, IReadOnlyList<Item> Items) : BaseResult(Status, Errors);
+
+/// <summary>Domain operation: search the item catalogue.</summary>
+public sealed class SearchItemsCommand : Command<SearchItemsRequest, ItemsResult>
 {
     private readonly ItemIndex _items;
 
@@ -16,8 +20,8 @@ public sealed class SearchItemsCommand
         _items = items;
     }
 
-    public IReadOnlyList<Item> Execute(string? query)
+    public ItemsResult Execute(SearchItemsRequest request)
     {
-        return _items.Search(query);
+        return new ItemsResult(Status.SUCCESS, new List<string>(), _items.Search(request.Query));
     }
 }

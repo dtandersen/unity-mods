@@ -30,7 +30,7 @@ public sealed class SearchRecipesTool : ITool
             return new ToolFailure("Missing required argument 'query'.");
         }
 
-        var recipes = _command.Execute(query)
+        var recipes = _command.Execute(new SearchRecipesRequest(query)).Recipes
             .OrderBy(recipe => recipe.Name, StringComparer.OrdinalIgnoreCase)
             .Take(ToolLimits.MaxResults)
             .ToArray();

@@ -1,10 +1,21 @@
+using System.Collections.Generic;
 using StationeersAi.Entity;
 using StationeersAi.Repository;
 
 namespace StationeersAi.Command;
 
-/// <summary>Domain operation: read one room's atmospherics.</summary>
-public sealed class ReadRoomCommand
+/// <summary>Ask for one room, or for the room the player stands in when the id is null.</summary>
+public sealed record ReadRoomRequest(long? RoomId);
+
+/// <summary>The room's atmospherics, or why the mod cannot say.</summary>
+public sealed record RoomResult(Status Status, List<string> Errors, RoomAtmosphere? Room) : BaseResult(Status, Errors);
+
+/// <summary>
+/// Domain operation: read one room's air. No id and no room under the
+/// player raises <see cref="Status.NOT_FOUND"/> saying which of the two was
+/// missing.
+/// </summary>
+public sealed class ReadRoomCommand : Command<ReadRoomRequest, RoomResult>
 {
     private readonly IRoomInspector _rooms;
     private readonly IPlayerContext _player;
@@ -15,16 +26,17 @@ public sealed class ReadRoomCommand
         _player = player;
     }
 
-    /// <param name="roomId">The room to read. Null reads the room the player stands in.</param>
-    /// <returns>The room's atmospherics, or null when it cannot be read.</returns>
-    public RoomAtmosphere? Execute(long? roomId)
+    public RoomResult Execute(ReadRoomRequest request)
     {
-        var id = roomId ?? _player.Status?.RoomId;
+        var id = request.RoomId ?? _player.Status?.RoomId;
         if (!id.HasValue)
         {
-            return null;
+            return new RoomResult(Status.NOT_FOUND, new List<string> { "You are outside a room." }, null);
         }
 
-        return _rooms.Describe(id.Value);
+        var room = _rooms.Describe(id.Value);
+        return room == null
+            ? new RoomResult(Status.NOT_FOUND, new List<string> { $"Room {id.Value} was not found." }, null)
+            : new RoomResult(Status.SUCCESS, new List<string>(), room);
     }
 }

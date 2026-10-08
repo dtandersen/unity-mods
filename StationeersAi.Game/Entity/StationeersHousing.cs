@@ -1,15 +1,16 @@
 using System;
 using Assets.Scripts.Objects.Electrical;
 using StationeersAi.Core;
-using StationeersAi.Formatting;
 using StationeersAi.Game;
+using StationeersAi.Repository;
 using Logger = StationeersAi.Core.Logger;
 
 namespace StationeersAi.Entity;
 
 /// <summary>
 /// One live IC housing, built by <see cref="StationeersIcDevices"/>
-/// from the housing it names. Reads the program burned on the chip it holds.
+/// from the housing it names. Reads the program burned on the chip it holds,
+/// its label, and what the chip reports against that program.
 /// Runs on Unity's main thread: the chip belongs to Unity state.
 /// </summary>
 public sealed class StationeersHousing : IHousing
@@ -25,6 +26,38 @@ public sealed class StationeersHousing : IHousing
         _housing = housing;
         _threads = threads;
         _log = log;
+    }
+
+    public string Name
+    {
+        get
+        {
+            try
+            {
+                return _threads.RunSync(() => ReadableName(_housing));
+            }
+            catch (Exception ex)
+            {
+                _log.Info(ex.ToString());
+                return "housing";
+            }
+        }
+    }
+
+    public string? CompileError
+    {
+        get
+        {
+            try
+            {
+                return _threads.RunSync(ReadCompileError);
+            }
+            catch (Exception ex)
+            {
+                _log.Info(ex.ToString());
+                throw;
+            }
+        }
     }
 
     public Program Read()
@@ -45,6 +78,31 @@ public sealed class StationeersHousing : IHousing
         var chip = _housing._ProgrammableChipSlot?.Get<ProgrammableChip>();
         var source = chip?.GetSourceCode();
         var code = source != null ? source.ToString() : string.Empty;
-        return new Program(code ?? string.Empty, CodeHash.Hash(code));
+        return new Program(code ?? string.Empty, Formatting.CodeHash.Hash(code));
+    }
+
+    private string? ReadCompileError()
+    {
+        var chip = _housing._ProgrammableChipSlot?.Get<ProgrammableChip>();
+        if (chip == null || !chip.CompilationError)
+        {
+            return null;
+        }
+
+        var type = ChipErrorReading.CompileErrorType(chip) ?? "compile error";
+        var line = ChipErrorReading.CompileErrorLine(chip);
+        return type + (line == null ? string.Empty : $" at line {line}");
+    }
+
+    private static string ReadableName(CircuitHousing housing)
+    {
+        try
+        {
+            return housing.DisplayName;
+        }
+        catch (Exception)
+        {
+            return "housing";
+        }
     }
 }

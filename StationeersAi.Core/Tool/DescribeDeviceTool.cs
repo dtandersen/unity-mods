@@ -34,17 +34,17 @@ public sealed class DescribeDeviceTool : ITool
             return new ToolFailure("Missing required argument 'device'.");
         }
 
-        var details = _command.Execute(device);
-        if (details == null)
+        var answer = _command.Execute(new DescribeDeviceRequest(device));
+        if (answer.Status != Status.SUCCESS)
         {
-            var candidates = _command.Candidates(device);
+            var candidates = answer.Candidates;
             if (candidates.Count == 0)
             {
-                return new ToolFailure($"No single device matches '{device}'.");
+                return new ToolFailure(ToolAnswer.Line(answer, "Device not found."));
             }
 
             return new ToolFailure(
-                $"No single device matches '{device}'. Matches:" +
+                ToolAnswer.Line(answer, "Device not found.") + " Matches:" +
                 "\n" + Markdown.Build(
                     new[] { "Name", "Type", "Thing", "Network" },
                     candidates.Select(entry => new[]
@@ -55,6 +55,8 @@ public sealed class DescribeDeviceTool : ITool
                         entry.NetworkId == 0 ? "none" : entry.NetworkId.ToString(),
                     })));
         }
+
+        var details = answer.Details!;
 
         var full = IsTrue(arguments.Get("full"));
         return new ToolSuccess<DescribeDeviceResult>(

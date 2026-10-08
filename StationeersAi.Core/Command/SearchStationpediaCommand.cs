@@ -4,8 +4,15 @@ using StationeersAi.Query;
 
 namespace StationeersAi.Command;
 
-/// <summary>Domain operation: find Stationpedia pages by title.</summary>
-public sealed class SearchStationpediaCommand
+/// <summary>Ask for help pages by name fragment.</summary>
+public sealed record SearchStationpediaRequest(string? Query);
+
+/// <summary>The pages that matched; empty when none did.</summary>
+public sealed record StationpediaSearchResult(
+    Status Status, List<string> Errors, IReadOnlyList<StationpediaEntry> Pages) : BaseResult(Status, Errors);
+
+/// <summary>Domain operation: search the Stationpedia catalogue.</summary>
+public sealed class SearchStationpediaCommand : Command<SearchStationpediaRequest, StationpediaSearchResult>
 {
     private readonly StationpediaIndex _pages;
 
@@ -14,8 +21,8 @@ public sealed class SearchStationpediaCommand
         _pages = pages;
     }
 
-    public IReadOnlyList<StationpediaEntry> Execute(string? query)
+    public StationpediaSearchResult Execute(SearchStationpediaRequest request)
     {
-        return _pages.Search(query);
+        return new StationpediaSearchResult(Status.SUCCESS, new List<string>(), _pages.Search(request.Query));
     }
 }

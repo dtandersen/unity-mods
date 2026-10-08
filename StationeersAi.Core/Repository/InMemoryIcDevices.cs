@@ -19,8 +19,13 @@ public sealed class InMemoryIcDevices : IIcDevices
     /// <summary>The computer lookups hand back.</summary>
     public InMemoryComputer Computer { get; } = new InMemoryComputer();
 
-    /// <summary>The housing lookups hand back.</summary>
+    /// <summary>The housing lookups hand back: the one computer's network holds.</summary>
     public InMemoryHousing Housing { get; } = new InMemoryHousing();
+
+    public InMemoryIcDevices()
+    {
+        Computer.NetworkedHousing = Housing;
+    }
 
     public IComputer FindComputer(long computerId)
     {
