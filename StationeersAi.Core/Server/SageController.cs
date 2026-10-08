@@ -222,7 +222,7 @@ public sealed class SageController
         return result.Errors.Count == 0 ? fallback : string.Join(" ", result.Errors);
     }
 
-    [SagePut("/computer/{computer}", "Write a computer's editor screen, guarded by the pointed chip's hash.")]
+    [SagePut("/computer/{computer}", "Write a computer's editor screen, guarded by the selected chip's hash.")]
     public SageResponse WriteComputer(ComputerScreenRequest request)
     {
         if (request.SourceCode is null)
@@ -235,7 +235,7 @@ public sealed class SageController
             "Computer write failed.");
     }
 
-    [SagePut("/computer/{computer}/import", "Pull the pointed housing chip into a computer's editor.")]
+    [SagePut("/computer/{computer}/import", "Pull the selected housing chip into a computer's editor.")]
     public SageResponse ImportComputer(ComputerImportRequest request)
     {
         return Answer(

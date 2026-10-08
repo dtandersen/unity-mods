@@ -32,14 +32,14 @@ public sealed class WriteIcSteps
     [Given("the chip under the dropdown holds {string}")]
     public void GivenTheChipUnderTheDropdownHolds(string code)
     {
-        World.Computer.PointedDevice = "Climate Control";
+        World.Computer.SelectedDevice = "Climate Control";
         World.Housing.ChipCode = code;
     }
 
     [Given("the computer points at nothing")]
     public void GivenTheComputerPointsAtNothing()
     {
-        World.Computer.PointedDevice = null;
+        World.Computer.SelectedDevice = null;
     }
 
     [When("I write to computer {string} with chip hash {string}:")]

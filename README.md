@@ -42,7 +42,7 @@ Sage can call these tools:
 | `search_inventory` | What you are carrying and where it is worn |
 | `describe_player` | Your position and world |
 | `get_world` | World, orbit, sunlight, and outside air |
-| `write_ic` | Place MIPS source in a computer's editor, after naming the pointed chip's hash |
+| `write_ic` | Place MIPS source in a computer's editor, after naming the selected chip's hash |
 | `read_ic` | Read a computer's editor text, by thing id |
 | `export_ic` | Burn editor text to a housing chip, hash-verified, by thing id |
 | `import_ic` | Pull the chip under the dropdown into a computer's editor |

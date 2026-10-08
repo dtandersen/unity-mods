@@ -61,10 +61,10 @@ public sealed class SageServerSteps
     [Given("the computer points at {string}")]
     public void GivenTheComputerPointsAt(string device)
     {
-        World.Computer.PointedDevice = device;
+        World.Computer.SelectedDevice = device;
         // The same housing "Climate Control" carries thing id 2200 in the
         // circuit-housing routes these features exercise.
-        World.Computer.PointedThing = 2200;
+        World.Computer.SelectedThing = 2200;
     }
 
     [Given("the computer read faults")]

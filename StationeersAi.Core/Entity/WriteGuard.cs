@@ -11,20 +11,20 @@ public static class WriteGuard
 {
     /// <summary>
     /// The reason to refuse, or null when the write may go ahead.
-    /// <paramref name="pointedDevice"/> is the housing under the dropdown,
+    /// <paramref name="selectedDevice"/> is the housing the dropdown has selected,
     /// <paramref name="burnedHash"/> the hash of the program on its chip, and
     /// <paramref name="chipHash"/> the hash the caller named.
     /// </summary>
-    public static string? Refusal(string? pointedDevice, string burnedHash, string? chipHash)
+    public static string? Refusal(string? selectedDevice, string burnedHash, string? chipHash)
     {
-        if (string.IsNullOrEmpty(pointedDevice))
+        if (string.IsNullOrEmpty(selectedDevice))
         {
             return "The computer points at no housing. Pick the housing first.";
         }
 
         if (!burnedHash.Equals(chipHash ?? string.Empty, StringComparison.OrdinalIgnoreCase))
         {
-            return $"Chip on {pointedDevice} holds {burnedHash}, not {chipHash}. Read it, then write with its hash.";
+            return $"Chip on {selectedDevice} holds {burnedHash}, not {chipHash}. Read it, then write with its hash.";
         }
 
         return null;

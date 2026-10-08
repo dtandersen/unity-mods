@@ -33,11 +33,11 @@ public sealed class WriteComputerCommand : Command<WriteComputerRequest, Compute
                 return ComputerAnswers.Refuse("A chip hash is required to write: name the hash of the chip under the dropdown.");
             }
 
-            var pointedId = target.Selected();
-            var pointed = pointedId == 0 ? null : _devices.FindHousing(pointedId);
+            var selectedId = target.Selected();
+            var selected = selectedId == 0 ? null : _devices.FindHousing(selectedId);
             var refusal = WriteGuard.Refusal(
-                pointed?.Name,
-                pointed == null ? string.Empty : pointed.Read().Hash,
+                selected?.Name,
+                selected == null ? string.Empty : selected.Read().Hash,
                 request.ChipHash.Trim());
             if (refusal != null)
             {

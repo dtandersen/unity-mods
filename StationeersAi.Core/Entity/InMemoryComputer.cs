@@ -28,11 +28,11 @@ public sealed class InMemoryComputer : IComputer
     /// <summary>The housing on this computer's network, or null when it holds none.</summary>
     public InMemoryHousing? NetworkedHousing { get; set; }
 
-    /// <summary>The housing the dropdown points at, or null when it points at none.</summary>
-    public string? PointedDevice { get; set; } = "Climate Control";
+    /// <summary>The name of the housing the dropdown has selected, or null when it selects none.</summary>
+    public string? SelectedDevice { get; set; } = "Climate Control";
 
-    /// <summary>The thing id of the housing the dropdown points at (0 when none).</summary>
-    public long PointedThing { get; set; } = 2200;
+    /// <summary>The thing id of the housing the dropdown has selected (0 when none).</summary>
+    public long SelectedThing { get; set; } = 2200;
 
     public void Write(string code)
     {
@@ -69,7 +69,7 @@ public sealed class InMemoryComputer : IComputer
     public void Import()
     {
         var housing = NetworkedHousing;
-        if (housing != null && PointedThing == housing.Thing)
+        if (housing != null && SelectedThing == housing.Thing)
         {
             EditorCode = housing.ChipCode;
         }
@@ -79,13 +79,13 @@ public sealed class InMemoryComputer : IComputer
     {
         Selections.Add(device);
         var housing = OnNetwork(device);
-        PointedDevice = housing.Name;
-        PointedThing = housing.Thing;
+        SelectedDevice = housing.Name;
+        SelectedThing = housing.Thing;
     }
 
     public long Selected()
     {
-        return string.IsNullOrEmpty(PointedDevice) ? 0 : PointedThing;
+        return string.IsNullOrEmpty(SelectedDevice) ? 0 : SelectedThing;
     }
 
     /// <summary>The networked housing, raising the game's own sentence when the id is not on it.</summary>

@@ -95,7 +95,7 @@ public sealed class StationeersComputer : IComputer
         {
             return _threads.RunSync(() =>
             {
-                var housing = PointedHousing();
+                var housing = SelectedHousing();
                 return housing == null ? 0 : SafeId(housing);
             });
         }
@@ -134,8 +134,8 @@ public sealed class StationeersComputer : IComputer
         return new Program(code ?? string.Empty, CodeHash.Hash(code));
     }
 
-    /// <summary>The housing under the dropdown, or null when it points at none. Throws when the dropdown cannot be read.</summary>
-    private CircuitHousing? PointedHousing()
+    /// <summary>The housing the dropdown has selected, or null when it selects none. Throws when the dropdown cannot be read.</summary>
+    private CircuitHousing? SelectedHousing()
     {
         var dropdown = Dropdown(_motherboard);
         var selected = (int?)dropdown?.GetType().GetProperty("SelectedIndex")?.GetValue(dropdown, null);

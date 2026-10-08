@@ -3,15 +3,15 @@ using StationeersAi.Repository;
 
 namespace StationeersAi.Command;
 
-/// <summary>The computer whose screen takes the pointed chip's text.</summary>
+/// <summary>The computer whose screen takes the selected chip's text.</summary>
 public sealed record ImportChipRequest(long Computer);
 
 /// <summary>
-/// Domain operation: pull the chip the dropdown points at into the
+/// Domain operation: pull the chip the dropdown has selected into the
 /// computer's screen. The ask names no housing because the game's button
-/// reads no housing: it takes what the dropdown points at, and this refuses
-/// when the dropdown points at nothing. The answer counts what landed on
-/// the screen, read back after the button. A missed id becomes
+/// reads no housing: it takes what the dropdown has selected, and this
+/// refuses when the dropdown selects nothing. The answer counts what landed
+/// on the screen, read back after the button. A missed id becomes
 /// <see cref="Status.NOT_FOUND"/>; a machine that fails outright raises.
 /// </summary>
 public sealed class ImportChipCommand : Command<ImportChipRequest, ComputerActionResult>

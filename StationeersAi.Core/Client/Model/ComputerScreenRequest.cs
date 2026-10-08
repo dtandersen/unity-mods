@@ -1,6 +1,6 @@
 namespace StationeersAi.Client.Model;
 
-/// <summary>Stage text on a computer's screen, naming the pointed chip by hash.</summary>
+/// <summary>Stage text on a computer's screen, naming the selected chip by hash.</summary>
 public sealed class ComputerScreenRequest
 {
     [FromRoute][ThingId]
