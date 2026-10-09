@@ -1,17 +1,19 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Caev;
 
-namespace Caev;
+namespace StationeersAi.Core;
 
 /// <summary>
-/// One question answered by an agent. Implemented by <see cref="Agent"/> and
-/// by a fake in specs that only need to know what a turn reports.
+/// Asking the agent one question, and condensing the history it keeps. This is
+/// the port Core uses: the turn runner, the window, and the chat all ask through
+/// it and listen on the <see cref="AgentEvents"/> the agent was built with.
 /// </summary>
 public interface AgentGateway
 {
     /// <summary>
     /// Answers <paramref name="prompt"/> and reports the answer through the events
-    /// it was built with.
+    /// the agent was built with.
     /// </summary>
     Task AskAsync(
         string prompt,

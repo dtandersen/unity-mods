@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Shouldly;
 using Caev;
+using StationeersAi.Core;
 using StationeersAi.Command;
 using StationeersAi.Entity;
 using StationeersAi.Query;
@@ -40,7 +41,7 @@ public class AssistantTests
         var ai = new FakeAiClient().RespondWith(Answer("hello"));
         var responder = new MentionResponder(
             chat,
-            events => new Agent(ai, RecipeTools(), systemPrompt: null, maxIterations: 5, log: new RecordingLogger(), events: events),
+            events => new CaevAgentGateway(ai, RecipeTools(), systemPrompt: null, maxIterations: 5, log: new RecordingLogger(), events),
             "Sage",
             new RecordingLogger());
 

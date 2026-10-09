@@ -54,7 +54,7 @@ public sealed class SageAssistantSteps
     [When("I ask the assistant {string}")]
     public async Task WhenIAskTheAssistant(string prompt)
     {
-        await TestComposition.Assistant(World, World.Events).AskAsync(prompt, null);
+        await TestComposition.Gateway(World, World.Events).AskAsync(prompt, null);
     }
 
     [Then("the request sent back to the AI model should contain these messages:")]

@@ -11,19 +11,19 @@ namespace StationeersAi.Ai;
 /// <summary>
 /// Answers public chat mentions. Only one question is handled at a time: while
 /// an answer is being produced, further mentions are ignored. The answer is
-/// broadcast as plain text under the assistant's name.
+/// broadcast as plain text under the agent's name.
 /// </summary>
 public sealed class MentionResponder
 {
     private readonly IChatSink _chat;
-    private readonly Func<AgentEvents, AgentGateway?> _assistantFactory;
+    private readonly Func<AgentEvents, AgentGateway?> _gatewayFactory;
     private readonly string _assistantName;
     private readonly Logger _log;
     private bool _busy;
 
     /// <param name="chat">Destination for the answer.</param>
-    /// <param name="assistantFactory">
-    /// Builds the assistant, or returns null when game data is not loaded. It
+    /// <param name="gatewayFactory">
+    /// Builds the agent, or returns null when game data is not loaded. It
     /// receives the events the turn reports through. Called
     /// on the calling thread (the Unity main thread) before the first await.
     /// </param>
@@ -31,12 +31,12 @@ public sealed class MentionResponder
     /// <param name="log">Receives exception details.</param>
     public MentionResponder(
         IChatSink chat,
-        Func<AgentEvents, AgentGateway?> assistantFactory,
+        Func<AgentEvents, AgentGateway?> gatewayFactory,
         string assistantName,
         Logger log)
     {
         _chat = chat ?? throw new ArgumentNullException(nameof(chat));
-        _assistantFactory = assistantFactory ?? throw new ArgumentNullException(nameof(assistantFactory));
+        _gatewayFactory = gatewayFactory ?? throw new ArgumentNullException(nameof(gatewayFactory));
         _assistantName = assistantName;
         _log = log ?? throw new ArgumentNullException(nameof(log));
     }
@@ -59,7 +59,7 @@ public sealed class MentionResponder
         _busy = true;
         try
         {
-            var command = new RunTurnCommand(_assistantFactory, _log);
+            var command = new RunTurnCommand(_gatewayFactory, _log);
             var events = new AgentEvents();
             events.OnAnswer += Say;
             await command.ExecuteAsync(new RunTurnRequest(prompt), conversation, events, cancellationToken);
@@ -71,7 +71,7 @@ public sealed class MentionResponder
         }
     }
 
-    /// <summary>Posts the plain-text answer under the assistant's name.</summary>
+    /// <summary>Posts the plain-text answer under the agent's name.</summary>
     private void Say(string text)
     {
         _chat.Write(ChatNaming.Apply(_assistantName, MarkdownToPlain.ToPlainText(text)));

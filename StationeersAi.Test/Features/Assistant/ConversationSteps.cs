@@ -43,13 +43,13 @@ public sealed class ConversationSteps
     [When("I ask the assistant {string} with context")]
     public async Task WhenIAskTheAssistantWithContext(string prompt)
     {
-        await TestComposition.Assistant(World, World.Events).AskAsync(prompt, World.Conversation);
+        await TestComposition.Gateway(World, World.Events).AskAsync(prompt, World.Conversation);
     }
 
     [When("I compact the conversation")]
     public async Task WhenICompactTheConversation()
     {
-        await TestComposition.Assistant(World, World.Events).CompactAsync(World.Conversation);
+        await TestComposition.Gateway(World, World.Events).CompactAsync(World.Conversation);
     }
 
     [Then("the conversation holds {int} message(s)")]

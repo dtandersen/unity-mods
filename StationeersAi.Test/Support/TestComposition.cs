@@ -1,4 +1,5 @@
 using Caev;
+using StationeersAi.Core;
 using StationeersAi.Command;
 using StationeersAi.Query;
 using Caev.Tools;
@@ -9,7 +10,7 @@ namespace StationeersAi.Test.Support;
 
 /// <summary>
 /// Wires the real core objects for a scenario. Tests exercise public entry
-/// points (<see cref="ToolHandler"/>, <see cref="Agent"/>) rather than
+/// points (<see cref="ToolHandler"/>, <see cref="CaevAgentGateway"/>) rather than
 /// constructing internals inline.
 /// </summary>
 internal static class TestComposition
@@ -40,16 +41,16 @@ internal static class TestComposition
         });
     }
 
-    public static AgentGateway Assistant(WorldContext world, AgentEvents events)
+    public static AgentGateway Gateway(WorldContext world, AgentEvents events)
     {
-        return new Agent(world.Ai, Tools(world), null, 5, world.Log, events);
+        return new CaevAgentGateway(world.Ai, Tools(world), null, 5, world.Log, events);
     }
 
     public static MentionResponder Responder(WorldContext world)
     {
         return new MentionResponder(
             world.Chat,
-            events => Assistant(world, events),
+            events => Gateway(world, events),
             world.AssistantName,
             world.Log);
     }

@@ -20,7 +20,7 @@ namespace Caev;
 /// null (no system prompt / nobody listening). The subscriber decides what to
 /// show, and renders the answer for where it shows it.
 /// </remarks>
-public sealed class Agent : AgentGateway
+public sealed class Agent
 {
     private readonly IAiClient _client;
     private readonly ToolHandler _tools;

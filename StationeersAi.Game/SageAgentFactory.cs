@@ -8,6 +8,7 @@ using StationeersAi.Formatting;
 using StationeersAi.Game.Ai;
 using StationeersAi.Server;
 using StationeersAi.Tool;
+using StationeersAi.Core;
 using Logger = StationeersAi.Core.Logger;
 
 namespace StationeersAi.Game;
@@ -17,7 +18,7 @@ namespace StationeersAi.Game;
 /// conversation. The shell keeps one for the session; the presenter asks
 /// it for an assistant each turn and the mod asks it for server data.
 /// </summary>
-public sealed class SageAssistantFactory
+public sealed class SageAgentFactory
 {
     private readonly SageConfig _settings;
     private readonly string _configPath;
@@ -27,7 +28,7 @@ public sealed class SageAssistantFactory
 
     private Conversation? _conversation;
 
-    public SageAssistantFactory(SageConfig settings, string configPath, CommandFactory commands, MainThreadExecutor threads, Logger log)
+    public SageAgentFactory(SageConfig settings, string configPath, CommandFactory commands, MainThreadExecutor threads, Logger log)
     {
         _settings = settings;
         _configPath = configPath;
@@ -90,7 +91,7 @@ public sealed class SageAssistantFactory
 
     public SageCommands Commands => _commands.Commands();
 
-    public AgentGateway? BuildAssistant(AgentEvents events)
+    public AgentGateway? BuildAgent(AgentEvents events)
     {
         var prefabs = Prefab.AllPrefabs;
         if (prefabs == null || prefabs.Count == 0)
@@ -126,7 +127,7 @@ public sealed class SageAssistantFactory
             new UnityWebRequestTransport(_settings.TimeoutSeconds.Value),
             new OpenAiOptions(_settings.Endpoint.Value, _settings.ApiKey.Value, _settings.Model.Value, _settings.ReasoningEffort.Value));
 
-        return new Agent(client, tools, SystemPromptText(), _settings.MaxIterations.Value, _log, events);
+        return new CaevAgentGateway(client, tools, SystemPromptText(), _settings.MaxIterations.Value, _log, events);
     }
 
     /// <summary>

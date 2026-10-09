@@ -25,7 +25,7 @@ public sealed class SagePresenter : IChatSink
 {
     private readonly WindowModel _model;
     private readonly ISageView _view;
-    private readonly Func<AgentEvents, AgentGateway?> _assistantFactory;
+    private readonly Func<AgentEvents, AgentGateway?> _gatewayFactory;
     private readonly Func<string?> _playerName;
     private readonly Func<string?> _assistantName;
     private readonly Logger _log;
@@ -42,12 +42,12 @@ public sealed class SagePresenter : IChatSink
 
     /// <param name="model">History store. Never null.</param>
     /// <param name="view">Passive view to drive. Never null.</param>
-    /// <param name="assistantFactory">
-    /// Builds the assistant, or returns null when game data is not loaded. It
+    /// <param name="gatewayFactory">
+    /// Builds the agent, or returns null when game data is not loaded. It
     /// receives the events the turn reports through.
     /// </param>
     /// <param name="playerName">Supplies the local player's name for the echo. May return null, which echoes as "You".</param>
-    /// <param name="assistantName">Supplies the name the assistant posts under. May return null, which posts as "Sage".</param>
+    /// <param name="assistantName">Supplies the name the agent posts under. May return null, which posts as "Sage".</param>
     /// <param name="log">Receives exception details.</param>
     /// <param name="showThinking">Post the model's reasoning and narration.</param>
     /// <param name="showToolCalls">Post each requested tool call.</param>
@@ -61,7 +61,7 @@ public sealed class SagePresenter : IChatSink
     public SagePresenter(
         WindowModel model,
         ISageView view,
-        Func<AgentEvents, AgentGateway?> assistantFactory,
+        Func<AgentEvents, AgentGateway?> gatewayFactory,
         Func<string?> playerName,
         Func<string?> assistantName,
         Logger log,
@@ -74,7 +74,7 @@ public sealed class SagePresenter : IChatSink
     {
         _model = model ?? throw new ArgumentNullException(nameof(model));
         _view = view ?? throw new ArgumentNullException(nameof(view));
-        _assistantFactory = assistantFactory;
+        _gatewayFactory = gatewayFactory;
         _playerName = playerName;
         _assistantName = assistantName;
         _log = log;
@@ -207,8 +207,8 @@ public sealed class SagePresenter : IChatSink
 
         try
         {
-            var assistant = _assistantFactory?.Invoke(new AgentEvents());
-            if (assistant == null)
+            var agent = _gatewayFactory?.Invoke(new AgentEvents());
+            if (agent == null)
             {
                 Say("game data is not loaded yet.");
                 return;
@@ -221,7 +221,7 @@ public sealed class SagePresenter : IChatSink
             }
 
             Say("compacting context...");
-            var summary = await assistant.CompactAsync(conversation).ConfigureAwait(false);
+            var summary = await agent.CompactAsync(conversation).ConfigureAwait(false);
             Say(string.IsNullOrWhiteSpace(summary)
                 ? "compaction produced no summary."
                 : "context compacted.");
@@ -281,7 +281,7 @@ public sealed class SagePresenter : IChatSink
 
     private async Task RunCommandAsync(string prompt, Conversation? conversation)
     {
-        var command = new RunTurnCommand(_assistantFactory, _log);
+        var command = new RunTurnCommand(_gatewayFactory, _log);
         var events = new AgentEvents();
         events.OnReasoning += text =>
         {
@@ -347,7 +347,7 @@ public sealed class SagePresenter : IChatSink
         Run(() => _view.SetLines(snapshot));
     }
 
-    /// <summary>Posts an assistant line to the window history.</summary>
+    /// <summary>Posts an agent line to the window history.</summary>
     private void Say(string? text)
     {
         Write(ChatNaming.Apply(_assistantName != null ? _assistantName() : null, text));

@@ -28,7 +28,7 @@ public sealed class AssistantLoopSteps
         _reported = new EventRecorder(_events);
     }
 
-    private Agent Assistant(int maxIterations)
+    private Agent BuildAgent(int maxIterations)
     {
         return new Agent(
             _ai,
@@ -56,7 +56,7 @@ public sealed class AssistantLoopSteps
     [When("we ask the question {string}")]
     public async Task WhenWeAskTheQuestion(string prompt)
     {
-        await Assistant(5).AskAsync(prompt, _conversation);
+        await BuildAgent(5).AskAsync(prompt, _conversation);
     }
 
     [Then("the agent answers with:")]
@@ -107,19 +107,19 @@ public sealed class AssistantLoopSteps
     [When("the assistant is asked {string}")]
     public async Task WhenTheAssistantIsAsked(string prompt)
     {
-        await Assistant(5).AskAsync(prompt, null);
+        await BuildAgent(5).AskAsync(prompt, null);
     }
 
     [When("the assistant is asked {string} with {int} iterations")]
     public async Task WhenTheAssistantIsAskedWithIterations(string prompt, int iterations)
     {
-        await Assistant(iterations).AskAsync(prompt, null);
+        await BuildAgent(iterations).AskAsync(prompt, null);
     }
 
     [When("the conversation is compacted")]
     public async Task WhenTheConversationIsCompacted()
     {
-        await Assistant(5).CompactAsync(_conversation);
+        await BuildAgent(5).CompactAsync(_conversation);
     }
 
     [Then("the assistant replies {string}")]

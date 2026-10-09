@@ -21,7 +21,7 @@ public sealed class ToolActivitySteps
     [When("I ask the assistant {string} reporting events")]
     public async Task WhenIAskTheAssistantReportingEvents(string prompt)
     {
-        var assistant = TestComposition.Assistant(World, World.Events);
+        var assistant = TestComposition.Gateway(World, World.Events);
         await assistant.AskAsync(prompt, null);
     }
 

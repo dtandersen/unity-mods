@@ -17,7 +17,7 @@ namespace StationeersAi.Game;
 public sealed class SageMod
 {
     private readonly SageConfig _settings;
-    private readonly SageAssistantFactory _assistants;
+    private readonly SageAgentFactory _agents;
     private readonly SwitchingSageView _view;
     private readonly SagePresenter _presenter;
     private readonly MainThreadExecutor _threads;
@@ -31,14 +31,14 @@ public sealed class SageMod
 
     public SageMod(
         SageConfig settings,
-        SageAssistantFactory assistants,
+        SageAgentFactory agents,
         SwitchingSageView view,
         SagePresenter presenter,
         MainThreadExecutor threads,
         Logger log)
     {
         _settings = settings;
-        _assistants = assistants;
+        _agents = agents;
         _view = view;
         _presenter = presenter;
         _threads = threads;
@@ -135,7 +135,7 @@ public sealed class SageMod
             return;
         }
 
-        var assistantName = _assistants.AssistantName;
+        var assistantName = _agents.AssistantName;
 
         // Skip our own answers echoing back through the server relay.
         if (message.DisplayName != null &&
@@ -176,7 +176,7 @@ public sealed class SageMod
             ? "player"
             : message.DisplayName;
         _presenter.Write($"{speaker}: {prompt}");
-        _ = responder.HandleAsync(prompt, _assistants.MentionConversation());
+        _ = responder.HandleAsync(prompt, _agents.MentionConversation());
     }
 
     /// <summary>
@@ -207,7 +207,7 @@ public sealed class SageMod
             }
 
             _httpServer = new SageHttpServer(
-                () => _assistants.Commands,
+                () => _agents.Commands,
                 _threads,
                 _log,
                 () => _settings.ServerPort.Value,
@@ -279,9 +279,9 @@ public sealed class SageMod
         EnsureWindow();
 
         return _mentionResponder ??= new MentionResponder(
-            new FanoutChatSink(_presenter, new ChatMessageSink(_threads, _log, () => _assistants.AssistantName)),
-            events => _assistants.BuildAssistant(events),
-            _assistants.AssistantName,
+            new FanoutChatSink(_presenter, new ChatMessageSink(_threads, _log, () => _agents.AssistantName)),
+            events => _agents.BuildAgent(events),
+            _agents.AssistantName,
             _log);
     }
 }

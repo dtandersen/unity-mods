@@ -42,7 +42,7 @@ public sealed class SagePresenterSteps
         return new SagePresenter(
             model,
             World.WindowView,
-            events => World.GameDataLoaded ? TestComposition.Assistant(World, events) : null,
+            events => World.GameDataLoaded ? TestComposition.Gateway(World, events) : null,
             () => World.PlayerName,
             () => World.AssistantName,
             World.Log,

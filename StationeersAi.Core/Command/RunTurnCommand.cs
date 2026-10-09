@@ -7,7 +7,7 @@ using Caev.Tools;
 
 namespace StationeersAi.Command;
 
-/// <summary>One assistant turn: the prompt to run.</summary>
+/// <summary>One agent turn: the prompt to run.</summary>
 public sealed class RunTurnRequest
 {
     public RunTurnRequest(string prompt)
@@ -19,26 +19,26 @@ public sealed class RunTurnRequest
 }
 
 /// <summary>
-/// Runs one assistant turn and reports it through <see cref="AgentEvents"/>:
+/// Runs one agent turn and reports it through <see cref="AgentEvents"/>:
 /// reasoning, tool calls and tool output as they happen, and the answer at the
-/// end. The assistant reports its own answer; this only reports what never
+/// end. The agent reports its own answer; this only reports what never
 /// reaches it — the game-not-loaded notice and errors — as answers too, so the
 /// turn itself never throws. The caller owns the events object and subscribes
 /// to what it shows.
 /// </summary>
 public sealed class RunTurnCommand
 {
-    private readonly Func<AgentEvents, AgentGateway?> _assistantFactory;
+    private readonly Func<AgentEvents, AgentGateway?> _gatewayFactory;
     private readonly Logger _log;
 
-    /// <param name="assistantFactory">
-    /// Builds the assistant, or returns null when game data is not loaded. It
+    /// <param name="gatewayFactory">
+    /// Builds the agent, or returns null when game data is not loaded. It
     /// receives the events the turn reports through.
     /// </param>
     /// <param name="log">Receives exception details.</param>
-    public RunTurnCommand(Func<AgentEvents, AgentGateway?> assistantFactory, Logger log)
+    public RunTurnCommand(Func<AgentEvents, AgentGateway?> gatewayFactory, Logger log)
     {
-        _assistantFactory = assistantFactory;
+        _gatewayFactory = gatewayFactory;
         _log = log;
     }
 
@@ -56,15 +56,15 @@ public sealed class RunTurnCommand
         var prompt = request != null ? request.Prompt : string.Empty;
         try
         {
-            var assistant = _assistantFactory?.Invoke(events);
-            if (assistant == null)
+            var agent = _gatewayFactory?.Invoke(events);
+            if (agent == null)
             {
                 events.RaiseAnswer("game data is not loaded yet.");
                 return;
             }
 
-            // The assistant raises its own answer through the events it was built with.
-            await assistant.AskAsync(prompt, conversation, cancellationToken).ConfigureAwait(false);
+            // The agent raises its own answer through the events it was built with.
+            await agent.AskAsync(prompt, conversation, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

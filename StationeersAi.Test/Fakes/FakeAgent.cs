@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Caev;
+using StationeersAi.Core;
 
 namespace StationeersAi.Test.Fakes;
 
@@ -11,7 +12,7 @@ namespace StationeersAi.Test.Fakes;
 /// <see cref="AgentEvents"/>, then reports the next scripted answer, as the
 /// assistant does when it finishes.
 /// </summary>
-public sealed class FakeAiAssistant : AgentGateway
+public sealed class FakeAgent : AgentGateway
 {
     private readonly AgentEvents _events;
     private readonly Queue<string> _answers = new Queue<string>();
@@ -20,7 +21,7 @@ public sealed class FakeAiAssistant : AgentGateway
     private readonly List<string> _toolCalls = new List<string>();
     private readonly List<string> _toolOutputs = new List<string>();
 
-    public FakeAiAssistant(AgentEvents events)
+    public FakeAgent(AgentEvents events)
     {
         _events = events;
     }
@@ -34,31 +35,31 @@ public sealed class FakeAiAssistant : AgentGateway
     /// <summary>How many compactions were asked for.</summary>
     public int CompactCalls { get; private set; }
 
-    public FakeAiAssistant ReportsReasoning(string text)
+    public FakeAgent ReportsReasoning(string text)
     {
         _reasoning.Add(text);
         return this;
     }
 
-    public FakeAiAssistant ReportsToolCall(string text)
+    public FakeAgent ReportsToolCall(string text)
     {
         _toolCalls.Add(text);
         return this;
     }
 
-    public FakeAiAssistant ReportsToolOutput(string text)
+    public FakeAgent ReportsToolOutput(string text)
     {
         _toolOutputs.Add(text);
         return this;
     }
 
-    public FakeAiAssistant AnswersWith(string answer)
+    public FakeAgent AnswersWith(string answer)
     {
         _answers.Enqueue(answer);
         return this;
     }
 
-    public FakeAiAssistant CompactsTo(string? summary)
+    public FakeAgent CompactsTo(string? summary)
     {
         _summaries.Enqueue(summary);
         return this;

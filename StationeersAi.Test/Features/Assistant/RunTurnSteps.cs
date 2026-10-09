@@ -12,7 +12,7 @@ namespace StationeersAi.Test.Features.Assistant;
 public sealed class RunTurnSteps
 {
     private readonly ScenarioContext _context;
-    private FakeAiAssistant _assistant;
+    private FakeAgent _assistant;
 
     public RunTurnSteps(ScenarioContext context)
     {
@@ -21,7 +21,7 @@ public sealed class RunTurnSteps
 
     private WorldContext World => Hooks.GetWorld(_context);
 
-    private FakeAiAssistant Assistant => _assistant ??= new FakeAiAssistant(World.Events);
+    private FakeAgent Assistant => _assistant ??= new FakeAgent(World.Events);
 
     [Given("the assistant will answer {string}")]
     public void GivenTheAssistantWillAnswer(string answer)

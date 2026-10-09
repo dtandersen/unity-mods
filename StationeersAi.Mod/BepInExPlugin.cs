@@ -63,21 +63,21 @@ public class BepInExPlugin : BaseUnityPlugin
         PatchHooks.LeaveGame = () => UnloadMod();
 
         var commands = new CommandFactory(_executor, _log);
-        var assistants = new SageAssistantFactory(_settings, Paths.ConfigPath, commands, _executor, _log);
+        var agents = new SageAgentFactory(_settings, Paths.ConfigPath, commands, _executor, _log);
         var view = new SwitchingSageView();
         var presenter = new SagePresenter(
             new WindowModel(200),
             view,
-            assistants.BuildAssistant,
-            assistants.PlayerName,
-            () => assistants.AssistantName,
+            agents.BuildAgent,
+            agents.PlayerName,
+            () => agents.AssistantName,
             _log,
             () => _settings.ShowThinking.Value,
             () => _settings.ShowToolCalls.Value,
             () => _settings.ShowToolResults.Value,
-            () => assistants.ConsoleConversation,
+            () => agents.ConsoleConversation,
             _executor.Run);
-        _mod = new SageMod(_settings, assistants, view, presenter, _executor, _log);
+        _mod = new SageMod(_settings, agents, view, presenter, _executor, _log);
         CommandLine.AddCommand("ai", new AiConsoleCommand(presenter));
         _log.Info("registered 'ai' console command");
 
