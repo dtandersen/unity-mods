@@ -19,6 +19,9 @@ public sealed class FakeAiClient : IAiClient
     private readonly TaskCompletionSource<bool> _gate =
         new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
+    /// <summary>Name reported to the assistant; the fake answers in its place.</summary>
+    public string Model { get; set; } = "fake";
+
     public List<IReadOnlyList<ChatMessage>> Transcript { get; } = new List<IReadOnlyList<ChatMessage>>();
 
     /// <summary>When true, once the script is exhausted, reply with the last tool result.</summary>
@@ -26,6 +29,8 @@ public sealed class FakeAiClient : IAiClient
 
     /// <summary>When true, calls block until <see cref="Release"/> is called.</summary>
     public bool Hold { get; set; }
+
+    private int? _failureStatus;
 
     /// <summary>Lets any held calls complete.</summary>
     public void Release()
@@ -39,12 +44,27 @@ public sealed class FakeAiClient : IAiClient
         return this;
     }
 
+    /// <summary>Fails every later call as the service did with that HTTP status.</summary>
+    public FakeAiClient FailWith(int? statusCode)
+    {
+        _failureStatus = statusCode;
+        return this;
+    }
+
     public async Task<AiCompletion> CompleteAsync(
         IReadOnlyList<ChatMessage> messages,
         IReadOnlyList<ToolDefinition> tools,
         CancellationToken cancellationToken = default)
     {
         Transcript.Add(messages.ToArray());
+
+        if (_failureStatus.HasValue)
+        {
+            throw new AiClientException(
+                $"The AI service returned HTTP {_failureStatus.Value}: stub failure",
+                _failureStatus.Value,
+                null);
+        }
 
         if (Hold)
         {

@@ -30,6 +30,35 @@ public sealed class AssistantLoopSteps
             activity: _activity);
     }
 
+    [Given("the model {string} is not a valid model")]
+    public void GivenTheModelIsNotAValidModel(string model)
+    {
+        _ai.Model = model;
+        _ai.FailWith(404);
+    }
+
+    [Given("the model {string} returns a {int}")]
+    public void GivenTheModelReturnsAStatus(string model, int statusCode)
+    {
+        _ai.Model = model;
+        _ai.FailWith(statusCode);
+    }
+
+    [When("we ask the question {string}")]
+    public async Task WhenWeAskTheQuestion(string prompt)
+    {
+        _reply = await Assistant(5).AskAsync(prompt, _conversation);
+    }
+
+    [Then("the agent answers with:")]
+    public void ThenTheAgentAnswersWith(string expected)
+    {
+        Flat(_reply).ShouldBe(Flat(expected));
+    }
+
+    /// <summary>Docstrings and answers may differ only in line breaks and padding.</summary>
+    private static string Flat(string text) => text.Replace("\r\n", "\n").Trim();
+
     [Given("the AI model will answer {string}")]
     public void GivenTheAiModelWillAnswer(string answer)
     {

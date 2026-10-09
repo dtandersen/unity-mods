@@ -19,6 +19,9 @@ public sealed class FakeAiClient : IAiClient
     private readonly TaskCompletionSource<bool> _gate =
         new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
+    /// <summary>Name reported to the assistant; the fake answers in its place.</summary>
+    public string Model { get; set; } = "fake";
+
     public List<IReadOnlyList<ChatMessage>> Transcript { get; } = new List<IReadOnlyList<ChatMessage>>();
 
     /// <summary>When true, once the script is exhausted, reply with the last tool result.</summary>

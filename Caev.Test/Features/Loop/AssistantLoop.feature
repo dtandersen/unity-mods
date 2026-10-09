@@ -26,3 +26,19 @@ Feature: Assistant loop
     And the AI model will answer "Cable needs copper."
     When the conversation is compacted
     Then the conversation holds the summary "Cable needs copper."
+
+  Scenario: An unknown model gives a plain answer
+    Given the model "invalid" is not a valid model
+    When we ask the question "What time is it?"
+    Then the agent answers with:
+      """
+      The model "invalid" is not available
+      """
+
+  Scenario: A failing model gives a plain answer
+    Given the model "broken" returns a 500
+    When we ask the question "What time is it?"
+    Then the agent answers with:
+      """
+      The model "broken" returned an error
+      """

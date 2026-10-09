@@ -11,6 +11,9 @@ namespace Caev;
 /// </summary>
 public interface IAiClient
 {
+    /// <summary>The model this client talks to, named in answers and logs.</summary>
+    string Model { get; }
+
     Task<AiCompletion> CompleteAsync(
         IReadOnlyList<ChatMessage> messages,
         IReadOnlyList<ToolDefinition> tools,

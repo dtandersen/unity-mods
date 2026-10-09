@@ -72,7 +72,17 @@ public sealed class AiAssistant
 
         for (var i = 0; i < _maxIterations; i++)
         {
-            var completion = await _client.CompleteAsync(messages, _tools.Definitions, cancellationToken);
+            AiCompletion completion;
+            try
+            {
+                completion = await _client.CompleteAsync(messages, _tools.Definitions, cancellationToken);
+            }
+            catch (AiClientException ex)
+            {
+                // Keep the provider's words in the log; the stationeer gets a short answer.
+                Log($"Model request failed: {ex.Message}");
+                return Unusable(_client, ex);
+            }
 
             if (!string.IsNullOrEmpty(completion?.Content))
             {
@@ -124,6 +134,15 @@ public sealed class AiAssistant
         Persist(conversation, messages);
         Log($"(gave up after {_maxIterations} tool rounds)");
         return "I couldn't complete that request.";
+    }
+
+    /// <summary>Names what went wrong with the model, without the provider's noise.</summary>
+    private static string Unusable(IAiClient client, AiClientException ex)
+    {
+        // No status means the service never answered, so there is no model to ask.
+        return ex.StatusCode == null || ex.StatusCode == 404
+            ? $"The model \"{client.Model}\" is not available"
+            : $"The model \"{client.Model}\" returned an error";
     }
 
     /// <summary>Keeps the whole turn — user, assistant, and tool traffic — for next time.</summary>

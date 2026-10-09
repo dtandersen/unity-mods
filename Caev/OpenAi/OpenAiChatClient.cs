@@ -34,6 +34,9 @@ public sealed class OpenAiChatClient : IAiClient
         _options = options;
     }
 
+    /// <summary>The configured model name.</summary>
+    public string Model => _options.Model;
+
     public async Task<AiCompletion> CompleteAsync(
         IReadOnlyList<ChatMessage> messages,
         IReadOnlyList<ToolDefinition> tools,
