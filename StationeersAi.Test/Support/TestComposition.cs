@@ -41,18 +41,13 @@ internal static class TestComposition
         });
     }
 
-    public static AgentGateway Gateway(WorldContext world, AgentEvents events)
+    public static AgentGateway Gateway(WorldContext world)
     {
-        return new CaevAgentGateway(world.Ai, Tools(world), world.Log, events);
+        return new CaevAgentGateway(world.Ai, Tools(world), world.Log, world.Events);
     }
 
     public static MentionResponder Responder(WorldContext world)
     {
-        return new MentionResponder(
-            world.Chat,
-            events => Gateway(world, events),
-            world,
-            world.AssistantName,
-            world.Log);
+        return new MentionResponder(world.Gateway, world, world.Log);
     }
 }

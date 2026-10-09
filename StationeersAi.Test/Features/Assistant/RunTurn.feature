@@ -23,8 +23,3 @@ Feature: Run turn
     And the agent will answer "42"
     When the turn runs "what is the answer"
     Then the turn sent the instructions "Look it up before answering" and 3 tool rounds
-
-  Scenario: Missing game data arrives as an answer
-    Given game data is not loaded
-    When the turn runs "hello"
-    Then the answered event is "game data is not loaded yet."

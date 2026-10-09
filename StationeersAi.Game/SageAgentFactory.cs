@@ -14,11 +14,10 @@ using Logger = StationeersAi.Core.Logger;
 namespace StationeersAi.Game;
 
 /// <summary>
-/// Builds the gateway from the factory's commands and owns the one shared
-/// conversation. The shell keeps one for the session; the presenter asks
-/// it for a gateway each turn and the mod asks it for server data. It also
+/// Builds the one gateway for a mod lifecycle and owns the shared
+/// conversations. The mod asks for server data from the same commands, and
 /// answers what a turn should say about itself: the system prompt and the
-/// iteration limit, read from the config each time a turn is built.
+/// iteration limit, read fresh each turn so an edit applies without a restart.
 /// </summary>
 public sealed class SageAgentFactory : AgentSettings
 {
@@ -99,14 +98,13 @@ public sealed class SageAgentFactory : AgentSettings
 
     public SageCommands Commands => _commands.Commands();
 
-    public AgentGateway? BuildAgent(AgentEvents events)
+    /// <summary>
+    /// Builds the gateway: one agent, one channel, every tool. Called on the first
+    /// level load, when prefabs and the world are there, so no turn has to check
+    /// whether game data exists.
+    /// </summary>
+    public AgentGateway BuildGateway()
     {
-        var prefabs = Prefab.AllPrefabs;
-        if (prefabs == null || prefabs.Count == 0)
-        {
-            return null;
-        }
-
         var commands = _commands.Commands();
         var tools = new ToolHandler(new ITool[]
         {
@@ -135,7 +133,7 @@ public sealed class SageAgentFactory : AgentSettings
             new UnityWebRequestTransport(_settings.TimeoutSeconds.Value),
             new OpenAiOptions(_settings.Endpoint.Value, _settings.ApiKey.Value, _settings.Model.Value, _settings.ReasoningEffort.Value));
 
-        return new CaevAgentGateway(client, tools, _log, events);
+        return new CaevAgentGateway(client, tools, _log);
     }
 
     /// <summary>

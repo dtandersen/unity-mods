@@ -50,8 +50,8 @@ public sealed class RunTurnSteps
     [When("the turn runs {string}")]
     public async Task WhenTheTurnRuns(string prompt)
     {
-        var command = new RunTurnCommand(events => World.GameDataLoaded ? Agent : null, World, World.Log);
-        await command.ExecuteAsync(new RunTurnRequest(prompt), World.Conversation, World.Events);
+        var command = new RunTurnCommand(Agent, World, World.Log);
+        await command.ExecuteAsync(new RunTurnRequest(prompt), World.Conversation);
     }
 
     [Then("the turn sent the instructions {string} and {int} tool rounds")]

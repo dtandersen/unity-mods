@@ -9,9 +9,10 @@ Feature: Chat routing
   lines, an empty line, and any line while answering is off are not, so a switched-off
   mod does not copy all of chat into the log.
 
-  Routing does not decide what the Sage window shows. Today the agent's own lines
-  reach nothing at all, because the answer test and the display test are one early
-  return in the mod.
+  Routing does not decide what the Sage window shows. The window takes its lines
+  from the gateway's channel, which the presenter listens on; the mod still hides
+  the agent's own chat lines with one early return, so those do not reach the window
+  from chat.
 
   The mod decides who is in the game. When it cannot read the player count it says
   somebody is, so a plain line goes unanswered; that guess stays in the mod and is

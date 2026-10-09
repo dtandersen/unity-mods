@@ -7,16 +7,16 @@ namespace StationeersAi.Game;
 /// The <c>ai</c> console command: <c>ai &lt;question&gt;</c> asks the assistant,
 /// <c>ai reset</c> drops the conversation, <c>ai compact</c> summarises it.
 /// Questions are answered asynchronously; the answer streams into the Sage
-/// window when the model replies. Hands each line straight to the shared
-/// presenter.
+/// window when the model replies. The mod owns the presenter, so a command
+/// issued before any level is loaded says so.
 /// </summary>
 public sealed class AiConsoleCommand : CommandBase
 {
-    private readonly SagePresenter _presenter;
+    private readonly SageMod _mod;
 
-    public AiConsoleCommand(SagePresenter presenter)
+    public AiConsoleCommand(SageMod mod)
     {
-        _presenter = presenter;
+        _mod = mod;
     }
 
     public override CommandScope Scope => CommandScope.InGame;
@@ -32,6 +32,6 @@ public sealed class AiConsoleCommand : CommandBase
 
     public override string Execute(string[] args)
     {
-        return _presenter.OnConsoleCommand(args);
+        return _mod.OnConsoleCommand(args);
     }
 }

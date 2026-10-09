@@ -11,9 +11,10 @@ namespace StationeersAi.Window;
 /// Presents Sage turns in the window: owns the <see cref="WindowModel"/>,
 /// answers the <see cref="ISageView"/> events, and pushes every state change
 /// to the view. Each turn echoes the question, runs through
-/// <see cref="RunTurnCommand"/>, and shows reasoning and tool traffic per
-/// its options. This is also the <see cref="IChatSink"/> the mention answers
-/// stream into, so the window keeps the full history.
+/// <see cref="RunTurnCommand"/>, and shows reasoning and tool traffic per its
+/// options. It subscribes to the gateway's channel once, here. Answers are not
+/// written from that channel: the agent posts them to chat, and the chat lines
+/// arrive through <see cref="Write"/>, which is what the window shows.
 /// </summary>
 /// <remarks>
 /// The view is only touched through <paramref name="marshal"/>, which the
@@ -25,7 +26,7 @@ public sealed class SagePresenter : IChatSink
 {
     private readonly WindowModel _model;
     private readonly ISageView _view;
-    private readonly Func<AgentEvents, AgentGateway?> _gatewayFactory;
+    private readonly AgentGateway _gateway;
     private readonly AgentSettings _settings;
     private readonly Func<string?> _playerName;
     private readonly Func<string?> _assistantName;
@@ -43,9 +44,8 @@ public sealed class SagePresenter : IChatSink
 
     /// <param name="model">History store. Never null.</param>
     /// <param name="view">Passive view to drive. Never null.</param>
-    /// <param name="gatewayFactory">
-    /// Builds the agent, or returns null when game data is not loaded. It
-    /// receives the events the turn reports through.
+    /// <param name="gateway">The agent to ask, and the channel it reports to.
+    /// The presenter subscribes to that channel once, here.
     /// </param>
     /// <param name="playerName">Supplies the local player's name for the echo. May return null, which echoes as "You".</param>
     /// <param name="settings">Instructions and iteration limit for each turn, from the game's config.</param>
@@ -63,7 +63,7 @@ public sealed class SagePresenter : IChatSink
     public SagePresenter(
         WindowModel model,
         ISageView view,
-        Func<AgentEvents, AgentGateway?> gatewayFactory,
+        AgentGateway gateway,
         AgentSettings settings,
         Func<string?> playerName,
         Func<string?> assistantName,
@@ -77,7 +77,7 @@ public sealed class SagePresenter : IChatSink
     {
         _model = model ?? throw new ArgumentNullException(nameof(model));
         _view = view ?? throw new ArgumentNullException(nameof(view));
-        _gatewayFactory = gatewayFactory;
+        _gateway = gateway ?? throw new ArgumentNullException(nameof(gateway));
         _settings = settings;
         _playerName = playerName;
         _assistantName = assistantName;
@@ -91,6 +91,13 @@ public sealed class SagePresenter : IChatSink
 
         _view.SubmitRequested += OnSubmitRequested;
         _view.ToggleRequested += OnToggleRequested;
+
+        // One gateway, one channel: subscribe for the life of the presenter.
+        _gateway.Events.OnReasoning += OnReasoning;
+        _gateway.Events.OnToolCall += OnToolCall;
+        _gateway.Events.OnToolOutput += OnToolOutput;
+        _gateway.Events.OnAnswer += OnAnswered;
+
         PushAll();
     }
 
@@ -211,13 +218,6 @@ public sealed class SagePresenter : IChatSink
 
         try
         {
-            var agent = _gatewayFactory?.Invoke(new AgentEvents());
-            if (agent == null)
-            {
-                Say("game data is not loaded yet.");
-                return;
-            }
-
             if (conversation.Messages.Count == 0)
             {
                 Say("nothing to compact.");
@@ -225,7 +225,7 @@ public sealed class SagePresenter : IChatSink
             }
 
             Say("compacting context...");
-            var summary = await agent.CompactAsync(conversation).ConfigureAwait(false);
+            var summary = await _gateway.CompactAsync(conversation).ConfigureAwait(false);
             Say(string.IsNullOrWhiteSpace(summary)
                 ? "compaction produced no summary."
                 : "context compacted.");
@@ -285,47 +285,55 @@ public sealed class SagePresenter : IChatSink
 
     private async Task RunCommandAsync(string prompt, Conversation? conversation)
     {
-        var command = new RunTurnCommand(_gatewayFactory, _settings, _log);
-        var events = new AgentEvents();
-        events.OnReasoning += text =>
+        await new RunTurnCommand(_gateway, _settings, _log)
+            .ExecuteAsync(new RunTurnRequest(prompt), conversation)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>The model's reasoning, shown per <c>General/ShowThinking</c>.</summary>
+    private void OnReasoning(string text)
+    {
+        if (_showThinking != null && _showThinking())
         {
-            if (_showThinking != null && _showThinking())
-            {
-                Say(text);
-            }
-            else
-            {
-                NoteProgress();
-            }
-        };
-        events.OnToolCall += text =>
+            Say(text);
+        }
+        else
         {
-            if (_showToolCalls != null && _showToolCalls())
-            {
-                Say(text);
-            }
-            else
-            {
-                NoteProgress();
-            }
-        };
-        events.OnToolOutput += text =>
+            NoteProgress();
+        }
+    }
+
+    /// <summary>A tool call, shown per <c>General/ShowToolCalls</c>.</summary>
+    private void OnToolCall(string text)
+    {
+        if (_showToolCalls != null && _showToolCalls())
         {
-            if (_showToolResults != null && _showToolResults())
-            {
-                Say(text);
-            }
-            else
-            {
-                NoteProgress();
-            }
-        };
-        events.OnAnswer += answer =>
+            Say(text);
+        }
+        else
         {
-            ClearThinking();
-            Say(MarkdownToPlain.ToPlainText(answer));
-        };
-        await command.ExecuteAsync(new RunTurnRequest(prompt), conversation, events).ConfigureAwait(false);
+            NoteProgress();
+        }
+    }
+
+    /// <summary>A tool result, shown per <c>General/ShowToolResults</c>.</summary>
+    private void OnToolOutput(string text)
+    {
+        if (_showToolResults != null && _showToolResults())
+        {
+            Say(text);
+        }
+        else
+        {
+            NoteProgress();
+        }
+    }
+
+    /// <summary>Retires the thinking line and shows the answer, in plain text.</summary>
+    private void OnAnswered(string answer)
+    {
+        ClearThinking();
+        Say(MarkdownToPlain.ToPlainText(answer));
     }
 
     /// <summary>Refreshes the thinking status with the elapsed turn time.</summary>

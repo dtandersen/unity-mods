@@ -65,21 +65,8 @@ public class BepInExPlugin : BaseUnityPlugin
         var commands = new CommandFactory(_executor, _log);
         var agents = new SageAgentFactory(_settings, Paths.ConfigPath, commands, _executor, _log);
         var view = new SwitchingSageView();
-        var presenter = new SagePresenter(
-            new WindowModel(200),
-            view,
-            agents.BuildAgent,
-            agents,
-            agents.PlayerName,
-            () => agents.AssistantName,
-            _log,
-            () => _settings.ShowThinking.Value,
-            () => _settings.ShowToolCalls.Value,
-            () => _settings.ShowToolResults.Value,
-            () => agents.ConsoleConversation,
-            _executor.Run);
-        _mod = new SageMod(_settings, agents, view, presenter, _executor, _log);
-        CommandLine.AddCommand("ai", new AiConsoleCommand(presenter));
+        _mod = new SageMod(_settings, agents, view, _executor, _log);
+        CommandLine.AddCommand("ai", new AiConsoleCommand(_mod));
         _log.Info("registered 'ai' console command");
 
         _log.Info($"Loaded {ModName} v{ModVersion} (core {CoreAssembly.Version})");

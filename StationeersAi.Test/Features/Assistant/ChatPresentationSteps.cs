@@ -19,12 +19,6 @@ public sealed class ChatPresentationSteps
 
     private WorldContext World => Hooks.GetWorld(_context);
 
-    [Given("game data is not loaded")]
-    public void GivenGameDataIsNotLoaded()
-    {
-        World.GameDataLoaded = false;
-    }
-
     [Given("my player name is {string}")]
     public void GivenMyPlayerNameIs(string name)
     {
@@ -46,7 +40,6 @@ public sealed class ChatPresentationSteps
     [Given("the AI model will wait")]
     public void GivenTheAiModelWillWait()
     {
-        World.Ai ??= new FakeAiClient();
         World.Ai.Hold = true;
     }
 

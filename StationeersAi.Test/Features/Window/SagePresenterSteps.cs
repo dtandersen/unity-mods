@@ -42,7 +42,7 @@ public sealed class SagePresenterSteps
         return new SagePresenter(
             model,
             World.WindowView,
-            events => World.GameDataLoaded ? TestComposition.Gateway(World, events) : null,
+            World.Gateway,
             World,
             () => World.PlayerName,
             () => World.AssistantName,
@@ -67,9 +67,7 @@ public sealed class SagePresenterSteps
 
     private string[] AskedQuestions()
     {
-        return World.Ai == null
-            ? Array.Empty<string>()
-            : World.Ai.Transcript
+        return World.Ai.Transcript
                 .SelectMany(messages => messages)
                 .Where(message => message.Role == ChatRole.User)
                 .Select(message => message.Content)
@@ -120,7 +118,6 @@ public sealed class SagePresenterSteps
     public async Task GivenTheAssistantIsStillAnswering(string question)
     {
         EnsurePresenter().ShouldNotBeNull();
-        World.Ai ??= new FakeAiClient();
         World.Ai.Hold = true;
         World.WindowView.Input = question;
         World.WindowView.RaiseSubmit();
@@ -137,7 +134,6 @@ public sealed class SagePresenterSteps
     [Given("the AI model will pause after {int} calls")]
     public void GivenTheAiModelWillPauseAfterCalls(int count)
     {
-        World.Ai ??= new FakeAiClient();
         World.Ai.PauseAfterCalls = count;
     }
 

@@ -49,15 +49,14 @@ public sealed class WorldContext : IDisposable, AgentSettings
 
     public InMemoryRoomInspector RoomInspector { get; } = new InMemoryRoomInspector();
 
-    public FakeAiClient Ai { get; set; }
+    /// <summary>The one model this scenario talks to, standing by before the gateway is built.</summary>
+    public FakeAiClient Ai { get; } = new FakeAiClient();
 
     public RecordingChatSink Chat { get; } = new RecordingChatSink();
 
     public RecordingLogger Log { get; } = new RecordingLogger();
 
     public string PlayerName { get; set; } = "Tester";
-
-    public bool GameDataLoaded { get; set; } = true;
 
     public string AssistantName { get; set; } = "Sage";
 
@@ -97,6 +96,23 @@ public sealed class WorldContext : IDisposable, AgentSettings
 
     /// <summary>Where this scenario's turns report: reasoning, tool traffic, answer.</summary>
     public AgentEvents Events { get; } = new AgentEvents();
+
+    /// <summary>
+    /// The one gateway for this scenario, with answers posted to <see cref="Chat"/>.
+    /// Specs that ask an agent ask this, the way the mod asks its one gateway.
+    /// </summary>
+    public AgentGateway Gateway => _gateway ??= BuildGateway();
+
+    private AgentGateway _gateway;
+
+    private AgentGateway BuildGateway()
+    {
+        var gateway = TestComposition.Gateway(this);
+        _answers = new ChatAnswerSink(gateway, Chat, AssistantName);
+        return gateway;
+    }
+
+    private ChatAnswerSink _answers;
 
     /// <summary>What the turns reported through <see cref="Events"/>.</summary>
     public EventRecorder Recorder { get; }

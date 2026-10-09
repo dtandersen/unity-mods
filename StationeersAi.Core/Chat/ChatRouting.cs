@@ -49,7 +49,8 @@ public sealed record ChatDecision(
 /// answer comes back through the display path like anyone else's, and answering it
 /// would ask forever. With nobody else in the game every line is addressed to the
 /// agent, so an unmentioned line is answered as written; with another player only a
-/// mention is. Nothing here decides what the Sage window shows.
+/// mention is. Nothing here decides what the Sage window shows: the presenter
+/// listens on the gateway's channel and writes the window itself.
 /// </remarks>
 public static class ChatRouting
 {

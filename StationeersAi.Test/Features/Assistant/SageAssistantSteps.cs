@@ -54,7 +54,7 @@ public sealed class SageAssistantSteps
     [When("I ask the assistant {string}")]
     public async Task WhenIAskTheAssistant(string prompt)
     {
-        await TestComposition.Gateway(World, World.Events).AskAsync(World.Turn(prompt));
+        await World.Gateway.AskAsync(World.Turn(prompt));
     }
 
     [Then("the request sent back to the AI model should contain these messages:")]
@@ -98,15 +98,7 @@ public sealed class SageAssistantSteps
         World.Reply.ShouldBe(expected.Replace("\\n", "\n"));
     }
 
-    private FakeAiClient Model()
-    {
-        if (World.Ai == null)
-        {
-            World.Ai = new FakeAiClient();
-        }
-
-        return World.Ai;
-    }
+    private FakeAiClient Model() => World.Ai;
 
     private static ToolArguments Arguments(string name, string value)
     {

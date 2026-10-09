@@ -7,9 +7,9 @@ namespace StationeersAi.Core;
 
 /// <summary>
 /// The engine's agent behind Core's port: builds a <see cref="Agent"/> from the
-/// model client, the tools, and the turn's events, then hands it the whole turn.
-/// The turn says how to run — prompt text and iteration limit come in with it —
-/// so one gateway answers any number of turns.
+/// model client, the tools, and the channel it reports to, then hands it the whole
+/// turn. The turn says how to run — prompt text and iteration limit come in with it
+/// — so one gateway answers any number of turns, and listeners subscribe once.
 /// </summary>
 public sealed class CaevAgentGateway : AgentGateway
 {
@@ -19,10 +19,14 @@ public sealed class CaevAgentGateway : AgentGateway
         IAiClient client,
         ToolHandler tools,
         Logger log,
-        AgentEvents? events)
+        AgentEvents? events = null)
     {
-        _agent = new Agent(client, tools, log, events);
+        Events = events ?? new AgentEvents();
+        _agent = new Agent(client, tools, log, Events);
     }
+
+    /// <summary>The one channel this gateway's agent reports to, for the life of the gateway.</summary>
+    public AgentEvents Events { get; }
 
     public Task AskAsync(TurnContext turn, CancellationToken cancellationToken = default)
     {

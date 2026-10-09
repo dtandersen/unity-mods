@@ -26,6 +26,9 @@ public sealed class FakeAgent : AgentGateway
         _events = events;
     }
 
+    /// <summary>The channel this gateway reports to.</summary>
+    public AgentEvents Events => _events;
+
     /// <summary>Every prompt asked, in order.</summary>
     public List<string> Prompts { get; } = new List<string>();
 

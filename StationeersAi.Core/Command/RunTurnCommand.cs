@@ -19,63 +19,46 @@ public sealed class RunTurnRequest
 }
 
 /// <summary>
-/// Runs one agent turn and reports it through <see cref="AgentEvents"/>:
-/// reasoning, tool calls and tool output as they happen, and the answer at the
-/// end. The agent reports its own answer; this only reports what never
-/// reaches it — the game-not-loaded notice and errors — as answers too, so the
-/// turn itself never throws. The caller owns the events object and subscribes
-/// to what it shows.
+/// Runs one agent turn. The gateway reports reasoning, tool traffic and the
+/// answer on its own channel; this adds an answer only for what never reaches the
+/// agent — an error — so a turn always ends with exactly one answer on that
+/// channel.
 /// </summary>
 public sealed class RunTurnCommand
 {
-    private readonly Func<AgentEvents, AgentGateway?> _gatewayFactory;
+    private readonly AgentGateway _gateway;
     private readonly AgentSettings _settings;
     private readonly Logger _log;
 
-    /// <param name="gatewayFactory">
-    /// Builds the gateway, or returns null when game data is not loaded. It
-    /// receives the events the turn reports through.
-    /// </param>
+    /// <param name="gateway">The agent to ask, and the channel it reports to.</param>
     /// <param name="settings">
     /// Instructions and iteration limit for the turn, read from the game's config.
     /// </param>
     /// <param name="log">Receives exception details.</param>
-    public RunTurnCommand(Func<AgentEvents, AgentGateway?> gatewayFactory, AgentSettings settings, Logger log)
+    public RunTurnCommand(AgentGateway gateway, AgentSettings settings, Logger log)
     {
-        _gatewayFactory = gatewayFactory;
+        _gateway = gateway ?? throw new ArgumentNullException(nameof(gateway));
         _settings = settings;
         _log = log;
     }
 
     /// <param name="request">The turn to run.</param>
     /// <param name="conversation">History sent with the request. May be null.</param>
-    /// <param name="events">
-    /// Where the turn reports: reasoning, tool traffic, then the answer. Never null.
-    /// </param>
     public async Task ExecuteAsync(
         RunTurnRequest request,
         Conversation? conversation,
-        AgentEvents events,
         CancellationToken cancellationToken = default)
     {
         var prompt = request != null ? request.Prompt : string.Empty;
         try
         {
-            var gateway = _gatewayFactory?.Invoke(events);
-            if (gateway == null)
-            {
-                events.RaiseAnswer("game data is not loaded yet.");
-                return;
-            }
-
-            // The gateway reports its own answer through the events it was built with.
-            await gateway.AskAsync(
+            await _gateway.AskAsync(
                 new TurnContext(prompt, conversation, _settings.SystemPrompt, _settings.MaxIterations),
                 cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            events.RaiseAnswer($"error: {ex.Message}");
+            _gateway.Events.RaiseAnswer($"error: {ex.Message}");
             _log.Info(ex.ToString());
         }
     }

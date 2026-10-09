@@ -98,18 +98,6 @@ Feature: Sage presenter
       Ada: hi
       """
 
-  Scenario: Missing game data is reported
-    Given game data is not loaded
-    And the window input is "hello"
-    When the user submits
-    And the turn completes
-    Then the window is not busy
-    And the view shows:
-      """
-      Tester: hello
-      Sage: game data is not loaded yet.
-      """
-
   Scenario: Reasoning is shown when thinking is on
     Given the AI model reasons "weigh the options" and answers "Go north"
     And thinking display is on

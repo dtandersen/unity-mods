@@ -3,46 +3,27 @@ using System.Threading;
 using System.Threading.Tasks;
 using StationeersAi.Command;
 using StationeersAi.Core;
-using StationeersAi.Formatting;
 using Caev;
 
 namespace StationeersAi.Ai;
 
 /// <summary>
 /// Answers public chat mentions. Only one question is handled at a time: while
-/// an answer is being produced, further mentions are ignored. The answer is
-/// broadcast as plain text under the agent's name.
+/// an answer is being produced, further mentions are ignored. The answer itself
+/// reaches chat through <see cref="ChatAnswerSink"/>, which listens on the
+/// gateway, so this holds no sink of its own.
 /// </summary>
 public sealed class MentionResponder
 {
-    private readonly IChatSink _chat;
-    private readonly Func<AgentEvents, AgentGateway?> _gatewayFactory;
-    private readonly AgentSettings _settings;
-    private readonly string _assistantName;
-    private readonly Logger _log;
+    private readonly RunTurnCommand _runTurn;
     private bool _busy;
 
-    /// <param name="chat">Destination for the answer.</param>
-    /// <param name="gatewayFactory">
-    /// Builds the agent, or returns null when game data is not loaded. It
-    /// receives the events the turn reports through. Called
-    /// on the calling thread (the Unity main thread) before the first await.
-    /// </param>
-    /// <param name="assistantName">Name the answer is posted under.</param>
-    /// <param name="settings">Instructions and iteration limit for each turn, from the game's config.</param>
+    /// <param name="gateway">The agent to ask, and the channel it reports to.</param>
+    /// <param name="settings">Instructions and iteration limit for each turn.</param>
     /// <param name="log">Receives exception details.</param>
-    public MentionResponder(
-        IChatSink chat,
-        Func<AgentEvents, AgentGateway?> gatewayFactory,
-        AgentSettings settings,
-        string assistantName,
-        Logger log)
+    public MentionResponder(AgentGateway gateway, AgentSettings settings, Logger log)
     {
-        _chat = chat ?? throw new ArgumentNullException(nameof(chat));
-        _gatewayFactory = gatewayFactory ?? throw new ArgumentNullException(nameof(gatewayFactory));
-        _settings = settings;
-        _assistantName = assistantName;
-        _log = log ?? throw new ArgumentNullException(nameof(log));
+        _runTurn = new RunTurnCommand(gateway, settings, log);
     }
 
     /// <summary>Whether a question is currently being answered.</summary>
@@ -63,21 +44,12 @@ public sealed class MentionResponder
         _busy = true;
         try
         {
-            var command = new RunTurnCommand(_gatewayFactory, _settings, _log);
-            var events = new AgentEvents();
-            events.OnAnswer += Say;
-            await command.ExecuteAsync(new RunTurnRequest(prompt), conversation, events, cancellationToken);
+            await _runTurn.ExecuteAsync(new RunTurnRequest(prompt), conversation, cancellationToken);
             return true;
         }
         finally
         {
             _busy = false;
         }
-    }
-
-    /// <summary>Posts the plain-text answer under the agent's name.</summary>
-    private void Say(string text)
-    {
-        _chat.Write(ChatNaming.Apply(_assistantName, MarkdownToPlain.ToPlainText(text)));
     }
 }

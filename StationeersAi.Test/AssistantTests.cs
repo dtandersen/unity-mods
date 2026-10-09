@@ -39,12 +39,9 @@ public class AssistantTests
     {
         var chat = new RecordingChatSink();
         var ai = new FakeAiClient().RespondWith(Answer("hello"));
-        var responder = new MentionResponder(
-            chat,
-            events => new CaevAgentGateway(ai, RecipeTools(), new RecordingLogger(), events),
-            new FakeAgentSettings(),
-            "Sage",
-            new RecordingLogger());
+        var gateway = new CaevAgentGateway(ai, RecipeTools(), new RecordingLogger());
+        var answers = new ChatAnswerSink(gateway, chat, "Sage");
+        var responder = new MentionResponder(gateway, new FakeAgentSettings(), new RecordingLogger());
 
         (await responder.HandleAsync("hi", null)).ShouldBeTrue();
         responder.IsBusy.ShouldBeFalse();

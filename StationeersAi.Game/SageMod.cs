@@ -1,5 +1,6 @@
 using System;
 using Caev;
+using StationeersAi.Core;
 using StationeersAi.Ai;
 using StationeersAi.Game.Ai;
 using StationeersAi.Game.Server;
@@ -11,20 +12,25 @@ namespace StationeersAi.Game;
 
 /// <summary>
 /// Level lifecycle for Sage: attaches the window, serves HTTP, and answers
-/// chat mentions while a level runs. The shell composes the assistant
-/// factory, view, and presenter; the mod only plugs them into the level.
+/// chat mentions while a level runs. The shell hands this the settings, the
+/// agent factory, the view, the main thread, and the log; the agent gateway, the
+/// answer sink, the presenter, and the mention responder are built once, on the
+/// first load, and kept across levels.
 /// </summary>
 public sealed class SageMod
 {
     private readonly SageConfig _settings;
     private readonly SageAgentFactory _agents;
     private readonly SwitchingSageView _view;
-    private readonly SagePresenter _presenter;
     private readonly MainThreadExecutor _threads;
     private readonly Logger _log;
+    private readonly WindowModel _model = new WindowModel(200);
 
     private bool _loaded;
-    private MentionResponder? _mentionResponder;
+    private AgentGateway? _gateway;
+    private SagePresenter? _presenter;
+    private ChatAnswerSink? _answers;
+    private MentionResponder? _responder;
     private GameObject? _holder;
     private SageImGuiWindow? _window;
     private SageHttpServer? _httpServer;
@@ -33,16 +39,29 @@ public sealed class SageMod
         SageConfig settings,
         SageAgentFactory agents,
         SwitchingSageView view,
-        SagePresenter presenter,
         MainThreadExecutor threads,
         Logger log)
     {
         _settings = settings;
         _agents = agents;
         _view = view;
-        _presenter = presenter;
         _threads = threads;
         _log = log;
+    }
+
+    /// <summary>The window presenter, once the level has been loaded.</summary>
+    public SagePresenter? Presenter => _presenter;
+
+    /// <summary>
+    /// Runs one console line. The presenter belongs to the loaded mod, so a
+    /// command issued before any level says so instead of guessing.
+    /// </summary>
+    public string OnConsoleCommand(string[] args)
+    {
+        var presenter = _presenter;
+        return presenter != null
+            ? presenter.OnConsoleCommand(args)
+            : "game data is not loaded yet.";
     }
 
     public bool IsLoaded => _loaded;
@@ -63,6 +82,7 @@ public sealed class SageMod
 
         _log.Info("Loading SageMod...");
 
+        EnsureAgent();
         EnsureWindow();
         EnsureHttpServer();
         _loaded = true;
@@ -157,18 +177,24 @@ public sealed class SageMod
 
         EnsureWindow();
 
-        var responder = MentionResponderInstance();
+        var responder = _responder;
+        var presenter = _presenter;
+        if (responder == null || presenter == null)
+        {
+            return;
+        }
+
         if (responder.IsBusy)
         {
             _log.Info("mention ignored: Sage is already answering");
             return;
         }
 
-        _presenter.Show();
+        presenter.Show();
         var speaker = string.IsNullOrWhiteSpace(message.DisplayName)
             ? "player"
             : message.DisplayName;
-        _presenter.Write($"{speaker}: {prompt}");
+        presenter.Write($"{speaker}: {prompt}");
         _ = responder.HandleAsync(prompt, _agents.MentionConversation());
     }
 
@@ -231,7 +257,7 @@ public sealed class SageMod
         _window.Logger = _log;
         _window.WindowToggle = () => _settings.WindowToggle.Value;
         _view.Show(_window);
-        _presenter.Refresh();
+        _presenter?.Refresh();
         _log.Info($"Sage window ready ({_settings.WindowToggle.Value})");
     }
 
@@ -272,15 +298,37 @@ public sealed class SageMod
         return value.Substring(0, max) + "...";
     }
 
-    private MentionResponder MentionResponderInstance()
+    /// <summary>
+    /// Builds the agent once for this mod: the gateway, the chat sink that posts its
+    /// answers, the window presenter, and the mention responder. A level is loaded
+    /// here, so no turn has to ask whether game data exists.
+    /// </summary>
+    private void EnsureAgent()
     {
-        EnsureWindow();
+        if (_gateway != null)
+        {
+            return;
+        }
 
-        return _mentionResponder ??= new MentionResponder(
-            new FanoutChatSink(_presenter, new ChatMessageSink(_threads, _log, () => _agents.AssistantName)),
-            events => _agents.BuildAgent(events),
+        _gateway = _agents.BuildGateway();
+        _answers = new ChatAnswerSink(
+            _gateway,
+            new ChatMessageSink(_threads, _log, () => _agents.AssistantName),
+            _agents.AssistantName);
+        _presenter = new SagePresenter(
+            _model,
+            _view,
+            _gateway,
             _agents,
-            _agents.AssistantName,
-            _log);
+            _agents.PlayerName,
+            () => _agents.AssistantName,
+            _log,
+            () => _settings.ShowThinking.Value,
+            () => _settings.ShowToolCalls.Value,
+            () => _settings.ShowToolResults.Value,
+            () => _agents.ConsoleConversation,
+            _threads.Run);
+        _responder = new MentionResponder(_gateway, _agents, _log);
+        _log.Info("Sage gateway ready (one agent for this mod)");
     }
 }

@@ -46,10 +46,28 @@ StationeersAi.Mod/
   BepInExPlugin.cs   # thin shell: patches, config, forwards lifecycle to SageMod
   BepinExLogger.cs   # Core.Logger over the BepInEx log
 StationeersAi.Game/
-  SageMod.cs         # owns window, server, catalogues; Load/Unload per level
+  SageMod.cs         # builds the agent on the first level load; owns window, server, mentions
   SageConfig.cs      # BepInEx config entries
   AiConsoleCommand.cs  # the `ai` console command
 ```
+
+## Turn lifecycle
+
+`SageMod.Load` builds one agent for the mod and keeps it across levels:
+`SageAgentFactory.BuildGateway()` makes the `AgentGateway` (a
+`CaevAgentGateway` over the engine's `Agent`), then the chat sink, the window
+presenter, and the mention responder. Every turn asks that one gateway and passes
+a `TurnContext` (prompt, history, system prompt, tool-round limit), so config
+edits apply to the next turn without rebuilding anything.
+
+The gateway owns one `AgentEvents`. The presenter subscribes in its constructor
+and shows reasoning, tool traffic, and answers in the window; `ChatAnswerSink`
+posts every answer to chat in plain text under the agent's name. Routing chat
+lines is Core's job: `ChatRouting.Decide` says whether a displayed line asks
+something, whether the log should note it, and whether the window takes it, from
+the name, the trigger, the answering switch, and whether anyone else is in the
+game. The mod supplies those four values; `NetworkManager` and `ChatMessage`
+stay in `StationeersAi.Game`.
 
 ## Prerequisites
 

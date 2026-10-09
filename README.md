@@ -14,8 +14,10 @@ There are two ways to interact with SAGE. You can mention `@sage <prompt>` in a 
 ai what does the autolathe need for steel sheets?
 ```
 
-SAGE posts the answer to chat — on a server, every player sees it. Two settings control mention handling:
-`General/RespondToMentions` (default on) and `General/MentionTrigger`
+SAGE answers every question in chat — on a server, every player sees it — and
+shows the same answer in the Sage window. That includes questions you type in the
+window or the console, not just `@sage` mentions. Two settings control mention
+handling: `General/RespondToMentions` (default on) and `General/MentionTrigger`
 (default `@sage`).
 
 For longer sessions with history, use the console (default key F3, rebindable
