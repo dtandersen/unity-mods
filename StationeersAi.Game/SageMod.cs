@@ -111,12 +111,11 @@ public sealed class SageMod
     }
 
     /// <summary>
-    /// Called for every chat message displayed on this machine. Mentions
-    /// are always answered; other messages are answered directly in local
-    /// games and empty servers. The question is echoed to the Sage window
-    /// and answered there through the window presenter. Runs on the Unity
-    /// main thread, so the game-data snapshot is safe to build. Ignored
-    /// while another turn is running.
+    /// Called for every chat message displayed on this machine. <see cref="ChatRouting"/>
+    /// decides whether the line asks something: a mention always does, and in a local
+    /// game or an empty server any line does. The question is echoed to the Sage window
+    /// and answered there through the window presenter. Runs on the Unity main thread,
+    /// so the game-data snapshot is safe to build. Ignored while another turn is running.
     /// </summary>
     public void HandleChatMessage(Assets.Scripts.Networking.ChatMessage message)
     {
@@ -125,42 +124,36 @@ public sealed class SageMod
             return;
         }
 
-        if (!_settings.ModEnabled.Value || !_settings.RespondToMentions.Value)
+        if (!_settings.ModEnabled.Value)
         {
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(message.ChatText))
-        {
-            return;
-        }
+        var decision = ChatRouting.Decide(
+            new ChatLine(message.DisplayName, message.ChatText),
+            new ChatRoutingRules(
+                _agents.AssistantName,
+                _settings.MentionTrigger.Value,
+                _settings.RespondToMentions.Value,
+                OthersInGame()));
 
-        var assistantName = _agents.AssistantName;
-
-        // Skip our own answers echoing back through the server relay.
-        if (message.DisplayName != null &&
-            message.DisplayName.Equals(assistantName, StringComparison.OrdinalIgnoreCase))
+        // Our own answer, and anything not worth reading, stays out of the log.
+        if (!decision.Considered)
         {
             return;
         }
 
         _log.Info($"chat seen from '{message.DisplayName}': {Truncate(message.ChatText, 80)}");
 
-        var mentioned = Mention.TryParse(_settings.MentionTrigger.Value, message.ChatText, out var prompt);
-        if (!mentioned)
+        if (!decision.ShouldAnswer)
         {
-            if (!AnswersDirectly())
-            {
-                return;
-            }
+            return;
+        }
 
-            prompt = message.ChatText.Trim();
-            _log.Info($"direct chat asking: {Truncate(prompt, 80)}");
-        }
-        else
-        {
-            _log.Info($"mention matched, asking: {Truncate(prompt, 80)}");
-        }
+        var prompt = decision.Prompt ?? string.Empty;
+        _log.Info(decision.Mentioned
+            ? $"mention matched, asking: {Truncate(prompt, 80)}"
+            : $"direct chat asking: {Truncate(prompt, 80)}");
 
         EnsureWindow();
 
@@ -247,20 +240,25 @@ public sealed class SageMod
     /// empty servers have no audience to disturb, so no mention prefix is
     /// needed. Fails closed to mentions only.
     /// </summary>
-    private bool AnswersDirectly()
+    /// <summary>
+    /// Whether another player is in the game, so only a mention addresses the
+    /// agent. A local game has nobody else. When the count cannot be read, say
+    /// somebody is there: an unasked question is worse than an unanswered one.
+    /// </summary>
+    private bool OthersInGame()
     {
         try
         {
             if (!Assets.Scripts.Networking.NetworkManager.IsClient)
             {
-                return true;
+                return false;
             }
 
-            return Assets.Scripts.Networking.NetworkManager.TotalPlayersInGame <= 1;
+            return Assets.Scripts.Networking.NetworkManager.TotalPlayersInGame > 1;
         }
         catch (Exception)
         {
-            return false;
+            return true;
         }
     }
 
