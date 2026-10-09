@@ -15,10 +15,17 @@ Feature: Assistant loop
     Then the assistant replies "Cable Coil needs 5 copper."
     And the tool "lookup" ran with query "cable"
 
-  Scenario: The loop gives up after max iterations
-    Given the AI model will request the tool "lookup" with query "cable"
+  Scenario: The turn's instructions lead the messages
+    Given the turn instructs "Look it up before answering"
+    And the AI model will answer "42"
+    When the assistant is asked "what is the answer"
+    Then the instructions sent "Look it up before answering"
+
+  Scenario: The turn's limit stops the tool rounds
+    Given the turn allows 2 tool rounds
     And the AI model will request the tool "lookup" with query "cable"
-    When the assistant is asked "cable?" with 2 iterations
+    And the AI model will request the tool "lookup" with query "cable"
+    When the assistant is asked "cable?"
     Then the assistant reports it could not complete
 
   Scenario: The turn reports the tool traffic

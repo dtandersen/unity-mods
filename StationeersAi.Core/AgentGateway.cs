@@ -5,20 +5,17 @@ using Caev;
 namespace StationeersAi.Core;
 
 /// <summary>
-/// Asking the agent one question, and condensing the history it keeps. This is
-/// the port Core uses: the turn runner, the window, and the chat all ask through
-/// it and listen on the <see cref="AgentEvents"/> the agent was built with.
+/// Asking the agent to work, and condensing the history it keeps. This is the
+/// port Core uses: the turn runner, the window, and the chat all ask through it
+/// and listen on the <see cref="AgentEvents"/> the agent was built with.
 /// </summary>
 public interface AgentGateway
 {
     /// <summary>
-    /// Answers <paramref name="prompt"/> and reports the answer through the events
-    /// the agent was built with.
+    /// Runs <paramref name="turn"/> and reports the answer through the events the
+    /// agent was built with.
     /// </summary>
-    Task AskAsync(
-        string prompt,
-        Conversation? conversation,
-        CancellationToken cancellationToken = default);
+    Task AskAsync(TurnContext turn, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Condenses <paramref name="conversation"/> into one summary message and returns

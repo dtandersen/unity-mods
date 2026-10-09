@@ -17,6 +17,7 @@ public sealed class MentionResponder
 {
     private readonly IChatSink _chat;
     private readonly Func<AgentEvents, AgentGateway?> _gatewayFactory;
+    private readonly AgentSettings _settings;
     private readonly string _assistantName;
     private readonly Logger _log;
     private bool _busy;
@@ -28,15 +29,18 @@ public sealed class MentionResponder
     /// on the calling thread (the Unity main thread) before the first await.
     /// </param>
     /// <param name="assistantName">Name the answer is posted under.</param>
+    /// <param name="settings">Instructions and iteration limit for each turn, from the game's config.</param>
     /// <param name="log">Receives exception details.</param>
     public MentionResponder(
         IChatSink chat,
         Func<AgentEvents, AgentGateway?> gatewayFactory,
+        AgentSettings settings,
         string assistantName,
         Logger log)
     {
         _chat = chat ?? throw new ArgumentNullException(nameof(chat));
         _gatewayFactory = gatewayFactory ?? throw new ArgumentNullException(nameof(gatewayFactory));
+        _settings = settings;
         _assistantName = assistantName;
         _log = log ?? throw new ArgumentNullException(nameof(log));
     }
@@ -59,7 +63,7 @@ public sealed class MentionResponder
         _busy = true;
         try
         {
-            var command = new RunTurnCommand(_gatewayFactory, _log);
+            var command = new RunTurnCommand(_gatewayFactory, _settings, _log);
             var events = new AgentEvents();
             events.OnAnswer += Say;
             await command.ExecuteAsync(new RunTurnRequest(prompt), conversation, events, cancellationToken);

@@ -26,6 +26,7 @@ public sealed class SagePresenter : IChatSink
     private readonly WindowModel _model;
     private readonly ISageView _view;
     private readonly Func<AgentEvents, AgentGateway?> _gatewayFactory;
+    private readonly AgentSettings _settings;
     private readonly Func<string?> _playerName;
     private readonly Func<string?> _assistantName;
     private readonly Logger _log;
@@ -47,6 +48,7 @@ public sealed class SagePresenter : IChatSink
     /// receives the events the turn reports through.
     /// </param>
     /// <param name="playerName">Supplies the local player's name for the echo. May return null, which echoes as "You".</param>
+    /// <param name="settings">Instructions and iteration limit for each turn, from the game's config.</param>
     /// <param name="assistantName">Supplies the name the agent posts under. May return null, which posts as "Sage".</param>
     /// <param name="log">Receives exception details.</param>
     /// <param name="showThinking">Post the model's reasoning and narration.</param>
@@ -62,6 +64,7 @@ public sealed class SagePresenter : IChatSink
         WindowModel model,
         ISageView view,
         Func<AgentEvents, AgentGateway?> gatewayFactory,
+        AgentSettings settings,
         Func<string?> playerName,
         Func<string?> assistantName,
         Logger log,
@@ -75,6 +78,7 @@ public sealed class SagePresenter : IChatSink
         _model = model ?? throw new ArgumentNullException(nameof(model));
         _view = view ?? throw new ArgumentNullException(nameof(view));
         _gatewayFactory = gatewayFactory;
+        _settings = settings;
         _playerName = playerName;
         _assistantName = assistantName;
         _log = log;
@@ -281,7 +285,7 @@ public sealed class SagePresenter : IChatSink
 
     private async Task RunCommandAsync(string prompt, Conversation? conversation)
     {
-        var command = new RunTurnCommand(_gatewayFactory, _log);
+        var command = new RunTurnCommand(_gatewayFactory, _settings, _log);
         var events = new AgentEvents();
         events.OnReasoning += text =>
         {

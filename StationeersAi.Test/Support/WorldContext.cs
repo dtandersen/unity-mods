@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Caev;
+using StationeersAi.Core;
 using StationeersAi.Entity;
 using StationeersAi.Repository;
 using StationeersAi.Test.Fakes;
@@ -14,7 +15,7 @@ namespace StationeersAi.Test.Support;
 /// Shared state for a scenario. Built once per scenario by <see cref="Hooks"/>
 /// and shared by all step bindings.
 /// </summary>
-public sealed class WorldContext : IDisposable
+public sealed class WorldContext : IDisposable, AgentSettings
 {
     public InMemoryItemRepository Items { get; } = new InMemoryItemRepository(Array.Empty<Item>());
 
@@ -83,6 +84,16 @@ public sealed class WorldContext : IDisposable
     public string ConsoleOutput { get; set; }
 
     public Conversation Conversation { get; set; } = new Conversation();
+
+    /// <summary>Instructions each turn sends. Null or blank sends none.</summary>
+    public string SystemPrompt { get; set; }
+
+    /// <summary>Tool round-trips each turn may take.</summary>
+    public int MaxIterations { get; set; } = 5;
+
+    /// <summary>A turn built from this scenario's prompt, history, and settings.</summary>
+    public TurnContext Turn(string prompt, Conversation conversation = null)
+        => new TurnContext(prompt, conversation, SystemPrompt, MaxIterations);
 
     /// <summary>Where this scenario's turns report: reasoning, tool traffic, answer.</summary>
     public AgentEvents Events { get; } = new AgentEvents();

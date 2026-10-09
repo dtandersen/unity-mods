@@ -29,16 +29,21 @@ public sealed class RunTurnRequest
 public sealed class RunTurnCommand
 {
     private readonly Func<AgentEvents, AgentGateway?> _gatewayFactory;
+    private readonly AgentSettings _settings;
     private readonly Logger _log;
 
     /// <param name="gatewayFactory">
-    /// Builds the agent, or returns null when game data is not loaded. It
+    /// Builds the gateway, or returns null when game data is not loaded. It
     /// receives the events the turn reports through.
     /// </param>
+    /// <param name="settings">
+    /// Instructions and iteration limit for the turn, read from the game's config.
+    /// </param>
     /// <param name="log">Receives exception details.</param>
-    public RunTurnCommand(Func<AgentEvents, AgentGateway?> gatewayFactory, Logger log)
+    public RunTurnCommand(Func<AgentEvents, AgentGateway?> gatewayFactory, AgentSettings settings, Logger log)
     {
         _gatewayFactory = gatewayFactory;
+        _settings = settings;
         _log = log;
     }
 
@@ -56,15 +61,17 @@ public sealed class RunTurnCommand
         var prompt = request != null ? request.Prompt : string.Empty;
         try
         {
-            var agent = _gatewayFactory?.Invoke(events);
-            if (agent == null)
+            var gateway = _gatewayFactory?.Invoke(events);
+            if (gateway == null)
             {
                 events.RaiseAnswer("game data is not loaded yet.");
                 return;
             }
 
-            // The agent raises its own answer through the events it was built with.
-            await agent.AskAsync(prompt, conversation, cancellationToken).ConfigureAwait(false);
+            // The gateway reports its own answer through the events it was built with.
+            await gateway.AskAsync(
+                new TurnContext(prompt, conversation, _settings.SystemPrompt, _settings.MaxIterations),
+                cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

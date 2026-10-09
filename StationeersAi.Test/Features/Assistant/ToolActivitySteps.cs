@@ -22,7 +22,7 @@ public sealed class ToolActivitySteps
     public async Task WhenIAskTheAssistantReportingEvents(string prompt)
     {
         var assistant = TestComposition.Gateway(World, World.Events);
-        await assistant.AskAsync(prompt, null);
+        await assistant.AskAsync(World.Turn(prompt));
     }
 
     [Then("the thinking reported {string}")]

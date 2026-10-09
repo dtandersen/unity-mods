@@ -16,51 +16,46 @@ namespace Caev;
 /// The optional callbacks keep the core free of any logging/UI framework:
 /// <paramref name="log"/> receives the full trace (plugin logs it) and
 /// <paramref name="events"/> reports reasoning, tool calls, tool output, and the
-/// answer. <paramref name="systemPrompt"/> and <paramref name="events"/> may be
-/// null (no system prompt / nobody listening). The subscriber decides what to
-/// show, and renders the answer for where it shows it.
+/// answer. <paramref name="events"/> may be null (nobody listening). The
+/// subscriber decides what to show, and renders the answer for where it shows it.
+/// How a turn should run comes in with the turn, not with the agent.
 /// </remarks>
 public sealed class Agent
 {
     private readonly IAiClient _client;
     private readonly ToolHandler _tools;
-    private readonly string? _systemPrompt;
-    private readonly int _maxIterations;
     private readonly Logger _log;
     private readonly AgentEvents? _events;
 
     public Agent(
         IAiClient client,
         ToolHandler tools,
-        string? systemPrompt,
-        int maxIterations,
         Logger log,
         AgentEvents? events)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _tools = tools ?? throw new ArgumentNullException(nameof(tools));
-        _systemPrompt = systemPrompt;
-        _maxIterations = maxIterations;
         _log = log ?? throw new ArgumentNullException(nameof(log));
         _events = events;
     }
 
     /// <summary>
-    /// Answers a question and reports the answer through the events it was built
-    /// with. If <paramref name="conversation"/> is non-null, prior turns (user,
-    /// assistant, and tool traffic) are sent with the request and this turn's full
-    /// transcript is appended to it.
+    /// Answers one turn and reports the answer through the events it was built
+    /// with. When <see cref="TurnContext.Conversation"/> is non-null, prior turns
+    /// (user, assistant, and tool traffic) are sent with the request and this
+    /// turn's full transcript is appended to it.
     /// </summary>
     public async Task AskAsync(
-        string prompt,
-        Conversation? conversation,
+        TurnContext turn,
         CancellationToken cancellationToken = default)
     {
+        var prompt = turn.Prompt ?? string.Empty;
+        var conversation = turn.Conversation;
         var messages = new List<ChatMessage>();
 
-        if (!string.IsNullOrWhiteSpace(_systemPrompt))
+        if (!string.IsNullOrWhiteSpace(turn.SystemPrompt))
         {
-            messages.Add(new ChatMessage(ChatRole.System, _systemPrompt));
+            messages.Add(new ChatMessage(ChatRole.System, turn.SystemPrompt));
         }
 
         if (conversation != null)
@@ -71,7 +66,7 @@ public sealed class Agent
         messages.Add(new ChatMessage(ChatRole.User, prompt));
         Log($"You: {prompt}");
 
-        for (var i = 0; i < _maxIterations; i++)
+        for (var i = 0; i < turn.MaxIterations; i++)
         {
             AiCompletion completion;
             try
@@ -135,7 +130,7 @@ public sealed class Agent
         }
 
         Persist(conversation, messages);
-        Log($"(gave up after {_maxIterations} tool rounds)");
+        Log($"(gave up after {turn.MaxIterations} tool rounds)");
         Answer("I couldn't complete that request.");
     }
 

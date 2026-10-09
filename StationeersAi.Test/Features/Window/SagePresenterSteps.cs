@@ -43,6 +43,7 @@ public sealed class SagePresenterSteps
             model,
             World.WindowView,
             events => World.GameDataLoaded ? TestComposition.Gateway(World, events) : null,
+            World,
             () => World.PlayerName,
             () => World.AssistantName,
             World.Log,

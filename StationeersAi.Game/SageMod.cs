@@ -281,6 +281,7 @@ public sealed class SageMod
         return _mentionResponder ??= new MentionResponder(
             new FanoutChatSink(_presenter, new ChatMessageSink(_threads, _log, () => _agents.AssistantName)),
             events => _agents.BuildAgent(events),
+            _agents,
             _agents.AssistantName,
             _log);
     }

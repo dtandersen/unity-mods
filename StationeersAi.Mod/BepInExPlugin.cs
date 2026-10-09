@@ -69,6 +69,7 @@ public class BepInExPlugin : BaseUnityPlugin
             new WindowModel(200),
             view,
             agents.BuildAgent,
+            agents,
             agents.PlayerName,
             () => agents.AssistantName,
             _log,

@@ -14,11 +14,13 @@ using Logger = StationeersAi.Core.Logger;
 namespace StationeersAi.Game;
 
 /// <summary>
-/// Builds the assistant from the factory's commands and owns the one shared
+/// Builds the gateway from the factory's commands and owns the one shared
 /// conversation. The shell keeps one for the session; the presenter asks
-/// it for an assistant each turn and the mod asks it for server data.
+/// it for a gateway each turn and the mod asks it for server data. It also
+/// answers what a turn should say about itself: the system prompt and the
+/// iteration limit, read from the config each time a turn is built.
 /// </summary>
-public sealed class SageAgentFactory
+public sealed class SageAgentFactory : AgentSettings
 {
     private readonly SageConfig _settings;
     private readonly string _configPath;
@@ -42,6 +44,12 @@ public sealed class SageAgentFactory
     /// <c>General/Name</c> entry; falls back to "Sage" when blank.
     /// </summary>
     public string AssistantName => ChatNaming.Resolve(_settings.AiName?.Value);
+
+    /// <summary>The turn's instructions: <c>SYSTEM.md</c> when it has text, else the configured prompt.</summary>
+    public string? SystemPrompt => SystemPromptText();
+
+    /// <summary>Tool round-trips allowed per question (<c>AI/MaxToolIterations</c>).</summary>
+    public int MaxIterations => _settings.MaxIterations.Value;
 
     private Conversation Conversation
     {
@@ -127,7 +135,7 @@ public sealed class SageAgentFactory
             new UnityWebRequestTransport(_settings.TimeoutSeconds.Value),
             new OpenAiOptions(_settings.Endpoint.Value, _settings.ApiKey.Value, _settings.Model.Value, _settings.ReasoningEffort.Value));
 
-        return new CaevAgentGateway(client, tools, SystemPromptText(), _settings.MaxIterations.Value, _log, events);
+        return new CaevAgentGateway(client, tools, _log, events);
     }
 
     /// <summary>

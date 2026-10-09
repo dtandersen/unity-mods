@@ -19,6 +19,8 @@ public sealed class AssistantLoopSteps
     private readonly RecordingLogger _log = new RecordingLogger();
     private readonly Conversation _conversation = new Conversation();
     private int _nextCallId;
+    private string _systemPrompt;
+    private int _turnIterations = 5;
 
     /// <summary>The answer the last turn reported.</summary>
     private string Answer => _reported.Answers.LastOrDefault() ?? string.Empty;
@@ -28,16 +30,14 @@ public sealed class AssistantLoopSteps
         _reported = new EventRecorder(_events);
     }
 
-    private Agent BuildAgent(int maxIterations)
+    private Agent BuildAgent()
     {
-        return new Agent(
-            _ai,
-            new ToolHandler(new ITool[] { _lookup }),
-            systemPrompt: null,
-            maxIterations: maxIterations,
-            log: _log,
-            events: _events);
+        return new Agent(_ai, new ToolHandler(new ITool[] { _lookup }), _log, _events);
     }
+
+    /// <summary>A turn as the engine sees it: question, history, instructions, limit.</summary>
+    private TurnContext Turn(string prompt, Conversation conversation = null, int maxIterations = -1)
+        => new TurnContext(prompt, conversation, _systemPrompt, maxIterations < 0 ? _turnIterations : maxIterations);
 
     [Given("the model {string} is not a valid model")]
     public void GivenTheModelIsNotAValidModel(string model)
@@ -56,7 +56,7 @@ public sealed class AssistantLoopSteps
     [When("we ask the question {string}")]
     public async Task WhenWeAskTheQuestion(string prompt)
     {
-        await BuildAgent(5).AskAsync(prompt, _conversation);
+        await BuildAgent().AskAsync(Turn(prompt, _conversation));
     }
 
     [Then("the agent answers with:")]
@@ -97,6 +97,18 @@ public sealed class AssistantLoopSteps
         _lookup.AnswersWith(answer);
     }
 
+    [Given("the turn allows {int} tool rounds")]
+    public void GivenTheTurnAllowsToolRounds(int rounds)
+    {
+        _turnIterations = rounds;
+    }
+
+    [Given("the turn instructs {string}")]
+    public void GivenTheTurnInstructs(string instructions)
+    {
+        _systemPrompt = instructions;
+    }
+
     [Given("we discussed {string} and heard {string}")]
     public void GivenWeDiscussedAndHeard(string question, string answer)
     {
@@ -107,19 +119,21 @@ public sealed class AssistantLoopSteps
     [When("the assistant is asked {string}")]
     public async Task WhenTheAssistantIsAsked(string prompt)
     {
-        await BuildAgent(5).AskAsync(prompt, null);
-    }
-
-    [When("the assistant is asked {string} with {int} iterations")]
-    public async Task WhenTheAssistantIsAskedWithIterations(string prompt, int iterations)
-    {
-        await BuildAgent(iterations).AskAsync(prompt, null);
+        await BuildAgent().AskAsync(Turn(prompt));
     }
 
     [When("the conversation is compacted")]
     public async Task WhenTheConversationIsCompacted()
     {
-        await BuildAgent(5).CompactAsync(_conversation);
+        await BuildAgent().CompactAsync(_conversation);
+    }
+
+    [Then("the instructions sent {string}")]
+    public void ThenTheInstructionsSent(string expected)
+    {
+        var sent = _ai.Transcript[_ai.Transcript.Count - 1];
+        sent[0].Role.ShouldBe(ChatRole.System);
+        sent[0].Content.ShouldBe(expected);
     }
 
     [Then("the assistant replies {string}")]

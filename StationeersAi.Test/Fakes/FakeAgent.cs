@@ -32,6 +32,9 @@ public sealed class FakeAgent : AgentGateway
     /// <summary>The conversation each ask received, in order (null when none).</summary>
     public List<Conversation?> Conversations { get; } = new List<Conversation?>();
 
+    /// <summary>Every turn handed to the gateway, in order.</summary>
+    public List<TurnContext> Turns { get; } = new List<TurnContext>();
+
     /// <summary>How many compactions were asked for.</summary>
     public int CompactCalls { get; private set; }
 
@@ -66,12 +69,12 @@ public sealed class FakeAgent : AgentGateway
     }
 
     public Task AskAsync(
-        string prompt,
-        Conversation? conversation,
+        TurnContext turn,
         CancellationToken cancellationToken = default)
     {
-        Prompts.Add(prompt);
-        Conversations.Add(conversation);
+        Prompts.Add(turn.Prompt);
+        Conversations.Add(turn.Conversation);
+        Turns.Add(turn);
 
         foreach (var text in _reasoning)
         {

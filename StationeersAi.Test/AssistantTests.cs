@@ -41,7 +41,8 @@ public class AssistantTests
         var ai = new FakeAiClient().RespondWith(Answer("hello"));
         var responder = new MentionResponder(
             chat,
-            events => new CaevAgentGateway(ai, RecipeTools(), systemPrompt: null, maxIterations: 5, log: new RecordingLogger(), events),
+            events => new CaevAgentGateway(ai, RecipeTools(), new RecordingLogger(), events),
+            new FakeAgentSettings(),
             "Sage",
             new RecordingLogger());
 

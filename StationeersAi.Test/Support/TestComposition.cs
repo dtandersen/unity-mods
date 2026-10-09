@@ -43,7 +43,7 @@ internal static class TestComposition
 
     public static AgentGateway Gateway(WorldContext world, AgentEvents events)
     {
-        return new CaevAgentGateway(world.Ai, Tools(world), null, 5, world.Log, events);
+        return new CaevAgentGateway(world.Ai, Tools(world), world.Log, events);
     }
 
     public static MentionResponder Responder(WorldContext world)
@@ -51,6 +51,7 @@ internal static class TestComposition
         return new MentionResponder(
             world.Chat,
             events => Gateway(world, events),
+            world,
             world.AssistantName,
             world.Log);
     }
