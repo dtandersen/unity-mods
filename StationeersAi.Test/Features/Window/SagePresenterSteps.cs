@@ -6,6 +6,7 @@ using Reqnroll;
 using Shouldly;
 using StationeersAi.Test.Fakes;
 using StationeersAi.Test.Support;
+using StationeersAi.Presentation;
 using StationeersAi.Window;
 
 namespace StationeersAi.Test.Features.Window;
@@ -24,34 +25,21 @@ public sealed class SagePresenterSteps
 
     private SagePresenter EnsurePresenter()
     {
-        if (World.WindowPresenter != null)
+        if (World.Presenter != null)
         {
-            return World.WindowPresenter;
+            return World.Presenter;
         }
 
-        World.WindowView = new FakeSageView();
-        World.WindowPresenter = BuildPresenter(World.Window);
-        return World.WindowPresenter;
+        World.Presenter = BuildPresenter();
+        return World.Presenter;
     }
 
     private static readonly DateTimeOffset TurnStarted = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
     private bool _clockArmed = true;
 
-    private SagePresenter BuildPresenter(WindowModel model)
+    private SagePresenter BuildPresenter()
     {
-        return new SagePresenter(
-            model,
-            World.WindowView,
-            World.Gateway,
-            World,
-            () => World.PlayerName,
-            () => World.AssistantName,
-            World.Log,
-            () => World.ShowThinking,
-            () => World.ShowToolCalls,
-            () => World.ShowToolResults,
-            () => World.Conversation,
-            clock: () =>
+        return TestComposition.Presenter(World, clock: () =>
             {
                 // Scripted time stands still, so trip it once per turn: the
                 // start reads the base instant, progress reads it elapsed.
@@ -81,7 +69,7 @@ public sealed class SagePresenterSteps
     /// </summary>
     private string ConsoleCommand(string command)
     {
-        return World.WindowPresenter.OnConsoleCommand(SplitConsoleLine(command));
+        return World.Presenter.OnConsoleCommand(SplitConsoleLine(command));
     }
 
     private static string[] SplitConsoleLine(string command)
@@ -111,7 +99,7 @@ public sealed class SagePresenterSteps
     {
         World.Window = new WindowModel(count);
         World.WindowView = new FakeSageView();
-        World.WindowPresenter = BuildPresenter(World.Window);
+        World.Presenter = BuildPresenter();
     }
 
     [Given("the assistant is still answering {string}")]
@@ -121,7 +109,7 @@ public sealed class SagePresenterSteps
         World.Ai.Hold = true;
         World.WindowView.Input = question;
         World.WindowView.RaiseSubmit();
-        World.WindowPresenter.Busy.ShouldBeTrue();
+        World.Presenter.Busy.ShouldBeTrue();
         await WaitUntil(() => AskedQuestions().Contains(question));
     }
 
@@ -141,7 +129,7 @@ public sealed class SagePresenterSteps
     public void GivenTheSageWindowIsntVisible()
     {
         EnsurePresenter().ShouldNotBeNull();
-        World.WindowPresenter.Visible.ShouldBeFalse();
+        World.Presenter.Visible.ShouldBeFalse();
     }
 
     [Given("the AI agent has context")]
@@ -169,7 +157,7 @@ public sealed class SagePresenterSteps
     {
         EnsurePresenter().ShouldNotBeNull();
         _clockArmed = true;
-        World.AskTask = World.WindowPresenter.AskAsync(question);
+        World.AskTask = World.Presenter.AskAsync(question);
     }
 
     [When("the user types the command {string}")]
@@ -191,13 +179,13 @@ public sealed class SagePresenterSteps
     public void WhenThePresenterReceivesTheLine(string line)
     {
         EnsurePresenter().ShouldNotBeNull();
-        World.WindowPresenter.Write(line);
+        World.Presenter.Write(line);
     }
 
     [When("the turn completes")]
     public async Task WhenTheTurnCompletes()
     {
-        await WaitUntil(() => !World.WindowPresenter.Busy);
+        await WaitUntil(() => !World.Presenter.Busy);
     }
 
     [When("the answer finishes")]
@@ -205,21 +193,21 @@ public sealed class SagePresenterSteps
     {
         World.Ai.ShouldNotBeNull();
         World.Ai.Release();
-        await WaitUntil(() => !World.WindowPresenter.Busy);
+        await WaitUntil(() => !World.Presenter.Busy);
     }
 
     [When("the user clears the context")]
     public void WhenTheUserClearsTheContext()
     {
         EnsurePresenter().ShouldNotBeNull();
-        World.WindowPresenter.ClearConversation();
+        World.Presenter.ClearConversation();
     }
 
     [When("the user compacts the context")]
     public async Task WhenTheUserCompactsTheContext()
     {
         EnsurePresenter().ShouldNotBeNull();
-        await World.WindowPresenter.CompactConversation();
+        await World.Presenter.CompactConversation();
     }
 
     [Then("the asked question is {string}")]
@@ -257,7 +245,7 @@ public sealed class SagePresenterSteps
     [Then("the SAGE window is visible")]
     public void ThenTheSageWindowIsVisible()
     {
-        World.WindowPresenter.Visible.ShouldBeTrue();
+        World.Presenter.Visible.ShouldBeTrue();
         World.WindowView.Visible.ShouldBeTrue();
     }
 
@@ -282,13 +270,13 @@ public sealed class SagePresenterSteps
     [Then("the window is busy")]
     public void ThenTheWindowIsBusy()
     {
-        World.WindowPresenter.Busy.ShouldBeTrue();
+        World.Presenter.Busy.ShouldBeTrue();
     }
 
     [Then("the window is not busy")]
     public void ThenTheWindowIsNotBusy()
     {
-        World.WindowPresenter.Busy.ShouldBeFalse();
+        World.Presenter.Busy.ShouldBeFalse();
     }
 
     [Then("the view is busy")]
@@ -306,14 +294,14 @@ public sealed class SagePresenterSteps
     [Then("the window is visible")]
     public void ThenTheWindowIsVisible()
     {
-        World.WindowPresenter.Visible.ShouldBeTrue();
+        World.Presenter.Visible.ShouldBeTrue();
         World.WindowView.Visible.ShouldBeTrue();
     }
 
     [Then("the window is hidden")]
     public void ThenTheWindowIsHidden()
     {
-        World.WindowPresenter.Visible.ShouldBeFalse();
+        World.Presenter.Visible.ShouldBeFalse();
         World.WindowView.Visible.ShouldBeFalse();
     }
 

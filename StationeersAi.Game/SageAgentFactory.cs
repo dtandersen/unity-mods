@@ -70,14 +70,8 @@ public sealed class SageAgentFactory : AgentSettings
         }
     }
 
-    /// <summary>Shared console history. Null when history is off.</summary>
-    public Conversation? ConsoleConversation => _settings.ContextBytes.Value > 0 ? Conversation : null;
-
-    /// <summary>The one shared history for chat mentions and the console. Null when history is off.</summary>
-    public Conversation? MentionConversation()
-    {
-        return _settings.ContextBytes.Value > 0 ? Conversation : null;
-    }
+    /// <summary>The one shared history, for every surface. Null when history is off.</summary>
+    public Conversation? ConversationOrNull => _settings.ContextBytes.Value > 0 ? Conversation : null;
 
     public string? PlayerName()
     {

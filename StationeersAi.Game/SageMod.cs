@@ -2,7 +2,8 @@ using System;
 using Caev;
 using StationeersAi.Core;
 using StationeersAi.Ai;
-using StationeersAi.Game.Ai;
+using StationeersAi.Game.View;
+using StationeersAi.Presentation;
 using StationeersAi.Game.Server;
 using StationeersAi.Window;
 using UnityEngine;
@@ -11,11 +12,11 @@ using Logger = StationeersAi.Core.Logger;
 namespace StationeersAi.Game;
 
 /// <summary>
-/// Level lifecycle for Sage: attaches the window, serves HTTP, and answers
-/// chat mentions while a level runs. The shell hands this the settings, the
-/// agent factory, the view, the main thread, and the log; the agent gateway, the
-/// answer sink, the presenter, and the mention responder are built once, on the
-/// first load, and kept across levels.
+/// Level lifecycle for Sage: attaches the window, serves HTTP, and hands chat
+/// lines to the presenter while a level runs. The shell hands this the settings,
+/// the agent factory, the view, the main thread, and the log; the agent gateway,
+/// the chat view, and the presenter are built once, on the first load, and kept
+/// across levels.
 /// </summary>
 public sealed class SageMod
 {
@@ -29,8 +30,6 @@ public sealed class SageMod
     private bool _loaded;
     private AgentGateway? _gateway;
     private SagePresenter? _presenter;
-    private ChatAnswerSink? _answers;
-    private MentionResponder? _responder;
     private GameObject? _holder;
     private SageImGuiWindow? _window;
     private SageHttpServer? _httpServer;
@@ -131,71 +130,31 @@ public sealed class SageMod
     }
 
     /// <summary>
-    /// Called for every chat message displayed on this machine. <see cref="ChatRouting"/>
-    /// decides whether the line asks something: a mention always does, and in a local
-    /// game or an empty server any line does. The question is echoed to the Sage window
-    /// and answered there through the window presenter. Runs on the Unity main thread,
-    /// so the game-data snapshot is safe to build. Ignored while another turn is running.
+    /// Called for every chat message displayed on this machine. Hands the line and
+    /// the values routing needs to the presenter, which decides nothing about
+    /// whether the line asks something - <see cref="ChatRouting"/> does that.
+    /// Runs on the Unity main thread.
     /// </summary>
     public void HandleChatMessage(Assets.Scripts.Networking.ChatMessage message)
     {
-        if (!_loaded || message == null)
+        if (!_loaded || message == null || !_settings.ModEnabled.Value)
         {
             return;
         }
 
-        if (!_settings.ModEnabled.Value)
+        var presenter = _presenter;
+        if (presenter == null)
         {
             return;
         }
 
-        var decision = ChatRouting.Decide(
+        presenter.OnChatLine(
             new ChatLine(message.DisplayName, message.ChatText),
             new ChatRoutingRules(
                 _agents.AssistantName,
                 _settings.MentionTrigger.Value,
                 _settings.RespondToMentions.Value,
                 OthersInGame()));
-
-        // Our own answer, and anything not worth reading, stays out of the log.
-        if (!decision.Considered)
-        {
-            return;
-        }
-
-        _log.Info($"chat seen from '{message.DisplayName}': {Truncate(message.ChatText, 80)}");
-
-        if (!decision.ShouldAnswer)
-        {
-            return;
-        }
-
-        var prompt = decision.Prompt ?? string.Empty;
-        _log.Info(decision.Mentioned
-            ? $"mention matched, asking: {Truncate(prompt, 80)}"
-            : $"direct chat asking: {Truncate(prompt, 80)}");
-
-        EnsureWindow();
-
-        var responder = _responder;
-        var presenter = _presenter;
-        if (responder == null || presenter == null)
-        {
-            return;
-        }
-
-        if (responder.IsBusy)
-        {
-            _log.Info("mention ignored: Sage is already answering");
-            return;
-        }
-
-        presenter.Show();
-        var speaker = string.IsNullOrWhiteSpace(message.DisplayName)
-            ? "player"
-            : message.DisplayName;
-        presenter.Write($"{speaker}: {prompt}");
-        _ = responder.HandleAsync(prompt, _agents.MentionConversation());
     }
 
     /// <summary>
@@ -311,13 +270,10 @@ public sealed class SageMod
         }
 
         _gateway = _agents.BuildGateway();
-        _answers = new ChatAnswerSink(
-            _gateway,
-            new ChatMessageSink(_threads, _log, () => _agents.AssistantName),
-            _agents.AssistantName);
         _presenter = new SagePresenter(
             _model,
             _view,
+            new ChatView(_threads, _log),
             _gateway,
             _agents,
             _agents.PlayerName,
@@ -326,9 +282,8 @@ public sealed class SageMod
             () => _settings.ShowThinking.Value,
             () => _settings.ShowToolCalls.Value,
             () => _settings.ShowToolResults.Value,
-            () => _agents.ConsoleConversation,
+            () => _agents.ConversationOrNull,
             _threads.Run);
-        _responder = new MentionResponder(_gateway, _agents, _log);
         _log.Info("Sage gateway ready (one agent for this mod)");
     }
 }

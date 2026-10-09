@@ -35,21 +35,6 @@ public class AssistantTests
         new AiCompletion(text, Array.Empty<ToolCall>());
 
     [Test]
-    public async Task Mention_responder_answers_once_at_a_time()
-    {
-        var chat = new RecordingChatSink();
-        var ai = new FakeAiClient().RespondWith(Answer("hello"));
-        var gateway = new CaevAgentGateway(ai, RecipeTools(), new RecordingLogger());
-        var answers = new ChatAnswerSink(gateway, chat, "Sage");
-        var responder = new MentionResponder(gateway, new FakeAgentSettings(), new RecordingLogger());
-
-        (await responder.HandleAsync("hi", null)).ShouldBeTrue();
-        responder.IsBusy.ShouldBeFalse();
-        chat.Lines.Count.ShouldBe(1);
-        chat.Lines[0].ShouldBe("Sage: hello");
-    }
-
-    [Test]
     public void Mention_parses_trigger_with_boundary()
     {
         Mention.TryParse("!sage", "!sage how do I make cable?", out var prompt).ShouldBeTrue();

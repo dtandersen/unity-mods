@@ -46,28 +46,33 @@ StationeersAi.Mod/
   BepInExPlugin.cs   # thin shell: patches, config, forwards lifecycle to SageMod
   BepinExLogger.cs   # Core.Logger over the BepInEx log
 StationeersAi.Game/
-  SageMod.cs         # builds the agent on the first level load; owns window, server, mentions
+  SageMod.cs         # builds the agent on the first level load; owns window, server, chat hook
   SageConfig.cs      # BepInEx config entries
   AiConsoleCommand.cs  # the `ai` console command
+  View/ChatView.cs   # posts lines to game chat on the main thread
 ```
 
 ## Turn lifecycle
 
 `SageMod.Load` builds one agent for the mod and keeps it across levels:
 `SageAgentFactory.BuildGateway()` makes the `AgentGateway` (a
-`CaevAgentGateway` over the engine's `Agent`), then the chat sink, the window
-presenter, and the mention responder. Every turn asks that one gateway and passes
-a `TurnContext` (prompt, history, system prompt, tool-round limit), so config
-edits apply to the next turn without rebuilding anything.
+`CaevAgentGateway` over the engine's `Agent`), then the chat view and the
+presenter. Every turn asks that one gateway and passes a `TurnContext` (prompt,
+history, system prompt, tool-round limit), so config edits apply to the next turn
+without rebuilding anything.
 
-The gateway owns one `AgentEvents`. The presenter subscribes in its constructor
-and shows reasoning, tool traffic, and answers in the window; `ChatAnswerSink`
-posts every answer to chat in plain text under the agent's name. Routing chat
-lines is Core's job: `ChatRouting.Decide` says whether a displayed line asks
-something, whether the log should note it, and whether the window takes it, from
-the name, the trigger, the answering switch, and whether anyone else is in the
-game. The mod supplies those four values; `NetworkManager` and `ChatMessage`
-stay in `StationeersAi.Game`.
+The gateway owns one `AgentEvents`. `SagePresenter` (`Core/Presentation/`) is the
+only object that starts a turn, so its busy flag is the single gate across window,
+console, and chat: the second question while one runs is refused and logged. It
+drives two passive views — `ISageView` for the window, `IChatView.Post(name, text)`
+for chat — both in `Core/View/`. Reasoning and tool traffic go to the window per
+their options; every answer goes to the window and to chat, in plain text, with no
+name in the text because the game shows the name it posts under.
+
+Whether a chat line asks something is `ChatRouting`'s call (`Core/Chat/`), from the
+poster's name, the trigger, the answering switch, and whether anyone else is in the
+game. The mod reads those four and hands the line over; `NetworkManager` and
+`ChatMessage` stay in `StationeersAi.Game`.
 
 ## Prerequisites
 

@@ -6,6 +6,7 @@ using StationeersAi.Entity;
 using StationeersAi.Repository;
 using StationeersAi.Test.Fakes;
 using Caev.Tools;
+using StationeersAi.Presentation;
 using StationeersAi.Window;
 using StationeersAi.Ai;
 
@@ -52,7 +53,13 @@ public sealed class WorldContext : IDisposable, AgentSettings
     /// <summary>The one model this scenario talks to, standing by before the gateway is built.</summary>
     public FakeAiClient Ai { get; } = new FakeAiClient();
 
-    public RecordingChatSink Chat { get; } = new RecordingChatSink();
+    public RecordingChatView Chat { get; } = new RecordingChatView();
+
+    /// <summary>Whether another player is in the game, so only a mention asks.</summary>
+    public bool OthersInGame { get; set; }
+
+    /// <summary>What routing may ask about for this scenario's chat lines.</summary>
+    public ChatRoutingRules ChatRules => new ChatRoutingRules(AssistantName, MentionTrigger, true, OthersInGame);
 
     public RecordingLogger Log { get; } = new RecordingLogger();
 
@@ -66,15 +73,14 @@ public sealed class WorldContext : IDisposable, AgentSettings
 
     public FakeSageView WindowView { get; set; }
 
-    public SagePresenter WindowPresenter { get; set; }
+    /// <summary>The one presenter for this scenario: the only object that starts turns.</summary>
+    public SagePresenter Presenter { get; set; }
 
     public bool ShowThinking { get; set; }
 
     public bool ShowToolCalls { get; set; }
 
     public bool ShowToolResults { get; set; }
-
-    public MentionResponder MentionResponder { get; set; }
 
     public string MentionTrigger { get; set; } = "!sage";
 
@@ -98,21 +104,14 @@ public sealed class WorldContext : IDisposable, AgentSettings
     public AgentEvents Events { get; } = new AgentEvents();
 
     /// <summary>
-    /// The one gateway for this scenario, with answers posted to <see cref="Chat"/>.
-    /// Specs that ask an agent ask this, the way the mod asks its one gateway.
+    /// The one gateway for this scenario. Specs that ask an agent ask this, the way
+    /// the mod asks its one gateway.
     /// </summary>
     public AgentGateway Gateway => _gateway ??= BuildGateway();
 
     private AgentGateway _gateway;
 
-    private AgentGateway BuildGateway()
-    {
-        var gateway = TestComposition.Gateway(this);
-        _answers = new ChatAnswerSink(gateway, Chat, AssistantName);
-        return gateway;
-    }
-
-    private ChatAnswerSink _answers;
+    private AgentGateway BuildGateway() => TestComposition.Gateway(this);
 
     /// <summary>What the turns reported through <see cref="Events"/>.</summary>
     public EventRecorder Recorder { get; }

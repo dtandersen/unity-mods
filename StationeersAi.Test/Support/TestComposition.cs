@@ -3,7 +3,10 @@ using StationeersAi.Core;
 using StationeersAi.Command;
 using StationeersAi.Query;
 using Caev.Tools;
+using System;
 using StationeersAi.Ai;
+using StationeersAi.Test.Fakes;
+using StationeersAi.Presentation;
 using StationeersAi.Tool;
 
 namespace StationeersAi.Test.Support;
@@ -46,8 +49,26 @@ internal static class TestComposition
         return new CaevAgentGateway(world.Ai, Tools(world), world.Log, world.Events);
     }
 
-    public static MentionResponder Responder(WorldContext world)
+    /// <summary>
+    /// The one presenter for a scenario: the only object that starts a turn, asked
+    /// through the scenario gateway, answering to the scenario chat view.
+    /// </summary>
+    public static SagePresenter Presenter(WorldContext world, Func<DateTimeOffset> clock = null)
     {
-        return new MentionResponder(world.Gateway, world, world.Log);
+        world.WindowView ??= new FakeSageView();
+        return new SagePresenter(
+            world.Window,
+            world.WindowView,
+            world.Chat,
+            world.Gateway,
+            world,
+            () => world.PlayerName,
+            () => world.AssistantName,
+            world.Log,
+            () => world.ShowThinking,
+            () => world.ShowToolCalls,
+            () => world.ShowToolResults,
+            () => world.Conversation,
+            clock: clock);
     }
 }
