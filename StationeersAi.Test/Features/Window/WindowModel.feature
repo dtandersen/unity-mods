@@ -27,26 +27,3 @@ Feature: Window model
     Given the model received the line "stale"
     When the history is cleared
     Then the window history is empty
-
-  Scenario: Thinking overwrites itself
-    When the thinking status is "Thinking (6s)..."
-    And the thinking status is "Thinking (7s)..."
-    Then the window history is:
-      """
-      Thinking (7s)...
-      """
-
-  Scenario: Clearing thinking removes only its line
-    Given the model received the line "You: hello"
-    When the thinking status is "Thinking (6s)..."
-    And the model receives the line "Sage: hi"
-    And thinking is cleared
-    Then the window history is:
-      """
-      You: hello
-      Sage: hi
-      """
-
-  Scenario: Clearing nothing is harmless
-    When thinking is cleared
-    Then the window history is empty

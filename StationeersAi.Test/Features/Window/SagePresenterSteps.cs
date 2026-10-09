@@ -87,13 +87,6 @@ public sealed class SagePresenterSteps
         return line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
     }
 
-    [Given("the window input is {string}")]
-    public void GivenTheWindowInputIs(string input)
-    {
-        EnsurePresenter().ShouldNotBeNull();
-        World.WindowView.Input = input;
-    }
-
     [Given("the view history holds {int} lines")]
     public void GivenTheViewHistoryHolds(int count)
     {
@@ -106,15 +99,16 @@ public sealed class SagePresenterSteps
     public async Task GivenTheAssistantIsStillAnswering(string question)
     {
         EnsurePresenter().ShouldNotBeNull();
+        _clockArmed = true;
         World.Ai.Hold = true;
-        World.WindowView.Input = question;
-        World.WindowView.RaiseSubmit();
+        World.AskTask = World.Presenter.AskAsync(question);
         World.Presenter.Busy.ShouldBeTrue();
         await WaitUntil(() => AskedQuestions().Contains(question));
     }
 
-    [Given("{int} seconds have passed")]
-    public void GivenSecondsHavePassed(int seconds)
+    [Given("{double} seconds have passed")]
+    [When("{double} seconds have passed")]
+    public void GivenSecondsHavePassed(double seconds)
     {
         World.ThinkingElapsed = TimeSpan.FromSeconds(seconds);
     }
@@ -142,14 +136,14 @@ public sealed class SagePresenterSteps
     [When("the turn pauses")]
     public async Task WhenTheTurnPauses()
     {
-        await WaitUntil(() => World.WindowView.Lines.Any(line => line.Contains("Thinking")));
+        await WaitUntil(() => World.WindowView.Status.Contains("Thinking"));
     }
 
-    [When("the user submits")]
-    public void WhenTheUserSubmits()
+    [When("the update loop runs")]
+    public void WhenTheUpdateLoopRuns()
     {
-        _clockArmed = true;
-        World.WindowView.RaiseSubmit();
+        EnsurePresenter().ShouldNotBeNull();
+        World.WindowView.RaiseUpdate();
     }
 
     [When("the console asks {string}")]
@@ -255,10 +249,11 @@ public sealed class SagePresenterSteps
         AskedQuestions().ShouldBeEmpty();
     }
 
-    [Then("the window input is {string}")]
-    public void ThenTheWindowInputIs(string expected)
+    [Then("the status is {string}")]
+    public void ThenTheStatusIs(string expected)
     {
-        World.WindowView.Input.ShouldBe(expected);
+        EnsurePresenter().ShouldNotBeNull();
+        World.WindowView.Status.ShouldBe(expected);
     }
 
     [Then("the view shows:")]
@@ -279,18 +274,6 @@ public sealed class SagePresenterSteps
         World.Presenter.Busy.ShouldBeFalse();
     }
 
-    [Then("the view is busy")]
-    public void ThenTheViewIsBusy()
-    {
-        World.WindowView.Busy.ShouldBeTrue();
-    }
-
-    [Then("the view is not busy")]
-    public void ThenTheViewIsNotBusy()
-    {
-        World.WindowView.Busy.ShouldBeFalse();
-    }
-
     [Then("the window is visible")]
     public void ThenTheWindowIsVisible()
     {
@@ -303,18 +286,6 @@ public sealed class SagePresenterSteps
     {
         World.Presenter.Visible.ShouldBeFalse();
         World.WindowView.Visible.ShouldBeFalse();
-    }
-
-    [Then("the input is focused")]
-    public void ThenTheInputIsFocused()
-    {
-        World.WindowView.FocusRequests.ShouldBeGreaterThan(0);
-    }
-
-    [Then("the input is not focused")]
-    public void ThenTheInputIsNotFocused()
-    {
-        World.WindowView.FocusRequests.ShouldBe(0);
     }
 
     private static async Task WaitUntil(Func<bool> condition)

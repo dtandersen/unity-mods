@@ -9,13 +9,11 @@ namespace StationeersAi.Window;
 /// </summary>
 public sealed class NoopSageView : ISageView
 {
-    public string Input { get; set; } = string.Empty;
-
     public void SetLines(IReadOnlyList<string> lines)
     {
     }
 
-    public void SetBusy(bool busy)
+    public void SetStatus(string status)
     {
     }
 
@@ -23,12 +21,9 @@ public sealed class NoopSageView : ISageView
     {
     }
 
-    public void RequestFocus()
-    {
-    }
-
-    // Never fire; subscribers come and go with no effect.
-    public event Action? SubmitRequested { add { } remove { } }
-
+    // Never fires; subscribers come and go with no effect.
     public event Action? ToggleRequested { add { } remove { } }
+
+    // Never fires; subscribers come and go with no effect.
+    public event Action? UpdateRequested { add { } remove { } }
 }

@@ -11,28 +11,21 @@ using UnityEngine;
 namespace StationeersAi.Game;
 
 /// <summary>
-/// Draggable in-game window for talking to Sage, drawn in the game's own
+/// Draggable in-game window for watching Sage, drawn in the game's own
 /// Dear ImGui frame so it matches the native style and fonts. A passive view
-/// over its presenter: renders the lines, input, busy and visible flags the
-/// presenter sets, and reports the toggle key, the Send button and Enter as
-/// events. No trimming, no busy checks, no history of its own.
+/// over its presenter: renders the lines, status and visible flag the
+/// presenter sets, and reports the toggle key as an event. No trimming, no
+/// busy checks, no history of its own. Questions arrive through game chat or
+/// the console command; the bar at the foot shows Idle or the thinking status.
 /// </summary>
 public sealed class SageImGuiWindow : MonoBehaviour, ISageView
 {
     private List<string> _lines = new List<string>();
-    private string _input = string.Empty;
+    private string _status = "Idle";
     private bool _visible;
-    private bool _busy;
     private bool _autoscroll;
     private bool _sized;
-    private bool _focusInput;
     private static readonly List<SageImGuiWindow> _windows = new List<SageImGuiWindow>();
-
-    public string Input
-    {
-        get => _input;
-        set => _input = value ?? string.Empty;
-    }
 
     /// <summary>Trace log. Null skips logging (set by the plugin).</summary>
     public Logger? Logger { get; set; }
@@ -40,9 +33,9 @@ public sealed class SageImGuiWindow : MonoBehaviour, ISageView
     /// <summary>Supplies the toggle key, read live on each press. Null disables toggling.</summary>
     public Func<KeyboardShortcut>? WindowToggle { get; set; }
 
-    public event Action? SubmitRequested;
-
     public event Action? ToggleRequested;
+
+    public event Action? UpdateRequested;
 
     public void SetLines(IReadOnlyList<string> lines)
     {
@@ -50,19 +43,14 @@ public sealed class SageImGuiWindow : MonoBehaviour, ISageView
         _autoscroll = true;
     }
 
-    public void SetBusy(bool busy)
+    public void SetStatus(string status)
     {
-        _busy = busy;
+        _status = status ?? "Idle";
     }
 
     public void SetVisible(bool visible)
     {
         _visible = visible;
-    }
-
-    public void RequestFocus()
-    {
-        _focusInput = true;
     }
 
     private void Update()
@@ -71,6 +59,8 @@ public sealed class SageImGuiWindow : MonoBehaviour, ISageView
         {
             ToggleRequested?.Invoke();
         }
+
+        UpdateRequested?.Invoke();
     }
 
     /// <summary>Draws every live window. Called from the overlay patch.</summary>
@@ -173,26 +163,8 @@ public sealed class SageImGuiWindow : MonoBehaviour, ISageView
 
         ImGui.EndChild();
 
-        if (_focusInput)
-        {
-            ImGui.SetKeyboardFocusHere();
-            _focusInput = false;
-        }
-
-        var input = _input ?? string.Empty;
-        var submitted = ImGui.InputText("##sageinput", ref input, 1024, ImGuiInputTextFlags.EnterReturnsTrue);
-        _input = input;
-
-        ImGui.SameLine();
-        if (ImGui.Button(_busy ? "..." : "Send"))
-        {
-            submitted = true;
-        }
-
-        if (submitted)
-        {
-            SubmitRequested?.Invoke();
-        }
+        ImGui.Separator();
+        ImGui.TextWrapped(Escape(_status));
 
         ImGui.End();
     }

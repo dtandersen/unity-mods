@@ -16,7 +16,9 @@ namespace StationeersAi.Presentation;
 /// <see cref="ISageView"/> gestures, takes chat lines through
 /// <see cref="OnChatLine"/>, and runs one turn at a time through
 /// <see cref="RunTurnCommand"/>. Reasoning and tool traffic go to the window per
-/// its options; every answer goes to the window and to chat.
+/// its options; every answer goes to the window and to chat. The window has no
+/// input: questions arrive through chat or the console command, and the status
+/// bar shows whether a turn runs.
 /// </summary>
 /// <remarks>
 /// It is the only object that starts a turn, so its busy flag is the single gate:
@@ -29,6 +31,8 @@ namespace StationeersAi.Presentation;
 /// </remarks>
 public sealed class SagePresenter
 {
+    private const string IdleStatus = "Idle";
+
     private readonly WindowModel _model;
     private readonly ISageView _view;
     private readonly IChatView _chat;
@@ -46,6 +50,7 @@ public sealed class SagePresenter
     private readonly object _gate = new object();
     private bool _busy;
     private bool _visible;
+    private string _status = IdleStatus;
     private DateTimeOffset _turnStarted;
 
     /// <param name="model">History store. Never null.</param>
@@ -97,8 +102,8 @@ public sealed class SagePresenter
         _marshal = marshal ?? (action => action());
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
 
-        _view.SubmitRequested += OnSubmitRequested;
         _view.ToggleRequested += OnToggleRequested;
+        _view.UpdateRequested += OnUpdateRequested;
 
         // One gateway, one channel: subscribe for the life of the presenter.
         _gateway.Events.OnReasoning += OnReasoning;
@@ -164,7 +169,7 @@ public sealed class SagePresenter
         Show();
         Write($"{Speaker(line.DisplayName)}: {prompt}");
         _turnStarted = _clock();
-        Run(() => _view.SetBusy(true));
+        RefreshThinkingStatus();
         return TurnAsync(prompt, echo: false);
     }
 
@@ -176,7 +181,7 @@ public sealed class SagePresenter
             switch (args[0].ToLowerInvariant())
             {
                 case "window":
-                    ShowAndFocus();
+                    Show();
                     return "Sage window opened.";
 
                 case "reset":
@@ -209,13 +214,6 @@ public sealed class SagePresenter
         Run(() => _view.SetVisible(true));
     }
 
-    /// <summary>Opens the window and moves keyboard focus to its input.</summary>
-    public void ShowAndFocus()
-    {
-        Show();
-        Run(() => _view.RequestFocus());
-    }
-
     public void Toggle()
     {
         bool visible;
@@ -225,14 +223,7 @@ public sealed class SagePresenter
             visible = _visible;
         }
 
-        Run(() =>
-        {
-            _view.SetVisible(visible);
-            if (visible)
-            {
-                _view.RequestFocus();
-            }
-        });
+        Run(() => _view.SetVisible(visible));
     }
 
     /// <summary>
@@ -242,7 +233,7 @@ public sealed class SagePresenter
     public Task AskAsync(string prompt)
     {
         Show();
-        return StartTurn(prompt, clearInput: false);
+        return StartTurn(prompt);
     }
 
     /// <summary>Drops the shared conversation and reports it in the window.</summary>
@@ -298,12 +289,7 @@ public sealed class SagePresenter
         PushLines();
     }
 
-    private void OnSubmitRequested()
-    {
-        _ = StartTurn(_view.Input, clearInput: true);
-    }
-
-    private Task StartTurn(string prompt, bool clearInput)
+    private Task StartTurn(string prompt)
     {
         if (!TryBeginTurn(prompt, out var trimmed))
         {
@@ -311,13 +297,7 @@ public sealed class SagePresenter
         }
 
         _turnStarted = _clock();
-
-        if (clearInput)
-        {
-            Run(() => _view.Input = string.Empty);
-        }
-
-        Run(() => _view.SetBusy(true));
+        RefreshThinkingStatus();
         return TurnAsync(trimmed, echo: true);
     }
 
@@ -389,33 +369,77 @@ public sealed class SagePresenter
     }
 
     /// <summary>
-    /// A turn ended: retire the thinking line, show the answer in the window, and
+    /// A turn ended: show the answer in the window, and
     /// post it to chat. Both surfaces get plain text; chat carries no name prefix,
     /// because the game shows the name it is posted under.
     /// </summary>
     private void OnAnswered(string answer)
     {
         var plain = MarkdownToPlain.ToPlainText(answer);
-        ClearThinking();
         Say(plain);
         _chat.Post(ChatNaming.Resolve(_assistantName != null ? _assistantName() : null), plain);
     }
 
-    /// <summary>Refreshes the thinking status with the elapsed turn time.</summary>
+    /// <summary>Refreshes the status bar with the elapsed turn time.</summary>
     private void NoteProgress()
     {
-        var elapsed = _clock() - _turnStarted;
-        var seconds = elapsed.TotalSeconds < 0 ? 0 : (int)elapsed.TotalSeconds;
-        _model.SetThinking(ChatNaming.Apply(_assistantName != null ? _assistantName() : null, $"Thinking ({seconds}s)..."));
-        PushLines();
+        RefreshThinkingStatus();
     }
 
-    private void ClearThinking()
+    /// <summary>
+    /// The update tick: while a turn runs, refreshes the status bar with the
+    /// elapsed thinking time in real time. Idle ticks do nothing, so the
+    /// status stays <c>Idle</c> when no turn runs.
+    /// </summary>
+    private void OnUpdateRequested()
     {
-        if (_model.ClearThinking())
+        lock (_gate)
         {
-            PushLines();
+            if (!_busy)
+            {
+                return;
+            }
         }
+
+        RefreshThinkingStatus();
+    }
+
+    /// <summary>
+    /// Pushes the current thinking text, but only when it changed since the
+    /// last push, so the update tick does not queue a view write every frame.
+    /// </summary>
+    private void RefreshThinkingStatus()
+    {
+        var text = ThinkingText();
+        lock (_gate)
+        {
+            if (!_busy || text == _status)
+            {
+                return;
+            }
+
+            _status = text;
+        }
+
+        Run(() => _view.SetStatus(text));
+    }
+
+    private string ThinkingText()
+    {
+        var elapsed = _clock() - _turnStarted;
+        var seconds = elapsed.TotalSeconds < 0 ? 0 : elapsed.TotalSeconds;
+        return ChatNaming.Apply(_assistantName != null ? _assistantName() : null, $"Thinking ({seconds:0.0}s)...");
+    }
+
+    private void SetStatus(string status)
+    {
+        lock (_gate)
+        {
+            _status = status ?? IdleStatus;
+            status = _status;
+        }
+
+        Run(() => _view.SetStatus(status));
     }
 
     private void PushLines()
@@ -483,19 +507,25 @@ public sealed class SagePresenter
         lock (_gate)
         {
             _busy = false;
+            _status = IdleStatus;
         }
 
-        Run(() => _view.SetBusy(false));
+        Run(() => _view.SetStatus(IdleStatus));
     }
 
     private void PushAll()
     {
         var snapshot = _model.Lines;
+        string status;
+        lock (_gate)
+        {
+            status = _status;
+        }
+
         Run(() =>
         {
             _view.SetVisible(_visible);
-            _view.SetBusy(_busy);
-            _view.Input = string.Empty;
+            _view.SetStatus(status);
             _view.SetLines(snapshot);
         });
     }

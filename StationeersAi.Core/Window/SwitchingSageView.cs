@@ -17,8 +17,8 @@ public sealed class SwitchingSageView : ISageView
     public SwitchingSageView()
     {
         _current = _noop;
-        _current.SubmitRequested += OnSubmitRequested;
         _current.ToggleRequested += OnToggleRequested;
+        _current.UpdateRequested += OnUpdateRequested;
     }
 
     /// <summary>Points the view at the next target. Null points it at noop.</summary>
@@ -32,18 +32,12 @@ public sealed class SwitchingSageView : ISageView
                 return;
             }
 
-            _current.SubmitRequested -= OnSubmitRequested;
             _current.ToggleRequested -= OnToggleRequested;
+            _current.UpdateRequested -= OnUpdateRequested;
             _current = next;
-            _current.SubmitRequested += OnSubmitRequested;
             _current.ToggleRequested += OnToggleRequested;
+            _current.UpdateRequested += OnUpdateRequested;
         }
-    }
-
-    public string Input
-    {
-        get { lock (_gate) return _current.Input; }
-        set { lock (_gate) _current.Input = value; }
     }
 
     public void SetLines(IReadOnlyList<string> lines)
@@ -54,11 +48,11 @@ public sealed class SwitchingSageView : ISageView
         }
     }
 
-    public void SetBusy(bool busy)
+    public void SetStatus(string status)
     {
         lock (_gate)
         {
-            _current.SetBusy(busy);
+            _current.SetStatus(status);
         }
     }
 
@@ -70,25 +64,17 @@ public sealed class SwitchingSageView : ISageView
         }
     }
 
-    public void RequestFocus()
-    {
-        lock (_gate)
-        {
-            _current.RequestFocus();
-        }
-    }
-
-    public event Action? SubmitRequested;
-
     public event Action? ToggleRequested;
 
-    private void OnSubmitRequested()
-    {
-        SubmitRequested?.Invoke();
-    }
+    public event Action? UpdateRequested;
 
     private void OnToggleRequested()
     {
         ToggleRequested?.Invoke();
+    }
+
+    private void OnUpdateRequested()
+    {
+        UpdateRequested?.Invoke();
     }
 }

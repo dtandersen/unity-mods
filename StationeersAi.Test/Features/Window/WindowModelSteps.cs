@@ -35,18 +35,6 @@ public sealed class WindowModelSteps
         World.Window.Clear();
     }
 
-    [When("the thinking status is {string}")]
-    public void WhenTheThinkingStatusIs(string line)
-    {
-        World.Window.SetThinking(line);
-    }
-
-    [When("thinking is cleared")]
-    public void WhenThinkingIsCleared()
-    {
-        World.Window.ClearThinking();
-    }
-
     [Then("the window history is:")]
     public void ThenTheWindowHistoryIs(string expected)
     {

@@ -1,24 +1,23 @@
 Feature: Chat answers
 
-  The agent answers in chat, whatever asked it: a window question, a console
-  question, or a chat mention. One answer, once, in plain text, and posted under
+  The agent answers in chat, whatever asked it: a console
+  question or a chat mention. One answer, once, in plain text, and posted under
   the agent's name so the game shows who speaks. The Sage window shows its own
   copy of the answer too.
 
   One question at a time, on every surface: while a turn runs, the next is
-  refused. The window, the console, and chat share that one gate.
+  refused. The console and chat share that one gate.
 
-  Scenario: A window question is answered in chat
+  Scenario: A console question is answered in chat
     Given the AI model will answer "Use **copper** and `cable`"
-    And the window input is "what do I need?"
-    When the user submits
+    When the console asks "what do I need?"
     And the turn completes
     Then the chat shows:
       """
       Sage: Use copper and cable
       """
 
-  Scenario: A console question is answered in chat
+  Scenario: A console question with a plain answer is answered in chat
     Given the AI model will answer "42"
     When the console asks "what is the answer"
     And the turn completes
@@ -54,7 +53,7 @@ Feature: Chat answers
       Sage: First answer
       """
 
-  Scenario: A window answer is shown in the window too
+  Scenario: A console answer is shown in the window too
     Given the AI model will answer "42"
     When the console asks "what is the answer"
     And the turn completes

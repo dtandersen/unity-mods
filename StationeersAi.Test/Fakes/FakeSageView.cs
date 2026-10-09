@@ -7,28 +7,24 @@ namespace StationeersAi.Test.Fakes;
 /// <summary>Passive-view fake: records what the presenter sets, raises gestures.</summary>
 public sealed class FakeSageView : ISageView
 {
-    public string Input { get; set; } = string.Empty;
-
     public bool Visible { get; private set; }
 
-    public bool Busy { get; private set; }
+    public string Status { get; private set; } = "Idle";
 
     public List<string> Lines { get; private set; } = new List<string>();
 
-    public int FocusRequests { get; private set; }
-
-    public event Action SubmitRequested;
-
     public event Action ToggleRequested;
+
+    public event Action UpdateRequested;
 
     public void SetLines(IReadOnlyList<string> lines)
     {
         Lines = lines != null ? new List<string>(lines) : new List<string>();
     }
 
-    public void SetBusy(bool busy)
+    public void SetStatus(string status)
     {
-        Busy = busy;
+        Status = status ?? "Idle";
     }
 
     public void SetVisible(bool visible)
@@ -36,18 +32,13 @@ public sealed class FakeSageView : ISageView
         Visible = visible;
     }
 
-    public void RequestFocus()
-    {
-        FocusRequests++;
-    }
-
-    public void RaiseSubmit()
-    {
-        SubmitRequested?.Invoke();
-    }
-
     public void RaiseToggle()
     {
         ToggleRequested?.Invoke();
+    }
+
+    public void RaiseUpdate()
+    {
+        UpdateRequested?.Invoke();
     }
 }
