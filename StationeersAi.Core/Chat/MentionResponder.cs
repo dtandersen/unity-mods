@@ -16,7 +16,7 @@ namespace StationeersAi.Ai;
 public sealed class MentionResponder
 {
     private readonly IChatSink _chat;
-    private readonly Func<IAssistantActivity?, AiAssistant?> _assistantFactory;
+    private readonly Func<AgentEvents, AgentGateway?> _assistantFactory;
     private readonly string _assistantName;
     private readonly Logger _log;
     private bool _busy;
@@ -24,14 +24,14 @@ public sealed class MentionResponder
     /// <param name="chat">Destination for the answer.</param>
     /// <param name="assistantFactory">
     /// Builds the assistant, or returns null when game data is not loaded. It
-    /// receives the activity sink to report reasoning and tool use to. Called
+    /// receives the events the turn reports through. Called
     /// on the calling thread (the Unity main thread) before the first await.
     /// </param>
     /// <param name="assistantName">Name the answer is posted under.</param>
     /// <param name="log">Receives exception details.</param>
     public MentionResponder(
         IChatSink chat,
-        Func<IAssistantActivity?, AiAssistant?> assistantFactory,
+        Func<AgentEvents, AgentGateway?> assistantFactory,
         string assistantName,
         Logger log)
     {
@@ -60,8 +60,9 @@ public sealed class MentionResponder
         try
         {
             var command = new RunTurnCommand(_assistantFactory, _log);
-            command.Answered += Say;
-            await command.ExecuteAsync(new RunTurnRequest(prompt), conversation, null, cancellationToken);
+            var events = new AgentEvents();
+            events.OnAnswer += Say;
+            await command.ExecuteAsync(new RunTurnRequest(prompt), conversation, events, cancellationToken);
             return true;
         }
         finally
@@ -70,8 +71,9 @@ public sealed class MentionResponder
         }
     }
 
+    /// <summary>Posts the plain-text answer under the assistant's name.</summary>
     private void Say(string text)
     {
-        _chat.Write(ChatNaming.Apply(_assistantName, text));
+        _chat.Write(ChatNaming.Apply(_assistantName, MarkdownToPlain.ToPlainText(text)));
     }
 }

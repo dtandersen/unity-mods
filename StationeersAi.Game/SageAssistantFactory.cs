@@ -90,7 +90,7 @@ public sealed class SageAssistantFactory
 
     public SageCommands Commands => _commands.Commands();
 
-    public AiAssistant? BuildAssistant(IAssistantActivity? activity)
+    public AgentGateway? BuildAssistant(AgentEvents events)
     {
         var prefabs = Prefab.AllPrefabs;
         if (prefabs == null || prefabs.Count == 0)
@@ -126,7 +126,7 @@ public sealed class SageAssistantFactory
             new UnityWebRequestTransport(_settings.TimeoutSeconds.Value),
             new OpenAiOptions(_settings.Endpoint.Value, _settings.ApiKey.Value, _settings.Model.Value, _settings.ReasoningEffort.Value));
 
-        return new AiAssistant(client, tools, SystemPromptText(), _settings.MaxIterations.Value, _log, activity);
+        return new Agent(client, tools, SystemPromptText(), _settings.MaxIterations.Value, _log, events);
     }
 
     /// <summary>

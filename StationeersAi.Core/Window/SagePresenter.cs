@@ -25,7 +25,7 @@ public sealed class SagePresenter : IChatSink
 {
     private readonly WindowModel _model;
     private readonly ISageView _view;
-    private readonly Func<IAssistantActivity?, AiAssistant?> _assistantFactory;
+    private readonly Func<AgentEvents, AgentGateway?> _assistantFactory;
     private readonly Func<string?> _playerName;
     private readonly Func<string?> _assistantName;
     private readonly Logger _log;
@@ -44,7 +44,7 @@ public sealed class SagePresenter : IChatSink
     /// <param name="view">Passive view to drive. Never null.</param>
     /// <param name="assistantFactory">
     /// Builds the assistant, or returns null when game data is not loaded. It
-    /// receives the activity sink to report reasoning and tool use to.
+    /// receives the events the turn reports through.
     /// </param>
     /// <param name="playerName">Supplies the local player's name for the echo. May return null, which echoes as "You".</param>
     /// <param name="assistantName">Supplies the name the assistant posts under. May return null, which posts as "Sage".</param>
@@ -61,7 +61,7 @@ public sealed class SagePresenter : IChatSink
     public SagePresenter(
         WindowModel model,
         ISageView view,
-        Func<IAssistantActivity?, AiAssistant?> assistantFactory,
+        Func<AgentEvents, AgentGateway?> assistantFactory,
         Func<string?> playerName,
         Func<string?> assistantName,
         Logger log,
@@ -207,7 +207,7 @@ public sealed class SagePresenter : IChatSink
 
         try
         {
-            var assistant = _assistantFactory?.Invoke(null);
+            var assistant = _assistantFactory?.Invoke(new AgentEvents());
             if (assistant == null)
             {
                 Say("game data is not loaded yet.");
@@ -282,7 +282,8 @@ public sealed class SagePresenter : IChatSink
     private async Task RunCommandAsync(string prompt, Conversation? conversation)
     {
         var command = new RunTurnCommand(_assistantFactory, _log);
-        command.Think += text =>
+        var events = new AgentEvents();
+        events.OnReasoning += text =>
         {
             if (_showThinking != null && _showThinking())
             {
@@ -293,7 +294,7 @@ public sealed class SagePresenter : IChatSink
                 NoteProgress();
             }
         };
-        command.ToolCall += text =>
+        events.OnToolCall += text =>
         {
             if (_showToolCalls != null && _showToolCalls())
             {
@@ -304,7 +305,7 @@ public sealed class SagePresenter : IChatSink
                 NoteProgress();
             }
         };
-        command.ToolOutput += text =>
+        events.OnToolOutput += text =>
         {
             if (_showToolResults != null && _showToolResults())
             {
@@ -315,12 +316,12 @@ public sealed class SagePresenter : IChatSink
                 NoteProgress();
             }
         };
-        command.Answered += answer =>
+        events.OnAnswer += answer =>
         {
             ClearThinking();
-            Say(answer);
+            Say(MarkdownToPlain.ToPlainText(answer));
         };
-        await command.ExecuteAsync(new RunTurnRequest(prompt), conversation, null).ConfigureAwait(false);
+        await command.ExecuteAsync(new RunTurnRequest(prompt), conversation, events).ConfigureAwait(false);
     }
 
     /// <summary>Refreshes the thinking status with the elapsed turn time.</summary>

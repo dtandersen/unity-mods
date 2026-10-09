@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Caev;
 using Caev.Test.Fakes;
@@ -13,21 +14,29 @@ public sealed class AssistantLoopSteps
 {
     private readonly FakeAiClient _ai = new FakeAiClient();
     private readonly StubTool _lookup = new StubTool("lookup");
-    private readonly RecordingActivity _activity = new RecordingActivity();
+    private readonly AgentEvents _events = new AgentEvents();
+    private readonly EventRecorder _reported;
     private readonly RecordingLogger _log = new RecordingLogger();
     private readonly Conversation _conversation = new Conversation();
     private int _nextCallId;
-    private string _reply;
 
-    private AiAssistant Assistant(int maxIterations)
+    /// <summary>The answer the last turn reported.</summary>
+    private string Answer => _reported.Answers.LastOrDefault() ?? string.Empty;
+
+    public AssistantLoopSteps()
     {
-        return new AiAssistant(
+        _reported = new EventRecorder(_events);
+    }
+
+    private Agent Assistant(int maxIterations)
+    {
+        return new Agent(
             _ai,
             new ToolHandler(new ITool[] { _lookup }),
             systemPrompt: null,
             maxIterations: maxIterations,
             log: _log,
-            activity: _activity);
+            events: _events);
     }
 
     [Given("the model {string} is not a valid model")]
@@ -47,13 +56,13 @@ public sealed class AssistantLoopSteps
     [When("we ask the question {string}")]
     public async Task WhenWeAskTheQuestion(string prompt)
     {
-        _reply = await Assistant(5).AskAsync(prompt, _conversation);
+        await Assistant(5).AskAsync(prompt, _conversation);
     }
 
     [Then("the agent answers with:")]
     public void ThenTheAgentAnswersWith(string expected)
     {
-        Flat(_reply).ShouldBe(Flat(expected));
+        Flat(Answer).ShouldBe(Flat(expected));
     }
 
     /// <summary>Docstrings and answers may differ only in line breaks and padding.</summary>
@@ -75,6 +84,19 @@ public sealed class AssistantLoopSteps
         }));
     }
 
+    [Given("the AI model reasons {string} and answers {string}")]
+    public void GivenTheAiModelReasonsAndAnswers(string reasoning, string answer)
+    {
+        _ai.RespondWith(new AiCompletion(answer, new ToolCall[0], reasoning));
+    }
+
+    [Given("the tool {string} will answer {string}")]
+    public void GivenTheToolWillAnswer(string name, string answer)
+    {
+        name.ShouldBe(_lookup.Name);
+        _lookup.AnswersWith(answer);
+    }
+
     [Given("we discussed {string} and heard {string}")]
     public void GivenWeDiscussedAndHeard(string question, string answer)
     {
@@ -85,13 +107,13 @@ public sealed class AssistantLoopSteps
     [When("the assistant is asked {string}")]
     public async Task WhenTheAssistantIsAsked(string prompt)
     {
-        _reply = await Assistant(5).AskAsync(prompt, null);
+        await Assistant(5).AskAsync(prompt, null);
     }
 
     [When("the assistant is asked {string} with {int} iterations")]
     public async Task WhenTheAssistantIsAskedWithIterations(string prompt, int iterations)
     {
-        _reply = await Assistant(iterations).AskAsync(prompt, null);
+        await Assistant(iterations).AskAsync(prompt, null);
     }
 
     [When("the conversation is compacted")]
@@ -103,7 +125,7 @@ public sealed class AssistantLoopSteps
     [Then("the assistant replies {string}")]
     public void ThenTheAssistantReplies(string expected)
     {
-        _reply.ShouldBe(expected);
+        Answer.ShouldBe(expected);
     }
 
     [Then("the tool {string} ran with query {string}")]
@@ -117,7 +139,31 @@ public sealed class AssistantLoopSteps
     [Then("the assistant reports it could not complete")]
     public void ThenTheAssistantReportsItCouldNotComplete()
     {
-        _reply.ShouldContain("couldn't complete");
+        Answer.ShouldContain("couldn't complete");
+    }
+
+    [Then("the answer reported {string}")]
+    public void ThenTheAnswerReported(string expected)
+    {
+        _reported.Answers.ShouldBe(new[] { expected });
+    }
+
+    [Then("the reasoning reported {string}")]
+    public void ThenTheReasoningReported(string expected)
+    {
+        _reported.Reasoning.ShouldContain(expected);
+    }
+
+    [Then("the tool call reported {string}")]
+    public void ThenTheToolCallReported(string expected)
+    {
+        _reported.ToolCalls.ShouldContain(expected);
+    }
+
+    [Then("the tool output reported {string}")]
+    public void ThenTheToolOutputReported(string expected)
+    {
+        _reported.ToolOutputs.ShouldContain(expected);
     }
 
     [Then("the conversation holds the summary {string}")]

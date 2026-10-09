@@ -21,6 +21,24 @@ Feature: Assistant loop
     When the assistant is asked "cable?" with 2 iterations
     Then the assistant reports it could not complete
 
+  Scenario: The turn reports the tool traffic
+    Given the tool "lookup" will answer "Cable coil, 5 copper"
+    And the AI model will request the tool "lookup" with query "cable"
+    And the AI model will answer "Cable needs 5 copper."
+    When the assistant is asked "how do I make cable?"
+    Then the tool call reported "lookup(query=cable)"
+    And the tool output reported "Cable coil, 5 copper"
+
+  Scenario: The turn reports the model's reasoning
+    Given the AI model reasons "weigh the options" and answers "Go north"
+    When the assistant is asked "which way?"
+    Then the reasoning reported "weigh the options"
+
+  Scenario: The turn reports the answer
+    Given the AI model will answer "Cable needs 5 copper."
+    When the assistant is asked "how do I make cable?"
+    Then the answer reported "Cable needs 5 copper."
+
   Scenario: The conversation compacts to a summary
     Given we discussed "cable" and heard "5 copper"
     And the AI model will answer "Cable needs copper."

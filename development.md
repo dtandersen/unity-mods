@@ -7,7 +7,7 @@ StationeersAi.Common/ netstandard2.0   Shared bits used on both sides (trace log
 StationeersAi.Core/   netstandard2.0   Unity-free game data (models, tools, commands, chat, window)
 Caev/               netstandard2.0   Generic agent engine (loop, clients, messages, tool ports)
 StationeersAi.Test/   net8.0           TUnit + Shouldly + ArchUnitNET specs (game, chat, window)
-Caev.Test/          net8.0           Engine specs: loop, activity, OpenAI wire (stub tools, fake server)
+Caev.Test/          net8.0           Engine specs: loop, events, OpenAI wire (stub tools, fake server)
 StationeersAi.Mod/    net48            BepInEx shell: plugin entry, patches, log (no game logic)
 StationeersAi.Game/   net48            Unity/game adapters: SageMod lifecycle, Stationeers* readers, window, HTTP server
 ```

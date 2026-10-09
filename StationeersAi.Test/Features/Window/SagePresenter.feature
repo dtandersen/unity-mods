@@ -52,6 +52,16 @@ Feature: Sage presenter
       Sage: 42
       """
 
+  Scenario: The answer shows as plain text
+    Given the AI model will answer "Use **copper** and `cable`"
+    When the console asks "what do I need?"
+    And the turn completes
+    Then the view shows:
+      """
+      Tester: what do I need?
+      Sage: Use copper and cable
+      """
+
   Scenario: A console question is ignored while busy
     Given the assistant is still answering "first question"
     When the console asks "second question"

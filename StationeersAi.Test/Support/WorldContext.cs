@@ -84,11 +84,22 @@ public sealed class WorldContext : IDisposable
 
     public Conversation Conversation { get; set; } = new Conversation();
 
-    public RecordingActivity Activity { get; set; } = new RecordingActivity();
+    /// <summary>Where this scenario's turns report: reasoning, tool traffic, answer.</summary>
+    public AgentEvents Events { get; } = new AgentEvents();
+
+    /// <summary>What the turns reported through <see cref="Events"/>.</summary>
+    public EventRecorder Recorder { get; }
+
+    public WorldContext()
+    {
+        // Subscribe before any turn runs, so nothing reported is missed.
+        Recorder = new EventRecorder(Events);
+    }
 
     public ToolResult ToolResult { get; set; }
 
-    public string Reply { get; set; }
+    /// <summary>What the last turn answered, read from the events it reported.</summary>
+    public string Reply => Recorder.Answers.Count > 0 ? Recorder.Answers[Recorder.Answers.Count - 1] : string.Empty;
 
     public void Dispose()
     {

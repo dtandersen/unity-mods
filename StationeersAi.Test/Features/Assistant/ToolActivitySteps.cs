@@ -18,29 +18,28 @@ public sealed class ToolActivitySteps
 
     private WorldContext World => Hooks.GetWorld(_context);
 
-    [When("I ask the assistant {string} reporting activity")]
-    public async Task WhenIAskTheAssistantReportingActivity(string prompt)
+    [When("I ask the assistant {string} reporting events")]
+    public async Task WhenIAskTheAssistantReportingEvents(string prompt)
     {
-        World.Activity = new RecordingActivity();
-        var assistant = TestComposition.Assistant(World, World.Activity);
-        World.Reply = await assistant.AskAsync(prompt, null);
+        var assistant = TestComposition.Assistant(World, World.Events);
+        await assistant.AskAsync(prompt, null);
     }
 
     [Then("the thinking reported {string}")]
     public void ThenTheThinkingReported(string expected)
     {
-        World.Activity.Reasoning.ShouldContain(expected);
+        World.Recorder.Reasoning.ShouldContain(expected);
     }
 
     [Then("the tool calls reported {string}")]
     public void ThenTheToolCallsReported(string expected)
     {
-        World.Activity.ToolCalls.ShouldContain(expected);
+        World.Recorder.ToolCalls.ShouldContain(expected);
     }
 
     [Then("the tool output reported:")]
     public void ThenTheToolOutputReported(string expected)
     {
-        World.Activity.ToolOutputs.ShouldContain(expected.Replace("\r\n", "\n").Trim());
+        World.Recorder.ToolOutputs.ShouldContain(expected.Replace("\r\n", "\n").Trim());
     }
 }

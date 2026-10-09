@@ -1,7 +1,7 @@
 Feature: Tool activity reporting
 
-  The assistant reports tool calls (thinking) and tool output through optional
-  callbacks. The plugin uses these for its ShowThinking and ShowToolResults
+  The assistant reports tool calls (thinking) and tool output through the turn's
+  events. The plugin subscribes to these for its ShowThinking and ShowToolResults
   options.
 
   Scenario: Tool activity is reported
@@ -10,7 +10,7 @@ Feature: Tool activity reporting
       | Welder | 85%      | Right hand |
     And the AI model will request the tool "search_inventory" with query "welder"
     And the AI model will answer "You have a welder."
-    When I ask the assistant "what am I holding?" reporting activity
+    When I ask the assistant "what am I holding?" reporting events
     Then the tool calls reported "search_inventory(query=welder)"
     And the tool output reported:
       """
@@ -20,6 +20,6 @@ Feature: Tool activity reporting
 
   Scenario: The model's reasoning is reported as thinking
     Given the AI model reasons "weigh the options" and answers "Go north"
-    When I ask the assistant "which way?" reporting activity
+    When I ask the assistant "which way?" reporting events
     Then the thinking reported "weigh the options"
     And the assistant replies "Go north"

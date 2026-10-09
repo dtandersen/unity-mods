@@ -40,7 +40,7 @@ public class AssistantTests
         var ai = new FakeAiClient().RespondWith(Answer("hello"));
         var responder = new MentionResponder(
             chat,
-            activity => new AiAssistant(ai, RecipeTools(), systemPrompt: null, maxIterations: 5, log: new RecordingLogger(), activity: activity),
+            events => new Agent(ai, RecipeTools(), systemPrompt: null, maxIterations: 5, log: new RecordingLogger(), events: events),
             "Sage",
             new RecordingLogger());
 

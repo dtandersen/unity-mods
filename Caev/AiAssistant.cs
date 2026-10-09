@@ -15,42 +15,43 @@ namespace Caev;
 /// <remarks>
 /// The optional callbacks keep the core free of any logging/UI framework:
 /// <paramref name="log"/> receives the full trace (plugin logs it) and
-/// <paramref name="activity"/> receives reasoning, tool calls and tool output.
-/// <paramref name="systemPrompt"/> and <paramref name="activity"/> may be null
-/// (no system prompt / no activity sink). The implementor of
-/// <see cref="IAssistantActivity"/> decides what to show.
+/// <paramref name="events"/> reports reasoning, tool calls, tool output, and the
+/// answer. <paramref name="systemPrompt"/> and <paramref name="events"/> may be
+/// null (no system prompt / nobody listening). The subscriber decides what to
+/// show, and renders the answer for where it shows it.
 /// </remarks>
-public sealed class AiAssistant
+public sealed class Agent : AgentGateway
 {
     private readonly IAiClient _client;
     private readonly ToolHandler _tools;
     private readonly string? _systemPrompt;
     private readonly int _maxIterations;
     private readonly Logger _log;
-    private readonly IAssistantActivity? _activity;
+    private readonly AgentEvents? _events;
 
-    public AiAssistant(
+    public Agent(
         IAiClient client,
         ToolHandler tools,
         string? systemPrompt,
         int maxIterations,
         Logger log,
-        IAssistantActivity? activity)
+        AgentEvents? events)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _tools = tools ?? throw new ArgumentNullException(nameof(tools));
         _systemPrompt = systemPrompt;
         _maxIterations = maxIterations;
         _log = log ?? throw new ArgumentNullException(nameof(log));
-        _activity = activity;
+        _events = events;
     }
 
     /// <summary>
-    /// Answers a question. If <paramref name="conversation"/> is non-null, prior
-    /// turns (user, assistant, and tool traffic) are sent with the request and
-    /// this turn's full transcript is appended to it.
+    /// Answers a question and reports the answer through the events it was built
+    /// with. If <paramref name="conversation"/> is non-null, prior turns (user,
+    /// assistant, and tool traffic) are sent with the request and this turn's full
+    /// transcript is appended to it.
     /// </summary>
-    public async Task<string> AskAsync(
+    public async Task AskAsync(
         string prompt,
         Conversation? conversation,
         CancellationToken cancellationToken = default)
@@ -81,7 +82,8 @@ public sealed class AiAssistant
             {
                 // Keep the provider's words in the log; the stationeer gets a short answer.
                 Log($"Model request failed: {ex.Message}");
-                return Unusable(_client, ex);
+                Answer(Unusable(_client, ex));
+                return;
             }
 
             if (!string.IsNullOrEmpty(completion?.Content))
@@ -94,7 +96,7 @@ public sealed class AiAssistant
             if (!string.IsNullOrEmpty(reasoning) && reasoning is not null)
             {
                 Log($"Sage thinking: {Readable(reasoning)}");
-                _activity?.OnReasoning(reasoning);
+                _events?.RaiseReasoning(reasoning);
             }
 
             if (completion == null || completion.ToolCalls == null || completion.ToolCalls.Count == 0)
@@ -108,12 +110,13 @@ public sealed class AiAssistant
                 }
 
                 Log($"(done in {i + 1} {(i == 0 ? "turn" : "turns")})");
-                return answer;
+                Answer(answer);
+                return;
             }
 
             if (!string.IsNullOrEmpty(completion.Content) && completion.Content is not null)
             {
-                _activity?.OnReasoning(completion.Content);
+                _events?.RaiseReasoning(completion.Content);
             }
 
             messages.Add(new ChatMessage(ChatRole.Assistant, completion.Content, completion.ToolCalls));
@@ -122,18 +125,24 @@ public sealed class AiAssistant
             {
                 var described = $"{call.Name}({Describe(call.Arguments)})";
                 Log($"Sage runs {described}");
-                _activity?.OnToolCall(described);
+                _events?.RaiseToolCall(described);
 
                 var result = _tools.Handle(call);
                 Log($"Result:\n{result.Content}");
-                _activity?.OnToolOutput(result.Content);
+                _events?.RaiseToolOutput(result.Content);
                 messages.Add(new ChatMessage(ChatRole.Tool, result.Content, ToolCallId: call.Id));
             }
         }
 
         Persist(conversation, messages);
         Log($"(gave up after {_maxIterations} tool rounds)");
-        return "I couldn't complete that request.";
+        Answer("I couldn't complete that request.");
+    }
+
+    /// <summary>Reports the answer to whoever is listening.</summary>
+    private void Answer(string answer)
+    {
+        _events?.RaiseAnswer(answer);
     }
 
     /// <summary>Names what went wrong with the model, without the provider's noise.</summary>
