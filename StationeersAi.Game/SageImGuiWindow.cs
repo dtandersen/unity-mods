@@ -137,7 +137,9 @@ public sealed class SageImGuiWindow : MonoBehaviour, ISageView
         if (!_sized)
         {
             _sized = true;
-            ImGui.SetNextWindowSize(new Vector2(600, 420));
+            // First run only: once imgui.ini holds this window, the saved
+            // position and size rule and this default is ignored.
+            ImGui.SetNextWindowSize(new Vector2(600, 480), ImGuiCond.FirstUseEver);
         }
 
         if (!ImGui.Begin("SAGE"))
