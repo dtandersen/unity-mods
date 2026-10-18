@@ -61,3 +61,13 @@ Feature: Write IC tool
       yield
       """
     Then the tool fails with "Computer 999 not found."
+
+  Scenario: Write needs a computer
+    When I call the "write_ic" tool without arguments
+    Then the tool fails with "Missing required argument 'computer'."
+
+  Scenario: Write refuses code over the line cap
+    Given a computer "Lab Computer"
+    And the chip under the dropdown holds "yield"
+    When I write 128 lines to computer "1189" with chip hash "6c96f2ae"
+    Then the tool fails with "Code is 128 lines; the editor holds 127."

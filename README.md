@@ -38,7 +38,7 @@ Sage can call these tools:
 | Tool | Data |
 |---|---|
 | `search_items` | Items by name (from the prefab catalogue) |
-| `search_structures` | Buildable structures by name |
+| `search_structures` | Buildable structures by name, with build stages |
 | `search_recipes` | Manufacturing recipes with station + ingredients |
 | `search_stationpedia` / `read_stationpedia` | In-game encyclopedia pages |
 | `search_inventory` | What you are carrying and where it is worn |
@@ -52,7 +52,7 @@ Sage can call these tools:
 | `read_slots` | List what one thing holds, slot by slot |
 | `list_instructions` | IC10 instruction usage and descriptions |
 | `search_devices` | Live devices: labels, types, networks |
-| `describe_device` | One device: ports, settings, slots |
+| `describe_device` | One device: ports, settings, slots, build state |
 
 Log file:
 

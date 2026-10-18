@@ -21,3 +21,8 @@ Feature: Describe player tool
       World: Europa
       Room: outside
       """
+
+  Scenario: No position is unavailable
+    Given my position is unknown
+    When I call the "describe_player" tool
+    Then the tool fails with "Player status is unavailable."

@@ -95,20 +95,6 @@ public sealed class ToolsSteps
         }
     }
 
-    [Then("the structure result is:")]
-    public void ThenTheStructureResultIs(Table table)
-    {
-        var actual = StructureResults().ToDictionary(structure => structure.Name, structure => structure.Description);
-        actual.Count.ShouldBe(table.Rows.Count);
-
-        foreach (var row in table.Rows)
-        {
-            var name = row["Name"];
-            actual.ContainsKey(name).ShouldBeTrue($"expected '{name}' in the result");
-            actual[name].ShouldBe(row["Description"]);
-        }
-    }
-
     [Then("the tool result contains a recipe {string}")]
     public void ThenTheToolResultContainsARecipe(string name)
     {
@@ -183,11 +169,6 @@ public sealed class ToolsSteps
     private IReadOnlyList<Entity.Item> ItemResults()
     {
         return World.ToolResult.ShouldBeOfType<ToolSuccess<SearchItemsResult>>().Value.Items;
-    }
-
-    private IReadOnlyList<Entity.Structure> StructureResults()
-    {
-        return World.ToolResult.ShouldBeOfType<ToolSuccess<SearchStructuresResult>>().Value.Structures;
     }
 
     private IReadOnlyList<Entity.Recipe> RecipeResults()

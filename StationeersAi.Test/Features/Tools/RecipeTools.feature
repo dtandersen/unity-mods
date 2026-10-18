@@ -38,3 +38,11 @@ Feature: Recipe tools
   Scenario: The tool requires its query argument
     When I call the "search_recipes" tool without arguments
     Then the tool fails with "Missing required argument 'query'."
+
+  Scenario: No match reports the query
+    When I call the "search_recipes" tool with query "glass"
+    Then the tool succeeds
+    And the tool result is:
+      """
+      No recipes found for 'glass'.
+      """

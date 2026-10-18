@@ -32,3 +32,7 @@ Feature: Export IC tool
     And no housing is found
     When I export from computer "1189" to "999"
     Then the tool fails with "Housing 999 not found on this computer's network. Available: Climate Control #2200"
+
+  Scenario: Export needs a housing
+    When I export from computer "1189" without a housing
+    Then the tool fails with "Missing required argument 'device'."

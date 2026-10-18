@@ -20,6 +20,12 @@ public sealed class InMemoryStructureRepository : IStructureRepository
         _structures.Add(structure);
     }
 
+    public void Update(Structure structure)
+    {
+        _structures.RemoveAll(existing => existing.Id == structure.Id);
+        _structures.Add(structure);
+    }
+
     public IReadOnlyList<Structure> GetAll()
     {
         return _structures;

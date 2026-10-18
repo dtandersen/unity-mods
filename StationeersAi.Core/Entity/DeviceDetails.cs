@@ -18,11 +18,30 @@ public sealed record HousingDeviceEntry(string Index, string? Label, long Thing)
 public sealed record ReagentAmount(string Reagent, double Quantity);
 
 /// <summary>
+/// One unfinished stage of a placed structure: its 1-based state number,
+/// the tool it needs held (null when the state names none — e.g. a sheets
+///-only stage), and the materials it consumes. Mirrors how the game itself
+/// reads a build state: entries that carry quantities are spent, the rest
+/// are tools you hold.
+/// </summary>
+public sealed record BuildStep(int State, string? Tool, IReadOnlyList<Ingredient> Materials);
+
+/// <summary>
+/// How far construction of a placed structure has come: the current stage
+/// (1-based) out of all stages, with one step per unfinished state after
+/// it — the game spends the next state's entries, then moves on. The last
+/// stage reached means built.
+/// </summary>
+public sealed record BuildProgress(int Stage, int Stages, IReadOnlyList<BuildStep> Steps);
+
+/// <summary>
 /// One device in full: identity, on/off state (null when it has no switch),
 /// readable logic settings, slots, and, for housings, the devices on its
 /// screws (null for anything else). Storage holds internal reagents for
-/// fabricators and furnaces (null when the device stores none). Live readings
-/// are absent when the game does not expose them.
+/// fabricators and furnaces (null when the device stores none). Build tells
+/// how far construction has come (null when the device is no structure or
+/// the game reports no stages). Live readings are absent when the game does
+/// not expose them.
 /// </summary>
 public sealed record DeviceDetails(
     string? Name,
@@ -34,4 +53,5 @@ public sealed record DeviceDetails(
     IReadOnlyList<DeviceSlotInfo>? Slots,
     IReadOnlyList<HousingDeviceEntry>? Devices,
     ChipState? Chip,
-    IReadOnlyList<ReagentAmount>? Storage);
+    IReadOnlyList<ReagentAmount>? Storage,
+    BuildProgress? Build);

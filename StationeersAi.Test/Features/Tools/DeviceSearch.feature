@@ -98,6 +98,21 @@ Feature: Device search tool
       No devices found for 'nope'.
       """
 
+  Scenario: A logic filter must be true or false
+    Given the world has devices
+    When I search devices with logic "maybe"
+    Then the tool fails with "Logic 'maybe' is not true or false."
+
+  Scenario: A room filter must be a number
+    Given the world has devices
+    When I search devices in room "abc"
+    Then the tool fails with "Room 'abc' is not a number."
+
+  Scenario: A network filter must be a number
+    Given the world has devices
+    When I search devices on network "abc"
+    Then the tool fails with "Network 'abc' is not a number."
+
   Scenario: Blank search states cap and total
     Given the world has 12 devices
     When I call the "search_devices" tool

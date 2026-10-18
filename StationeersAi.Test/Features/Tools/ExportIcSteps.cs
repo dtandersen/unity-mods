@@ -50,6 +50,18 @@ public sealed class ExportIcSteps
             })));
     }
 
+    [When("I export from computer {string} without a housing")]
+    public void WhenIExportFromComputerWithoutAHousing(string computer)
+    {
+        World.ToolResult = TestComposition.Tools(World).Handle(new ToolCall(
+            "call_1",
+            "export_ic",
+            new ToolArguments(new System.Collections.Generic.Dictionary<string, string>
+            {
+                ["computer"] = computer,
+            })));
+    }
+
     [Given("the chip of housing {string} holds:")]
     public void GivenTheChipOfHousingHolds(string device, string program)
     {

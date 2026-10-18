@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Objects;
 using StationeersAi.Game;
+using BuildStepEntity = StationeersAi.Entity.BuildStep;
 using StructureEntity = StationeersAi.Entity.Structure;
 using Logger = StationeersAi.Core.Logger;
 
@@ -63,10 +64,29 @@ public sealed class StationeersStructureRepository : IStructureRepository
             structures.Add(new StructureEntity(
                 Id: prefab.PrefabName,
                 Name: StationeersItemRepository.SafeDisplayName(prefab),
-                Description: SafeTooltip(prefab)));
+                Description: SafeTooltip(prefab),
+                Steps: SafeSteps((Assets.Scripts.Objects.Structure)prefab)));
         }
 
         return structures;
+    }
+
+    /// <summary>
+    /// How the prefab builds, one step per build state in order (e.g. the
+    /// furnace takes a kit, then wrench-held sheets, then welding). A prefab
+    /// that fails to report keeps no steps rather than dropping the whole
+    /// catalogue.
+    /// </summary>
+    private static IReadOnlyList<BuildStepEntity> SafeSteps(Assets.Scripts.Objects.Structure prefab)
+    {
+        try
+        {
+            return BuildMaterials.StepsFrom(prefab.BuildStates, 0);
+        }
+        catch (System.Exception)
+        {
+            return new BuildStepEntity[0];
+        }
     }
 
     private static string? SafeTooltip(Thing prefab)

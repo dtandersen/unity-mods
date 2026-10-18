@@ -19,7 +19,7 @@ public sealed class DescribeDeviceTool : ITool
 
     public ToolDefinition Definition { get; } = new ToolDefinition(
         "describe_device",
-        "Describe one live device: its logic settings with live values, and its slots with occupants. Find devices first with search_devices.",
+        "Describe one live device: its logic settings with live values, its slots with occupants, and how far its construction has come. Find devices first with search_devices.",
         new[]
         {
             new ToolParameter("device", "The device, by label or reference id."),
@@ -74,6 +74,27 @@ public sealed class DescribeDeviceTool : ITool
     /// <summary>Most useful first: switch, power, air, then the rest by name.</summary>
     private static readonly string[] Priority = new[] { "On", "Power", "Temperature", "Pressure", "Setting", "Mode", "Error" };
 
+    private static string DescribeBuild(BuildProgress? build)
+    {
+        if (build == null)
+        {
+            return "Build: unknown.";
+        }
+
+        if (build.Stage >= build.Stages)
+        {
+            return "Build: complete.";
+        }
+
+        var lines = new List<string> { $"Build: {build.Stage}/{build.Stages}" };
+        foreach (var step in build.Steps ?? Array.Empty<BuildStep>())
+        {
+            lines.Add(BuildStepText.Format(step));
+        }
+
+        return string.Join("\n", lines);
+    }
+
     private static string Describe(DeviceDetails details, bool full)
     {
         var lines = new List<string>
@@ -81,6 +102,7 @@ public sealed class DescribeDeviceTool : ITool
             $"Device: {details.Name ?? "unknown"} ({details.Type ?? "unknown"} #{details.Thing})",
             $"Network: {(details.NetworkId == 0 ? "none" : details.NetworkId.ToString())}" +
                 (details.IsOn == null ? string.Empty : $", On: {(details.IsOn.Value ? "yes" : "no")}"),
+            DescribeBuild(details.Build),
         };
 
         var logic = (details.Logic ?? Array.Empty<DeviceLogicValue>())

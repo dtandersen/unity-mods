@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using StationeersAi.Entity;
@@ -39,8 +40,24 @@ public sealed class DatabaseSteps
             world.Structures.Add(new Structure(
                 row["Name"],
                 row["Name"],
-                row.ContainsKey("Description") ? row["Description"] : null));
+                row.ContainsKey("Description") ? row["Description"] : null,
+                Array.Empty<BuildStep>()));
         }
+    }
+
+    [Given("the structure {string} is built in steps:")]
+    public void GivenTheStructureIsBuiltInSteps(string name, Table table)
+    {
+        var world = Hooks.GetWorld(_context);
+        var current = world.Structures.GetById(name);
+        world.Structures.Update(new Structure(
+            name,
+            current?.Name ?? name,
+            current?.Description,
+            table.Rows.Select(row => new BuildStep(
+                int.Parse(row["State"], CultureInfo.InvariantCulture),
+                row.ContainsKey("Tool") && !string.IsNullOrWhiteSpace(row["Tool"]) ? row["Tool"].Trim() : null,
+                Materials(row.ContainsKey("Materials") ? row["Materials"] : string.Empty))).ToArray()));
     }
 
     [Given("the recipe database contains {string}")]
@@ -97,6 +114,12 @@ public sealed class DatabaseSteps
             null);
     }
 
+    [Given("my position is unknown")]
+    public void GivenMyPositionIsUnknown()
+    {
+        Hooks.GetWorld(_context).Player.Status = null;
+    }
+
     [Given("my inventory contains:")]
     public void GivenMyInventoryContains(Table table)
     {
@@ -127,6 +150,30 @@ public sealed class DatabaseSteps
         }
 
         return null;
+    }
+
+    internal static IReadOnlyList<Ingredient> Materials(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return Array.Empty<Ingredient>();
+        }
+
+        // One material per ";", each as "<name> x<amount>", e.g. "Iron Sheets x4".
+        return value.Split(';')
+            .Select(part => part.Trim())
+            .Where(part => part.Length > 0)
+            .Select(part =>
+            {
+                var mark = part.LastIndexOf('x');
+                if (mark > 0 && double.TryParse(part.Substring(mark + 1).Trim(), NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out var amount))
+                {
+                    return new Ingredient(part.Substring(0, mark).Trim(), amount);
+                }
+
+                return new Ingredient(part, 1);
+            })
+            .ToArray();
     }
 
     private static double Number(string value)

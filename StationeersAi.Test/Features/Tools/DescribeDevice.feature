@@ -1,7 +1,8 @@
 Feature: Describe device tool
 
   The describe_device tool reports one live device in full: its logic
-  settings with live values, and its slots with occupants.
+  settings with live values, its slots with occupants, and how far its
+  construction has come.
 
   Scenario: Describe a device
     Given the device "Air Vent" exists
@@ -11,6 +12,7 @@ Feature: Describe device tool
       """
       Device: Air Vent (StructureAirVent #101)
       Network: 7, On: yes
+      Build: unknown.
       Logic:
       | Name     | Value | Writable |
       | -------- | ----- | -------- |
@@ -30,6 +32,7 @@ Feature: Describe device tool
       """
       Device: Air Vent (StructureAirVent #101)
       Network: 7, On: yes
+      Build: unknown.
       Logic:
       | Name     | Value | Writable |
       | -------- | ----- | -------- |
@@ -41,6 +44,59 @@ Feature: Describe device tool
       | 0 | Filter | empty    |
       """
 
+  Scenario: Describe an unfinished structure
+    Given the device "Furnace" stands at stage 1 of 3 with steps:
+      | State | Tool          | Materials      |
+      | 2     | Wrench        | Iron Sheets x2 |
+      | 3     | Welding Torch | Iron Sheets x2 |
+    When I describe the device "Furnace"
+    Then the tool succeeds
+    And the tool result is:
+      """
+      Device: Furnace (StructureFurnace #101)
+      Network: 7, On: yes
+      Build: 1/3
+      2. Wrench - Iron Sheets x2
+      3. Welding Torch - Iron Sheets x2
+      Logic: none readable.
+      Slots: none.
+      """
+
+  Scenario: Describe a finished structure
+    Given the device "Air Vent" stands finished
+    When I describe the device "Air Vent"
+    Then the tool succeeds
+    And the tool result is:
+      """
+      Device: Air Vent (StructureAirVent #101)
+      Network: 7, On: yes
+      Build: complete.
+      Logic: none readable.
+      Slots: none.
+      """
+
+  Scenario: Describe a structure needing tools
+    Given the device "Satellite Dish" stands at stage 1 of 3 with steps:
+      | State | Tool   | Materials        |
+      | 2     | Wrench | Steel Sheets x20 |
+      | 3     |        | Cable Coil x10   |
+    When I describe the device "Satellite Dish"
+    Then the tool succeeds
+    And the tool result is:
+      """
+      Device: Satellite Dish (StructureSatelliteDish #101)
+      Network: 7, On: yes
+      Build: 1/3
+      2. Wrench - Steel Sheets x20
+      3. Cable Coil x10
+      Logic: none readable.
+      Slots: none.
+      """
+
+  Scenario: Describe needs a device
+    When I call the "describe_device" tool without arguments
+    Then the tool fails with "Missing required argument 'device'."
+
   Scenario: Describe a housing
     Given the housing "Housing" exists
     When I describe the device "Housing"
@@ -49,6 +105,7 @@ Feature: Describe device tool
       """
       Device: Housing (StructureCircuitHousing #100)
       Network: 7
+      Build: unknown.
       Logic: none readable.
       Slots: none.
       Devices:
@@ -67,6 +124,7 @@ Feature: Describe device tool
       """
       Device: Housing (StructureCircuitHousing #100)
       Network: 7
+      Build: unknown.
       Logic: none readable.
       Slots: none.
       Devices:
@@ -94,6 +152,7 @@ Feature: Describe device tool
       """
       Device: Gas Sensor (StructureGasSensor #1482)
       Network: 1194
+      Build: unknown.
       Logic:
       | Name               | Value     | Writable |
       | ------------------ | --------- | -------- |
@@ -113,6 +172,7 @@ Feature: Describe device tool
       """
       Device: Gas Sensor (StructureGasSensor #1482)
       Network: 1194
+      Build: unknown.
       Logic:
       | Name               | Value     | Writable |
       | ------------------ | --------- | -------- |

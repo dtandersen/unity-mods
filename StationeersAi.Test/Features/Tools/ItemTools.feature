@@ -31,6 +31,14 @@ Feature: Item tools
     When I call the "search_items" tool without arguments
     Then the tool fails with "Missing required argument 'query'."
 
+  Scenario: No match reports the query
+    When I call the "search_items" tool with query "plastic"
+    Then the tool succeeds
+    And the tool result is:
+      """
+      No items found for 'plastic'.
+      """
+
   Scenario: The item tool reports an unknown tool
     When I call the "no_such_tool" tool with query "steel"
     Then the tool fails with "Unknown tool 'no_such_tool'."

@@ -7,7 +7,7 @@ using Caev.Tools;
 
 namespace StationeersAi.Tool;
 
-/// <summary>Tool: find structures whose name matches a query, as CSV.</summary>
+/// <summary>Tool: find structures whose name matches a query, with build steps.</summary>
 public sealed class SearchStructuresTool : ITool
 {
     private readonly SearchStructuresCommand _command;
@@ -19,7 +19,7 @@ public sealed class SearchStructuresTool : ITool
 
     public ToolDefinition Definition { get; } = new ToolDefinition(
         "search_structures",
-        "Search the game's buildable structures by name. Returns CSV with columns Name, Description, Id.",
+        "Search the game's buildable structures by name. Returns each match with its Name, Description, and build Steps, one line per stage (e.g. '2. Wrench - Iron Sheets x2').",
         new[] { new ToolParameter("query", "Text to match against structure names, e.g. 'solar'.") });
 
     public ToolResult Execute(ToolArguments arguments)
@@ -47,13 +47,23 @@ public sealed class SearchStructuresTool : ITool
             return $"No structures found for '{query}'.";
         }
 
-        var rows = structures.Select(structure => new[]
-        {
-            structure.Name ?? string.Empty,
-            structure.Description ?? string.Empty,
-            structure.Id ?? string.Empty,
-        });
+        return string.Join("\n\n", structures.Select(FormatStructure));
+    }
 
-        return Csv.Build(new[] { "Name", "Description", "Id" }, rows);
+    private static string FormatStructure(Structure structure)
+    {
+        var lines = new List<string>
+        {
+            $"Name: {structure.Name ?? string.Empty}",
+            $"Description: {structure.Description ?? string.Empty}",
+            "Steps:",
+        };
+
+        foreach (var step in structure.Steps ?? Array.Empty<BuildStep>())
+        {
+            lines.Add(BuildStepText.Format(step));
+        }
+
+        return string.Join("\n", lines);
     }
 }

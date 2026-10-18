@@ -91,7 +91,45 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
             ReadSlots(target as ILogicable),
             ReadHousingDevices(target),
             ReadChip(target),
-            ReadStorage(target));
+            ReadStorage(target),
+            ReadBuild(target as Assets.Scripts.Objects.Structure));
+    }
+
+    /// <summary>
+    /// How far construction of the placed structure has come, with one step
+    /// per unfinished state after the current one. Null when the device is
+    /// no structure or the game reports no stages.
+    /// </summary>
+    private static BuildProgress? ReadBuild(Assets.Scripts.Objects.Structure? structure)
+    {
+        try
+        {
+            var states = structure?.BuildStates;
+            if (states == null || states.Count == 0)
+            {
+                return null;
+            }
+
+            var index = structure!.CurrentBuildStateIndex;
+            if (index < 0)
+            {
+                index = 0;
+            }
+
+            if (index > states.Count - 1)
+            {
+                index = states.Count - 1;
+            }
+
+            return new BuildProgress(
+                index + 1,
+                states.Count,
+                BuildMaterials.StepsFrom(states, index + 1));
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 
     /// <summary>

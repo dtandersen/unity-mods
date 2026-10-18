@@ -37,3 +37,4 @@ integration.settings.json
 # OS
 .DS_Store
 Thumbs.db
+data/

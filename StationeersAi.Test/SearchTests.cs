@@ -18,8 +18,8 @@ public class SearchTests
 
     private static InMemoryStructureRepository Structures() => new InMemoryStructureRepository(new[]
     {
-        new Structure("StructureSolarPanel", "Solar Panel", "Generates power."),
-        new Structure("StructureSolidFuelGenerator", "Solid Fuel Generator", "Burns coal."),
+        new Structure("StructureSolarPanel", "Solar Panel", "Generates power.", new BuildStep[0]),
+        new Structure("StructureSolidFuelGenerator", "Solid Fuel Generator", "Burns coal.", new BuildStep[0]),
     });
 
     private static InMemoryRecipeRepository Recipes() => new InMemoryRecipeRepository(new[]

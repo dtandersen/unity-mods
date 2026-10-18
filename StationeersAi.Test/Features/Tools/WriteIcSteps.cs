@@ -54,6 +54,12 @@ public sealed class WriteIcSteps
         Write(computer, code, "");
     }
 
+    [When("I write {int} lines to computer {string} with chip hash {string}")]
+    public void WhenIWriteLinesToComputerWithChipHash(int lines, string computer, string hash)
+    {
+        Write(computer, string.Join("\n", System.Linq.Enumerable.Repeat("yield", lines)), hash);
+    }
+
     private void Write(string computer, string code, string hash)
     {
         var values = new Dictionary<string, string>

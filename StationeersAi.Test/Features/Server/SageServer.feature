@@ -9,7 +9,15 @@ Feature: Sage HTTP API
     When I GET /sage/players
     Then the response is:
       """
-      {"X":1.0,"Y":2.0,"Z":3.0,"World":"Europa","Details":null,"RoomId":null,"FacingYaw":null}
+      {
+        "X": 1.0,
+        "Y": 2.0,
+        "Z": 3.0,
+        "World": "Europa",
+        "Details": null,
+        "RoomId": null,
+        "FacingYaw": null
+      }
       """
 
   Scenario: Inventory search
@@ -20,7 +28,14 @@ Feature: Sage HTTP API
     When I GET /sage/inventory?q=coil
     Then the response is:
       """
-      [{"Id":"Cable Coil","Name":"Cable Coil","Quantity":null,"Slot":"Toolbelt"}]
+      [
+        {
+          "Id": "Cable Coil",
+          "Name": "Cable Coil",
+          "Quantity": null,
+          "Slot": "Toolbelt"
+        }
+      ]
       """
 
   Scenario: Inventory search reports the hand
@@ -30,7 +45,15 @@ Feature: Sage HTTP API
     When I GET /sage/inventory?q=welder
     Then the response is:
       """
-      [{"Id":"Welder","Name":"Welder","Quantity":null,"Slot":"Right hand","Hand":"Right"}]
+      [
+        {
+          "Id": "Welder",
+          "Name": "Welder",
+          "Quantity": null,
+          "Slot": "Right hand",
+          "Hand": "Right"
+        }
+      ]
       """
 
   Scenario: Device search
@@ -41,7 +64,16 @@ Feature: Sage HTTP API
     When I GET /sage/devices?q=vent
     Then the response is:
       """
-      [{"Name":"Air Vent","Type":"StructureAirVent","Thing":101,"NetworkId":7,"Logic":true,"RoomId":5}]
+      [
+        {
+          "Name": "Air Vent",
+          "Type": "StructureAirVent",
+          "Thing": 101,
+          "NetworkId": 7,
+          "Logic": true,
+          "RoomId": 5
+        }
+      ]
       """
 
   Scenario: Item catalogue search
@@ -51,7 +83,13 @@ Feature: Sage HTTP API
     When I GET /sage/items?q=coil
     Then the response is:
       """
-      [{"Id":"Cable Coil","Name":"Cable Coil","Type":"Item"}]
+      [
+        {
+          "Id": "Cable Coil",
+          "Name": "Cable Coil",
+          "Type": "Item"
+        }
+      ]
       """
 
   Scenario: Recipe search
@@ -61,7 +99,21 @@ Feature: Sage HTTP API
     When I GET /sage/recipes?q=coil
     Then the response is:
       """
-      [{"Id":"Cable Coil","ResultItemId":"Cable Coil","Name":"Cable Coil","Amount":1,"Station":"Electronics Printer","Ingredients":[{"ItemId":"Copper","Amount":5.0}]}]
+      [
+        {
+          "Id": "Cable Coil",
+          "ResultItemId": "Cable Coil",
+          "Name": "Cable Coil",
+          "Amount": 1,
+          "Station": "Electronics Printer",
+          "Ingredients": [
+            {
+              "ItemId": "Copper",
+              "Amount": 5.0
+            }
+          ]
+        }
+      ]
       """
 
   Scenario: Stationpedia search
@@ -71,7 +123,14 @@ Feature: Sage HTTP API
     When I GET /sage/stationpedia?q=cable
     Then the response is:
       """
-      [{"Key":"ItemCable","Title":"Cable Coil","Description":"Spooled wire.","Text":"Cable Coil carries power."}]
+      [
+        {
+          "Key": "ItemCable",
+          "Title": "Cable Coil",
+          "Description": "Spooled wire.",
+          "Text": "Cable Coil carries power."
+        }
+      ]
       """
 
   Scenario: MIPS reference
@@ -79,7 +138,13 @@ Feature: Sage HTTP API
     When I GET /sage/instructions?instruction=add
     Then the response is:
       """
-      [{"Name":"add","Example":"add r? device var","Description":"Does add."}]
+      [
+        {
+          "Name": "add",
+          "Example": "add r? device var",
+          "Description": "Does add."
+        }
+      ]
       """
 
   Scenario: Circuit housing read
@@ -87,7 +152,10 @@ Feature: Sage HTTP API
     When I GET /sage/circuit-housings/2200
     Then the response is:
       """
-      {"SourceCode":"alias a d0","Hash":"8044fec0"}
+      {
+        "SourceCode": "alias a d0",
+        "Hash": "8044fec0"
+      }
       """
 
   Scenario: Computer read
@@ -96,7 +164,12 @@ Feature: Sage HTTP API
     When I GET /sage/computer/1189
     Then the response is:
       """
-      {"Name":"Lab Computer","Device":2200,"SourceCode":"alias a d0","Hash":"8044fec0"}
+      {
+        "Name": "Lab Computer",
+        "Device": 2200,
+        "SourceCode": "alias a d0",
+        "Hash": "8044fec0"
+      }
       """
 
   Scenario: Unknown computer read
@@ -121,7 +194,37 @@ Feature: Sage HTTP API
     When I GET /sage/world
     Then the response is:
       """
-      {"WorldName":"Europa","WorldId":"Europa1","Gravity":-9.8,"DaysPast":12,"HasLava":false,"IsCreative":false,"DayLength":"20m","YearLength":"60d","DaysPerYear":72.0,"Eccentricity":0.01,"SemiMajorAxisAu":5.2,"Inclination":3.1,"TidallyLocked":false,"SolarIrradiance":500.0,"EarthSolarRatio":0.37,"TimeOfDay":0.35,"IsEclipse":false,"OutsideTemperatureC":-20.0,"OutsidePressureKpa":0.0,"OutsideAir":[{"Gas":"Nitrogen","Percent":90.0},{"Gas":"Oxygen","Percent":10.0}]}
+      {
+        "WorldName": "Europa",
+        "WorldId": "Europa1",
+        "Gravity": -9.8,
+        "DaysPast": 12,
+        "HasLava": false,
+        "IsCreative": false,
+        "DayLength": "20m",
+        "YearLength": "60d",
+        "DaysPerYear": 72.0,
+        "Eccentricity": 0.01,
+        "SemiMajorAxisAu": 5.2,
+        "Inclination": 3.1,
+        "TidallyLocked": false,
+        "SolarIrradiance": 500.0,
+        "EarthSolarRatio": 0.37,
+        "TimeOfDay": 0.35,
+        "IsEclipse": false,
+        "OutsideTemperatureC": -20.0,
+        "OutsidePressureKpa": 0.0,
+        "OutsideAir": [
+          {
+            "Gas": "Nitrogen",
+            "Percent": 90.0
+          },
+          {
+            "Gas": "Oxygen",
+            "Percent": 10.0
+          }
+        ]
+      }
       """
 
   Scenario: Structure catalogue search
@@ -131,7 +234,14 @@ Feature: Sage HTTP API
     When I GET /sage/structures?q=vent
     Then the response is:
       """
-      [{"Id":"Air Vent","Name":"Air Vent","Description":"Moves air."}]
+      [
+        {
+          "Id": "Air Vent",
+          "Name": "Air Vent",
+          "Description": "Moves air.",
+          "Steps": []
+        }
+      ]
       """
 
   Scenario: Structure names ship without rich text
@@ -141,7 +251,14 @@ Feature: Sage HTTP API
     When I GET /sage/structures?q=autolathe
     Then the response is:
       """
-      [{"Id":"Autolathe","Name":"Autolathe","Description":"Prints."}]
+      [
+        {
+          "Id": "Autolathe",
+          "Name": "Autolathe",
+          "Description": "Prints.",
+          "Steps": []
+        }
+      ]
       """
 
   Scenario: Stationpedia read
@@ -151,7 +268,12 @@ Feature: Sage HTTP API
     When I GET /sage/stationpedia/ItemCable
     Then the response is:
       """
-      {"Key":"ItemCable","Title":"Cable Coil","Description":"Spooled wire.","Text":"Cable Coil carries power."}
+      {
+        "Key": "ItemCable",
+        "Title": "Cable Coil",
+        "Description": "Spooled wire.",
+        "Text": "Cable Coil carries power."
+      }
       """
 
   Scenario: Stationpedia text ships without rich text
@@ -161,7 +283,12 @@ Feature: Sage HTTP API
     When I GET /sage/stationpedia/ItemFan
     Then the response is:
       """
-      {"Key":"ItemFan","Title":"Fan","Description":"Moves air.","Text":"Plain."}
+      {
+        "Key": "ItemFan",
+        "Title": "Fan",
+        "Description": "Moves air.",
+        "Text": "Plain."
+      }
       """
 
   Scenario: Device describe
@@ -169,7 +296,36 @@ Feature: Sage HTTP API
     When I GET /sage/devices/Air Vent
     Then the response is:
       """
-      {"Name":"Air Vent","Type":"StructureAirVent","Thing":101,"NetworkId":7,"IsOn":true,"Logic":[{"Name":"Pressure","Value":101.3,"Writable":false},{"Name":"On","Value":1.0,"Writable":true}],"Slots":[{"Index":0,"Slot":"Filter","Occupant":"empty"}],"Devices":null,"Chip":null,"Storage":null}
+      {
+        "Name": "Air Vent",
+        "Type": "StructureAirVent",
+        "Thing": 101,
+        "NetworkId": 7,
+        "IsOn": true,
+        "Logic": [
+          {
+            "Name": "Pressure",
+            "Value": 101.3,
+            "Writable": false
+          },
+          {
+            "Name": "On",
+            "Value": 1.0,
+            "Writable": true
+          }
+        ],
+        "Slots": [
+          {
+            "Index": 0,
+            "Slot": "Filter",
+            "Occupant": "empty"
+          }
+        ],
+        "Devices": null,
+        "Chip": null,
+        "Storage": null,
+        "Build": null
+      }
       """
 
   Scenario: Device describe includes fabricator storage
@@ -180,7 +336,39 @@ Feature: Sage HTTP API
     When I GET /sage/devices/1456
     Then the response is:
       """
-      {"Name":"Autolathe","Type":"StructureAutolathe","Thing":1456,"NetworkId":0,"IsOn":false,"Logic":[],"Slots":[{"Index":0,"Slot":"Import","Occupant":"empty"},{"Index":1,"Slot":"Export","Occupant":"empty"}],"Devices":null,"Chip":null,"Storage":[{"Reagent":"Iron","Quantity":60.0},{"Reagent":"Copper","Quantity":12.5}]}
+      {
+        "Name": "Autolathe",
+        "Type": "StructureAutolathe",
+        "Thing": 1456,
+        "NetworkId": 0,
+        "IsOn": false,
+        "Logic": [],
+        "Slots": [
+          {
+            "Index": 0,
+            "Slot": "Import",
+            "Occupant": "empty"
+          },
+          {
+            "Index": 1,
+            "Slot": "Export",
+            "Occupant": "empty"
+          }
+        ],
+        "Devices": null,
+        "Chip": null,
+        "Storage": [
+          {
+            "Reagent": "Iron",
+            "Quantity": 60.0
+          },
+          {
+            "Reagent": "Copper",
+            "Quantity": 12.5
+          }
+        ],
+        "Build": null
+      }
       """
 
   Scenario: Thing search
@@ -190,7 +378,26 @@ Feature: Sage HTTP API
     When I GET /sage/things?q=ingot
     Then the response is:
       """
-      {"things":[{"Name":"Iron Ingot","Type":"Ingot","Thing":501,"Quantity":"x5","X":1.0,"Y":2.0,"Z":4.0,"RoomId":0}],"origin":{"X":1.0,"Y":2.0,"Z":3.0},"facing":null}
+      {
+        "things": [
+          {
+            "Name": "Iron Ingot",
+            "Type": "Ingot",
+            "Thing": 501,
+            "Quantity": "x5",
+            "X": 1.0,
+            "Y": 2.0,
+            "Z": 4.0,
+            "RoomId": 0
+          }
+        ],
+        "origin": {
+          "X": 1.0,
+          "Y": 2.0,
+          "Z": 3.0
+        },
+        "facing": null
+      }
       """
 
   Scenario: Thing slots list container slots
@@ -201,7 +408,18 @@ Feature: Sage HTTP API
     When I GET /sage/things/301/slots
     Then the response is:
       """
-      [{"Slot":"Slot 1","Name":"Iron Ore","Quantity":"x12"},{"Slot":"Slot 2","Name":"Copper Ore","Quantity":"x4"}]
+      [
+        {
+          "Slot": "Slot 1",
+          "Name": "Iron Ore",
+          "Quantity": "x12"
+        },
+        {
+          "Slot": "Slot 2",
+          "Name": "Copper Ore",
+          "Quantity": "x4"
+        }
+      ]
       """
 
   Scenario: Thing quantity ships without rich text
@@ -211,7 +429,26 @@ Feature: Sage HTTP API
     When I GET /sage/things?q=methane
     Then the response is:
       """
-      {"things":[{"Name":"Methane Filter","Type":"Filter","Thing":502,"Quantity":"100%","X":1.0,"Y":2.0,"Z":4.0,"RoomId":0}],"origin":{"X":1.0,"Y":2.0,"Z":3.0},"facing":null}
+      {
+        "things": [
+          {
+            "Name": "Methane Filter",
+            "Type": "Filter",
+            "Thing": 502,
+            "Quantity": "100%",
+            "X": 1.0,
+            "Y": 2.0,
+            "Z": 4.0,
+            "RoomId": 0
+          }
+        ],
+        "origin": {
+          "X": 1.0,
+          "Y": 2.0,
+          "Z": 3.0
+        },
+        "facing": null
+      }
       """
 
   Scenario: Room read
@@ -223,24 +460,48 @@ Feature: Sage HTTP API
     When I GET /sage/rooms/5
     Then the response is:
       """
-      {"RoomId":5,"RoomType":"sealed","TemperatureC":20.0,"PressureKpa":101.0,"VolumeLitres":100.0,"Gases":[{"Gas":"Oxygen","Moles":10.0},{"Gas":"Nitrogen","Moles":40.0}]}
+      {
+        "RoomId": 5,
+        "RoomType": "sealed",
+        "TemperatureC": 20.0,
+        "PressureKpa": 101.0,
+        "VolumeLitres": 100.0,
+        "Gases": [
+          {
+            "Gas": "Oxygen",
+            "Moles": 10.0
+          },
+          {
+            "Gas": "Nitrogen",
+            "Moles": 40.0
+          }
+        ]
+      }
       """
 
   Scenario: IC editor write
     Given the chip under the dropdown holds "yield"
     When I PUT /sage/computer/1189 with:
       """
-      {"sourceCode":"alias a d0","hash":"6c96f2ae"}
+      {
+        "sourceCode": "alias a d0",
+        "hash": "6c96f2ae"
+      }
       """
     Then the response is:
       """
-      {"Device":"Lab Computer","Lines":1}
+      {
+        "Device": "Lab Computer",
+        "Lines": 1
+      }
       """
 
   Scenario: IC editor write without a chip hash
     When I PUT /sage/computer/1189 with:
       """
-      {"sourceCode":"alias a d0"}
+      {
+        "sourceCode": "alias a d0"
+      }
       """
     Then the response status is 400
     And the response reports "A chip hash is required to write: name the hash of the chip under the dropdown."
@@ -249,11 +510,16 @@ Feature: Sage HTTP API
     Given the export succeeds
     When I PUT /sage/computer/1189/export with:
       """
-      {"device":"2200"}
+      {
+        "device": "2200"
+      }
       """
     Then the response is:
       """
-      {"Device":"Climate Control","Lines":37}
+      {
+        "Device": "Climate Control",
+        "Lines": 37
+      }
       """
 
   Scenario: IC import
@@ -269,23 +535,33 @@ Feature: Sage HTTP API
       """
     Then the response is:
       """
-      {"Device":"Lab Computer","Lines":3}
+      {
+        "Device": "Lab Computer",
+        "Lines": 3
+      }
       """
 
   Scenario: IC select housing
     When I PUT /sage/computer/1189/select with:
       """
-      {"device":"2200"}
+      {
+        "device": "2200"
+      }
       """
     Then the response is:
       """
-      {"Device":"Climate Control","Lines":0}
+      {
+        "Device": "Climate Control",
+        "Lines": 0
+      }
       """
 
   Scenario: IC burn names a housing by label
     When I PUT /sage/computer/1189/export with:
       """
-      {"device":"Climate Control"}
+      {
+        "device": "Climate Control"
+      }
       """
     Then the response status is 400
     And the response reports "device must be a thing id."
@@ -293,7 +569,9 @@ Feature: Sage HTTP API
   Scenario: Screen write without text to write
     When I PUT /sage/computer/1189 with:
       """
-      {"hash":"6c96f2ae"}
+      {
+        "hash": "6c96f2ae"
+      }
       """
     Then the response status is 400
     And the response reports "sourceCode is required."

@@ -33,6 +33,7 @@ public sealed class DescribeDeviceSteps
             new[] { new DeviceSlotInfo(0, "Filter", "empty") },
             null,
             null,
+            null,
             null);
     }
 
@@ -55,7 +56,8 @@ public sealed class DescribeDeviceSteps
             null,
             table.Rows.Select(row => new ReagentAmount(
                 row["Reagent"],
-                double.Parse(row["Quantity"], CultureInfo.InvariantCulture))).ToArray());
+                double.Parse(row["Quantity"], CultureInfo.InvariantCulture))).ToArray(),
+            null);
     }
 
     [Given("the housing {string} exists")]
@@ -76,6 +78,7 @@ public sealed class DescribeDeviceSteps
                 new HousingDeviceEntry("d1", "empty", 0),
             },
             null,
+            null,
             null);
     }
 
@@ -94,7 +97,48 @@ public sealed class DescribeDeviceSteps
             details.Slots,
             details.Devices,
             new ChipState("IncorrectVariable", "12", 294, "6c96f2ae"),
-            details.Storage);
+            details.Storage,
+            details.Build);
+    }
+
+    [Given("the device {string} stands at stage {int} of {int} with steps:")]
+    public void GivenTheDeviceStandsAtStage(string name, int stage, int stages, Table table)
+    {
+        World.Inspector.Details = new DeviceDetails(
+            name,
+            "Structure" + name.Replace(" ", string.Empty),
+            101,
+            7,
+            true,
+            new DeviceLogicValue[0],
+            new DeviceSlotInfo[0],
+            null,
+            null,
+            null,
+            new BuildProgress(
+                stage,
+                stages,
+                table.Rows.Select(row => new BuildStep(
+                    int.Parse(row["State"], CultureInfo.InvariantCulture),
+                    row.ContainsKey("Tool") && !string.IsNullOrWhiteSpace(row["Tool"]) ? row["Tool"].Trim() : null,
+                    DatabaseSteps.Materials(row.ContainsKey("Materials") ? row["Materials"] : string.Empty))).ToArray()));
+    }
+
+    [Given("the device {string} stands finished")]
+    public void GivenTheDeviceStandsFinished(string name)
+    {
+        World.Inspector.Details = new DeviceDetails(
+            name,
+            "Structure" + name.Replace(" ", string.Empty),
+            101,
+            7,
+            true,
+            new DeviceLogicValue[0],
+            new DeviceSlotInfo[0],
+            null,
+            null,
+            null,
+            new BuildProgress(1, 1, Array.Empty<BuildStep>()));
     }
 
     [Given("no device matches")]
@@ -123,6 +167,7 @@ public sealed class DescribeDeviceSteps
                 new DeviceLogicValue("RatioNitrogen", 0.0241535, false),
             },
             new DeviceSlotInfo[0],
+            null,
             null,
             null,
             null);
