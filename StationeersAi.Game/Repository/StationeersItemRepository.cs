@@ -42,7 +42,7 @@ public sealed class StationeersItemRepository : IItemRepository
 
     public ItemEntity GetById(string id)
     {
-        return GetAll().FirstOrDefault(item => item.Id == id);
+        return GetAll().FirstOrDefault(item => item.PrefabName == id);
     }
 
     private IReadOnlyList<ItemEntity> ReadAll()
@@ -63,7 +63,7 @@ public sealed class StationeersItemRepository : IItemRepository
 
             var name = SafeDisplayName(prefab);
             items.Add(new ItemEntity(
-                Id: prefab.PrefabName,
+                PrefabName: prefab.PrefabName,
                 Name: name,
                 Type: prefab.GetType().Name));
         }

@@ -38,7 +38,7 @@ Sage can call these tools:
 | Tool | Data |
 |---|---|
 | `search_items` | Items by name (from the prefab catalogue) |
-| `search_structures` | Buildable structures by name, with build stages |
+| `search_structures` | Buildable structures by name, with build states |
 | `search_recipes` | Manufacturing recipes with station + ingredients |
 | `search_stationpedia` / `read_stationpedia` | In-game encyclopedia pages |
 | `search_inventory` | What you are carrying and where it is worn |

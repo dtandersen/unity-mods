@@ -22,17 +22,17 @@ Feature: Sage HTTP API
 
   Scenario: Inventory search
     Given my inventory contains:
-      | Item       | Slot      |
-      | Cable Coil | Toolbelt  |
-      | Iron Ingot | Backpack  |
+      | Item       | Slot     | Quantity |
+      | Cable Coil | Toolbelt | x5       |
+      | Iron Ingot | Backpack | x10      |
     When I GET /sage/inventory?q=coil
     Then the response is:
       """
       [
         {
-          "Id": "Cable Coil",
+          "PrefabName": "Cable Coil",
           "Name": "Cable Coil",
-          "Quantity": null,
+          "Quantity": "x5",
           "Slot": "Toolbelt"
         }
       ]
@@ -47,7 +47,7 @@ Feature: Sage HTTP API
       """
       [
         {
-          "Id": "Welder",
+          "PrefabName": "Welder",
           "Name": "Welder",
           "Quantity": null,
           "Slot": "Right hand",
@@ -85,7 +85,7 @@ Feature: Sage HTTP API
       """
       [
         {
-          "Id": "Cable Coil",
+          "PrefabName": "Cable Coil",
           "Name": "Cable Coil",
           "Type": "Item"
         }
@@ -236,10 +236,10 @@ Feature: Sage HTTP API
       """
       [
         {
-          "Id": "Air Vent",
+          "PrefabName": "Air Vent",
           "Name": "Air Vent",
           "Description": "Moves air.",
-          "Steps": []
+          "BuildStates": []
         }
       ]
       """
@@ -253,10 +253,10 @@ Feature: Sage HTTP API
       """
       [
         {
-          "Id": "Autolathe",
+          "PrefabName": "Autolathe",
           "Name": "Autolathe",
           "Description": "Prints.",
-          "Steps": []
+          "BuildStates": []
         }
       ]
       """

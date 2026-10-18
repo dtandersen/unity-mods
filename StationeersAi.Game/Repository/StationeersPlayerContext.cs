@@ -85,7 +85,7 @@ public sealed class StationeersPlayerContext : IPlayerContext
         var name = StationeersItemRepository.SafeDisplayName(occupant);
         var label = SlotName(slot, fallbackName);
         inventory.Add(new ItemStack(
-            Id: occupant.PrefabName,
+            PrefabName: occupant.PrefabName,
             Name: name,
             Quantity: QuantityText(occupant),
             Slot: label,
@@ -139,7 +139,7 @@ public sealed class StationeersPlayerContext : IPlayerContext
             }
 
             inventory.Add(new ItemStack(
-                Id: nested.PrefabName,
+                PrefabName: nested.PrefabName,
                 Name: StationeersItemRepository.SafeDisplayName(nested),
                 Quantity: QuantityText(nested),
                 Slot: parentSlot));

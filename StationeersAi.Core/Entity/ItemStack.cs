@@ -9,7 +9,7 @@ namespace StationeersAi.Entity;
 /// "Right" when the stack sits in a hand, else null.
 /// </summary>
 public sealed record ItemStack(
-    string Id,
+    string PrefabName,
     string? Name,
     string? Quantity,
     string Slot,

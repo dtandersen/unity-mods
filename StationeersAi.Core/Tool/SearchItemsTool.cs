@@ -51,9 +51,9 @@ public sealed class SearchItemsTool : ITool
         {
             item.Name ?? string.Empty,
             item.Type ?? string.Empty,
-            item.Id ?? string.Empty,
+            item.PrefabName ?? string.Empty,
         });
 
-        return Csv.Build(new[] { "Name", "Type", "Id" }, rows);
+        return Csv.Build(new[] { "Name", "Type", "PrefabName" }, rows);
     }
 }

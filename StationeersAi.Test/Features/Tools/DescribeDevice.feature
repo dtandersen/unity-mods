@@ -12,7 +12,7 @@ Feature: Describe device tool
       """
       Device: Air Vent (StructureAirVent #101)
       Network: 7, On: yes
-      Build: unknown.
+      Build states: unknown.
       Logic:
       | Name     | Value | Writable |
       | -------- | ----- | -------- |
@@ -32,7 +32,7 @@ Feature: Describe device tool
       """
       Device: Air Vent (StructureAirVent #101)
       Network: 7, On: yes
-      Build: unknown.
+      Build states: unknown.
       Logic:
       | Name     | Value | Writable |
       | -------- | ----- | -------- |
@@ -46,16 +46,18 @@ Feature: Describe device tool
 
   Scenario: Describe an unfinished structure
     Given the device "Furnace" stands at stage 1 of 3 with steps:
-      | State | Tool          | Materials      |
-      | 2     | Wrench        | Iron Sheets x2 |
-      | 3     | Welding Torch | Iron Sheets x2 |
+      | State | PrefabName       | Name          | Quantity |
+      | 2     | ItemWrench       | Wrench        |          |
+      | 2     | ItemIronSheets   | Iron Sheets   | 2        |
+      | 3     | ItemWeldingTorch | Welding Torch |          |
+      | 3     | ItemIronSheets   | Iron Sheets   | 2        |
     When I describe the device "Furnace"
     Then the tool succeeds
     And the tool result is:
       """
       Device: Furnace (StructureFurnace #101)
       Network: 7, On: yes
-      Build: 1/3
+      Build states: 1/3
       2. Wrench - Iron Sheets x2
       3. Welding Torch - Iron Sheets x2
       Logic: none readable.
@@ -70,23 +72,24 @@ Feature: Describe device tool
       """
       Device: Air Vent (StructureAirVent #101)
       Network: 7, On: yes
-      Build: complete.
+      Build states: complete.
       Logic: none readable.
       Slots: none.
       """
 
   Scenario: Describe a structure needing tools
     Given the device "Satellite Dish" stands at stage 1 of 3 with steps:
-      | State | Tool   | Materials        |
-      | 2     | Wrench | Steel Sheets x20 |
-      | 3     |        | Cable Coil x10   |
+      | State | PrefabName      | Name         | Quantity |
+      | 2     | ItemWrench      | Wrench       |          |
+      | 2     | ItemSteelSheets | Steel Sheets | 20       |
+      | 3     | ItemCableCoil   | Cable Coil   | 10       |
     When I describe the device "Satellite Dish"
     Then the tool succeeds
     And the tool result is:
       """
       Device: Satellite Dish (StructureSatelliteDish #101)
       Network: 7, On: yes
-      Build: 1/3
+      Build states: 1/3
       2. Wrench - Steel Sheets x20
       3. Cable Coil x10
       Logic: none readable.
@@ -105,7 +108,7 @@ Feature: Describe device tool
       """
       Device: Housing (StructureCircuitHousing #100)
       Network: 7
-      Build: unknown.
+      Build states: unknown.
       Logic: none readable.
       Slots: none.
       Devices:
@@ -124,7 +127,7 @@ Feature: Describe device tool
       """
       Device: Housing (StructureCircuitHousing #100)
       Network: 7
-      Build: unknown.
+      Build states: unknown.
       Logic: none readable.
       Slots: none.
       Devices:
@@ -152,7 +155,7 @@ Feature: Describe device tool
       """
       Device: Gas Sensor (StructureGasSensor #1482)
       Network: 1194
-      Build: unknown.
+      Build states: unknown.
       Logic:
       | Name               | Value     | Writable |
       | ------------------ | --------- | -------- |
@@ -172,7 +175,7 @@ Feature: Describe device tool
       """
       Device: Gas Sensor (StructureGasSensor #1482)
       Network: 1194
-      Build: unknown.
+      Build states: unknown.
       Logic:
       | Name               | Value     | Writable |
       | ------------------ | --------- | -------- |

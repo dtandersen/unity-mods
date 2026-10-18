@@ -18,13 +18,19 @@ public sealed record HousingDeviceEntry(string Index, string? Label, long Thing)
 public sealed record ReagentAmount(string Reagent, double Quantity);
 
 /// <summary>
-/// One unfinished stage of a placed structure: its 1-based state number,
-/// the tool it needs held (null when the state names none — e.g. a sheets
-///-only stage), and the materials it consumes. Mirrors how the game itself
-/// reads a build state: entries that carry quantities are spent, the rest
-/// are tools you hold.
+/// One requirement of a build state: what to hold or spend, named the
+/// way Stationpedia names it. <see cref="PrefabName"/> is the stable id
+/// (e.g. <c>ItemIronSheets</c>), <see cref="Name"/> the display name, and
+/// <see cref="Quantity"/> how many the state consumes — null when it is a
+/// tool you hold rather than material you spend (e.g. <c>Wrench</c>).
 /// </summary>
-public sealed record BuildStep(int State, string? Tool, IReadOnlyList<Ingredient> Materials);
+public sealed record BuildEntry(string PrefabName, string Name, double? Quantity);
+
+/// <summary>
+/// One unfinished stage of a placed structure: its 1-based state number and
+/// what it requires, in the order the game lists them.
+/// </summary>
+public sealed record BuildStep(int State, IReadOnlyList<BuildEntry> Entries);
 
 /// <summary>
 /// How far construction of a placed structure has come: the current stage
@@ -32,7 +38,7 @@ public sealed record BuildStep(int State, string? Tool, IReadOnlyList<Ingredient
 /// it — the game spends the next state's entries, then moves on. The last
 /// stage reached means built.
 /// </summary>
-public sealed record BuildProgress(int Stage, int Stages, IReadOnlyList<BuildStep> Steps);
+public sealed record BuildProgress(int Stage, int Stages, IReadOnlyList<BuildStep> BuildStates);
 
 /// <summary>
 /// One device in full: identity, on/off state (null when it has no switch),

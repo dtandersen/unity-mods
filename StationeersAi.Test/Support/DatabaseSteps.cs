@@ -45,8 +45,8 @@ public sealed class DatabaseSteps
         }
     }
 
-    [Given("the structure {string} is built in steps:")]
-    public void GivenTheStructureIsBuiltInSteps(string name, Table table)
+    [Given("the structure {string} has build states:")]
+    public void GivenTheStructureHasBuildStates(string name, Table table)
     {
         var world = Hooks.GetWorld(_context);
         var current = world.Structures.GetById(name);
@@ -54,10 +54,22 @@ public sealed class DatabaseSteps
             name,
             current?.Name ?? name,
             current?.Description,
-            table.Rows.Select(row => new BuildStep(
-                int.Parse(row["State"], CultureInfo.InvariantCulture),
-                row.ContainsKey("Tool") && !string.IsNullOrWhiteSpace(row["Tool"]) ? row["Tool"].Trim() : null,
-                Materials(row.ContainsKey("Materials") ? row["Materials"] : string.Empty))).ToArray()));
+            Steps(table)));
+    }
+
+    internal static IReadOnlyList<BuildStep> Steps(Table table)
+    {
+        return table.Rows
+            .GroupBy(row => int.Parse(row["State"], CultureInfo.InvariantCulture))
+            .Select(group => new BuildStep(
+                group.Key,
+                group.Select(row => new BuildEntry(
+                    row["PrefabName"],
+                    row.ContainsKey("Name") && !string.IsNullOrWhiteSpace(row["Name"]) ? row["Name"].Trim() : row["PrefabName"],
+                    row.ContainsKey("Quantity") && !string.IsNullOrWhiteSpace(row["Quantity"])
+                        ? double.Parse(row["Quantity"], CultureInfo.InvariantCulture)
+                        : (double?)null)).ToArray()))
+            .ToArray();
     }
 
     [Given("the recipe database contains {string}")]

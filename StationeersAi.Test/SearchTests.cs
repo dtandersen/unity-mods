@@ -42,7 +42,7 @@ public class SearchTests
         var index = new ItemIndex(Items());
         index.Search("steel").Count.ShouldBe(2);
         index.Search("STEEL").Count.ShouldBe(2);
-        index.Search("copper")[0].Id.ShouldBe("ItemCopper");
+        index.Search("copper")[0].PrefabName.ShouldBe("ItemCopper");
     }
 
     [Test]
@@ -60,7 +60,7 @@ public class SearchTests
     {
         var index = new StructureIndex(Structures());
         index.Search("solar").Count.ShouldBe(1);
-        index.Search("generator")[0].Id.ShouldBe("StructureSolidFuelGenerator");
+        index.Search("generator")[0].PrefabName.ShouldBe("StructureSolidFuelGenerator");
         index.Search("airlock").ShouldBeEmpty();
     }
 

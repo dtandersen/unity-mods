@@ -118,10 +118,7 @@ public sealed class DescribeDeviceSteps
             new BuildProgress(
                 stage,
                 stages,
-                table.Rows.Select(row => new BuildStep(
-                    int.Parse(row["State"], CultureInfo.InvariantCulture),
-                    row.ContainsKey("Tool") && !string.IsNullOrWhiteSpace(row["Tool"]) ? row["Tool"].Trim() : null,
-                    DatabaseSteps.Materials(row.ContainsKey("Materials") ? row["Materials"] : string.Empty))).ToArray()));
+                DatabaseSteps.Steps(table)));
     }
 
     [Given("the device {string} stands finished")]

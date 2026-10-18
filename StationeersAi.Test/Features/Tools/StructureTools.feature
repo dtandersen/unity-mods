@@ -23,11 +23,13 @@ Feature: Structure tools
     Given the structure database contains:
       | Name    | Description |
       | Furnace | Smelts ore. |
-    And the structure "Furnace" is built in steps:
-      | State | Tool          | Materials      |
-      | 1     |               | Kit (Furnace) x1 |
-      | 2     | Wrench        | Iron Sheets x2 |
-      | 3     | Welding Torch | Iron Sheets x2 |
+    And the structure "Furnace" has build states:
+      | State | PrefabName       | Name           | Quantity |
+      | 1     | ItemKitFurnace   | Kit (Furnace)  | 1        |
+      | 2     | ItemWrench       | Wrench         |          |
+      | 2     | ItemIronSheets   | Iron Sheets    | 2        |
+      | 3     | ItemWeldingTorch | Welding Torch  |          |
+      | 3     | ItemIronSheets   | Iron Sheets    | 2        |
     When I call the "search_structures" tool with query "furnace"
     Then the tool succeeds
     And the tool result is:
@@ -44,9 +46,11 @@ Feature: Structure tools
     Given the structure database contains:
       | Name      | Description   |
       | Autolathe | Prints parts. |
-    And the structure "Autolathe" is built in steps:
-      | State | Tool | Materials                                        |
-      | 1     |      | Iron Sheets x4; Copper Wire x2; Glass Sheets x1 |
+    And the structure "Autolathe" has build states:
+      | State | PrefabName      | Name          | Quantity |
+      | 1     | ItemIronSheets  | Iron Sheets   | 4        |
+      | 1     | ItemCopperWire  | Copper Wire   | 2        |
+      | 1     | ItemGlassSheets | Glass Sheets  | 1        |
     When I call the "search_structures" tool with query "autolathe"
     Then the tool succeeds
     And the tool result is:

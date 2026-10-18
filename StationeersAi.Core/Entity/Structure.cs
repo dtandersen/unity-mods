@@ -8,4 +8,4 @@ namespace StationeersAi.Entity;
 /// <see cref="Steps"/> is how it builds, one step per build state in order
 /// (e.g. the furnace takes a kit, then wrench-held sheets, then welding).
 /// </summary>
-public sealed record Structure(string Id, string Name, string? Description, IReadOnlyList<BuildStep> Steps);
+public sealed record Structure(string PrefabName, string Name, string? Description, IReadOnlyList<BuildStep> BuildStates);

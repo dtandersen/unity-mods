@@ -42,7 +42,7 @@ public sealed class StationeersStructureRepository : IStructureRepository
 
     public StructureEntity? GetById(string id)
     {
-        return GetAll().FirstOrDefault(structure => structure.Id == id);
+        return GetAll().FirstOrDefault(structure => structure.PrefabName == id);
     }
 
     private IReadOnlyList<StructureEntity> ReadAll()
@@ -62,10 +62,10 @@ public sealed class StationeersStructureRepository : IStructureRepository
             }
 
             structures.Add(new StructureEntity(
-                Id: prefab.PrefabName,
+                PrefabName: prefab.PrefabName,
                 Name: StationeersItemRepository.SafeDisplayName(prefab),
                 Description: SafeTooltip(prefab),
-                Steps: SafeSteps((Assets.Scripts.Objects.Structure)prefab)));
+                BuildStates: SafeSteps((Assets.Scripts.Objects.Structure)prefab)));
         }
 
         return structures;

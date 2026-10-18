@@ -27,6 +27,6 @@ public sealed class InMemoryItemRepository : IItemRepository
 
     public Item GetById(string id)
     {
-        return _items.FirstOrDefault(item => item.Id == id);
+        return _items.FirstOrDefault(item => item.PrefabName == id);
     }
 }

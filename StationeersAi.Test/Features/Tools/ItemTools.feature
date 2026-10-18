@@ -22,7 +22,7 @@ Feature: Item tools
     Then the tool succeeds
     And the tool result is:
       """
-      Name,Type,Id
+      Name,Type,PrefabName
       Steel,Ingot,Steel
       Steel Sheets,Ingot,Steel Sheets
       """

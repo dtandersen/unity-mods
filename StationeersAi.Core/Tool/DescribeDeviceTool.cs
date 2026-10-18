@@ -78,16 +78,16 @@ public sealed class DescribeDeviceTool : ITool
     {
         if (build == null)
         {
-            return "Build: unknown.";
+            return "Build states: unknown.";
         }
 
         if (build.Stage >= build.Stages)
         {
-            return "Build: complete.";
+            return "Build states: complete.";
         }
 
-        var lines = new List<string> { $"Build: {build.Stage}/{build.Stages}" };
-        foreach (var step in build.Steps ?? Array.Empty<BuildStep>())
+        var lines = new List<string> { $"Build states: {build.Stage}/{build.Stages}" };
+        foreach (var step in build.BuildStates ?? Array.Empty<BuildStep>())
         {
             lines.Add(BuildStepText.Format(step));
         }

@@ -59,7 +59,7 @@ public sealed class SearchStructuresTool : ITool
             "Steps:",
         };
 
-        foreach (var step in structure.Steps ?? Array.Empty<BuildStep>())
+        foreach (var step in structure.BuildStates ?? Array.Empty<BuildStep>())
         {
             lines.Add(BuildStepText.Format(step));
         }

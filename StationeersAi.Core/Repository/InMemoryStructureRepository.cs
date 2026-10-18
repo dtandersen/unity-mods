@@ -22,7 +22,7 @@ public sealed class InMemoryStructureRepository : IStructureRepository
 
     public void Update(Structure structure)
     {
-        _structures.RemoveAll(existing => existing.Id == structure.Id);
+        _structures.RemoveAll(existing => existing.PrefabName == structure.PrefabName);
         _structures.Add(structure);
     }
 
@@ -33,6 +33,6 @@ public sealed class InMemoryStructureRepository : IStructureRepository
 
     public Structure? GetById(string id)
     {
-        return _structures.FirstOrDefault(structure => structure.Id == id);
+        return _structures.FirstOrDefault(structure => structure.PrefabName == id);
     }
 }
