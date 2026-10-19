@@ -18,4 +18,6 @@ Create Reqnroll features instead of TUnit test cases when able.
 
 ## Development
 
+Read development.md for build, test, and layout.
+
 Leave changes uncomitted for review.

@@ -50,6 +50,8 @@ public sealed class WorldContext : IDisposable, AgentSettings
 
     public InMemoryRoomInspector RoomInspector { get; } = new InMemoryRoomInspector();
 
+    public InMemoryPipeNetworkInspector PipeNetworks { get; } = new InMemoryPipeNetworkInspector();
+
     /// <summary>The one model this scenario talks to, standing by before the gateway is built.</summary>
     public FakeAiClient Ai { get; } = new FakeAiClient();
 

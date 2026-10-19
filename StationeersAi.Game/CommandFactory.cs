@@ -90,6 +90,11 @@ public sealed class CommandFactory
         return new StationeersRoomInspector(_executor, _log);
     }
 
+    public IPipeNetworkInspector PipeNetworks()
+    {
+        return new StationeersPipeNetworkInspector(_executor, _log);
+    }
+
     /// <summary>
     /// One <see cref="SageCommands"/> wired with fresh live readers. The
     /// router and the chat assistant share this, so both serve the same data.
@@ -109,6 +114,7 @@ public sealed class CommandFactory
             Inspector(),
             Things(),
             Slots(),
-            Rooms());
+            Rooms(),
+            PipeNetworks());
     }
 }

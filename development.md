@@ -163,7 +163,8 @@ Never commit credentials.
 - PrefabName: name of the Unity prefab (e.g. StructureFurnace)
 - Name: localized display name of a thing
 - RoomId: room the thing stands in (0 outside rooms)
-- NetworkId: data network the thing sits on (0 when it joins none)
+- NetworkId: referenceid to a data network
+- PipeNetworkId: referenceid to a pipe network
 - position: x, y, z coordinates of a thing in meters
 - BuildState: one unfinished build stage — its number and requirements (tool held, materials with quantities)
 - RecipeId: prefab name of what the recipe makes (the station names the machine)

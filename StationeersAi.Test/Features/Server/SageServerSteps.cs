@@ -150,7 +150,8 @@ public sealed class SageServerSteps
             world.Inspector,
             world.Things,
             world.ThingSlots,
-            world.RoomInspector);
+            world.RoomInspector,
+            world.PipeNetworks);
     }
 
     private static void Parse(string request, out string path, out IDictionary<string, string> query)

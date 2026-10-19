@@ -41,6 +41,7 @@ internal static class TestComposition
             new SearchThingsTool(new SearchThingsCommand(world.Things, world.Player)),
             new ReadSlotsTool(new ReadThingSlotsCommand(world.ThingSlots)),
             new ReadRoomTool(new ReadRoomCommand(world.RoomInspector, world.Player)),
+            new ReadPipeNetworkTool(new ReadPipeNetworkCommand(world.PipeNetworks)),
         });
     }
 

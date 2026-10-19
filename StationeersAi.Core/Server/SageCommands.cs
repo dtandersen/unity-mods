@@ -25,6 +25,7 @@ public sealed class SageCommands
     private readonly IThingCatalog _things;
     private readonly IThingSlots _slots;
     private readonly IRoomInspector _rooms;
+    private readonly IPipeNetworkInspector _pipeNetworks;
 
     public SageCommands(
         IItemRepository items,
@@ -39,7 +40,8 @@ public sealed class SageCommands
         IDeviceInspector inspector,
         IThingCatalog things,
         IThingSlots slots,
-        IRoomInspector rooms)
+        IRoomInspector rooms,
+        IPipeNetworkInspector pipeNetworks)
     {
         _items = items;
         _structures = structures;
@@ -54,6 +56,7 @@ public sealed class SageCommands
         _things = things;
         _slots = slots;
         _rooms = rooms;
+        _pipeNetworks = pipeNetworks;
     }
 
     public SearchItemsCommand SearchItems()
@@ -154,5 +157,10 @@ public sealed class SageCommands
     public ReadRoomCommand ReadRoom()
     {
         return new ReadRoomCommand(_rooms, _player);
+    }
+
+    public ReadPipeNetworkCommand ReadPipeNetwork()
+    {
+        return new ReadPipeNetworkCommand(_pipeNetworks);
     }
 }

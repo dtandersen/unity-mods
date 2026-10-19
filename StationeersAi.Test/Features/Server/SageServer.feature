@@ -605,6 +605,61 @@ Feature: Sage HTTP API
       }
       """
 
+  Scenario: Pipe network read
+    Given a Liquid pipe network 21665 at 20 C and 100 kPa in 100 L holding:
+      | MoleType | Moles |
+      | Water    | 300   |
+    When I GET /sage/pipe-networks/21665
+    Then the response is:
+      """
+      {
+        "PipeNetworkId": 21665,
+        "ContentType": "Liquid",
+        "TemperatureC": 20.0,
+        "PressureKpa": 100.0,
+        "VolumeLitres": 100.0,
+        "TotalMoles": 300.0,
+        "Gases": [
+          {
+            "MoleType": "Water",
+            "Moles": 300.0
+          }
+        ],
+        "Members": [
+          "Liquid Pipe Straight #21798"
+        ]
+      }
+      """
+
+  Scenario: Pipe networks joined to a device
+    Given a Liquid pipe network 21665 at 20 C and 100 kPa in 100 L holding:
+      | MoleType | Moles |
+      | Water    | 300   |
+    And device "20211" joins pipe network 21665
+    When I GET /sage/pipe-networks?device=20211
+    Then the response is:
+      """
+      [
+        {
+          "PipeNetworkId": 21665,
+          "ContentType": "Liquid",
+          "TemperatureC": 20.0,
+          "PressureKpa": 100.0,
+          "VolumeLitres": 100.0,
+          "TotalMoles": 300.0,
+          "Gases": [
+            {
+              "MoleType": "Water",
+              "Moles": 300.0
+            }
+          ],
+          "Members": [
+            "Liquid Pipe Straight #21798"
+          ]
+        }
+      ]
+      """
+
   Scenario: IC editor write
     Given the chip under the dropdown holds "yield"
     When I PUT /sage/computer/1189 with:

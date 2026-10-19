@@ -124,6 +124,24 @@ public sealed class SageController
         return SageResponse.Ok(room.Room);
     }
 
+    [SageGet("/pipe-networks", "Read pipe networks joined to a device.")]
+    [SageGet("/pipe-networks/{pipenetwork}", "Read one pipe network's air and members.")]
+    public SageResponse PipeNetworks(PipeNetworkReadRequest request)
+    {
+        var result = _commands.ReadPipeNetwork().Execute(new ReadPipeNetworkRequest(request.PipeNetwork, request.Device));
+        if (result.Status != Status.SUCCESS)
+        {
+            return Failure(result, "Pipe network not found.");
+        }
+
+        if (request.PipeNetwork.HasValue)
+        {
+            return SageResponse.Ok(result.PipeNetworks.Count == 0 ? null : result.PipeNetworks[0]);
+        }
+
+        return SageResponse.Ok(result.PipeNetworks);
+    }
+
     [SageGet("/items", "Search items by name.")]
     public SageResponse Items(string? q)
     {
