@@ -64,8 +64,43 @@ public sealed class ReadStationpediaTool : ITool
             }
         }
 
+        var burns = (entry.Combustion ?? Array.Empty<StationpediaCombustion>()).ToArray();
+        if (burns.Length > 0)
+        {
+            lines.Add("Combustion:");
+            foreach (var burn in burns)
+            {
+                lines.Add(FormatCombustion(burn));
+            }
+        }
+
         return new ToolSuccess<ReadStationpediaResult>(
             new ReadStationpediaResult(entry),
             string.Join("\n", lines));
+    }
+
+    internal static string FormatCombustion(StationpediaCombustion burn)
+    {
+        var outputs = (burn.Outputs ?? System.Array.Empty<StationpediaCombustionOutput>())
+            .Select(o => $"{FormatAmount(o.Quantity)} x {o.Gas}");
+        var line = $"{FormatAmount(burn.FuelAmount)} x {burn.Fuel} + {FormatAmount(burn.OxidiserAmount)} x {burn.Oxidiser} -> {string.Join(" + ", outputs)}";
+        if (burn.AutoIgnitionC.HasValue)
+        {
+            line += $"; Auto Ignition {FormatAmount(burn.AutoIgnitionC.Value)} °C";
+        }
+
+        if (burn.OutputTemperatureC.HasValue)
+        {
+            line += $"; {FormatAmount(burn.OutputTemperatureC.Value)} °C";
+        }
+
+        return line;
+    }
+
+    internal static string FormatAmount(double amount)
+    {
+        return amount == System.Math.Truncate(amount)
+            ? ((long)amount).ToString()
+            : amount.ToString("0.##");
     }
 }

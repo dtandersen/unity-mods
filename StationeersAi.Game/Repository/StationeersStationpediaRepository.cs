@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Assets.Scripts.Atmospherics;
 using Assets.Scripts.UI;
 using StationeersAi.Entity;
 using StationeersAi.Formatting;
 using StationpediaUseEntity = StationeersAi.Entity.StationpediaUse;
 using StationpediaMakeEntity = StationeersAi.Entity.StationpediaMake;
+using StationpediaCombustionEntity = StationeersAi.Entity.StationpediaCombustion;
+using StationpediaCombustionOutputEntity = StationeersAi.Entity.StationpediaCombustionOutput;
 using StationeersAi.Game;
 using Logger = StationeersAi.Core.Logger;
 
@@ -69,7 +72,8 @@ public sealed class StationeersStationpediaRepository : IStationpediaRepository
                 Description: page.Description,
                 Text: string.IsNullOrWhiteSpace(page.Text) ? page.ConstructWithText : page.Text,
                 UsedIn: SafeUsedIn(page),
-                HowToBuild: SafeHowToBuild(page)));
+                HowToBuild: SafeHowToBuild(page),
+                Combustion: SafeCombustion(page)));
         }
 
         return entries;
@@ -146,5 +150,80 @@ public sealed class StationeersStationpediaRepository : IStationpediaRepository
         {
             return new StationpediaMakeEntity[0];
         }
+    }
+
+    /// <summary>
+    /// How the page's subject burns: fuel and oxidiser with mole counts,
+    /// outputs, auto ignition and output heat. Values come from the game's
+    /// combustion tables on every read, using the same maths as the
+    /// Stationpedia UI, so no numbers live in this repo. A page that fails
+    /// to report keeps no burns rather than dropping the whole encyclopedia.
+    /// </summary>
+    private static IReadOnlyList<StationpediaCombustionEntity> SafeCombustion(StationpediaPage page)
+    {
+        try
+        {
+            var burns = new List<StationpediaCombustionEntity>();
+            foreach (var insert in page.CombustionInserts)
+            {
+                if (insert == null)
+                {
+                    continue;
+                }
+
+                if (!Combustion.TryGetResult(insert.FuelType, insert.OxidiserType, out var result))
+                {
+                    continue;
+                }
+
+                var fuelTemp = Chemistry.Temperature.TwentyDegrees;
+                if (Mole.MatterState(insert.FuelType) == AtmosphereHelper.MatterState.Liquid)
+                {
+                    fuelTemp = Mole.BoilingPoint(insert.FuelType);
+                }
+
+                var oxidiserTemp = Chemistry.Temperature.TwentyDegrees;
+                if (Mole.MatterState(insert.OxidiserType) == AtmosphereHelper.MatterState.Liquid)
+                {
+                    oxidiserTemp = Mole.BoilingPoint(insert.OxidiserType);
+                }
+
+                var fuel = new Mole(
+                    insert.FuelType,
+                    result.FuelMoleCount,
+                    IdealGas.Energy(fuelTemp, Mole.SpecificHeat(insert.FuelType), result.FuelMoleCount));
+                var oxidiser = new Mole(
+                    insert.OxidiserType,
+                    result.OxidiserMoleCount,
+                    IdealGas.Energy(oxidiserTemp, Mole.SpecificHeat(insert.OxidiserType), result.OxidiserMoleCount));
+                var mixture = result.RunCombustion(fuel, oxidiser, 1.0, out _, out _, out _);
+
+                var autoC = (fuel.AutoIgnitionTemperature + oxidiser.AutoIgnitionOffset - Chemistry.Temperature.ZeroDegrees).ToDouble();
+                var outC = (mixture.Temperature - Chemistry.Temperature.ZeroDegrees).ToDouble();
+                var outputs = result.Outputs
+                    .Select(o => new StationpediaCombustionOutputEntity(Symbol(o.GasType), o.Quantity.ToDouble()))
+                    .ToArray();
+                burns.Add(new StationpediaCombustionEntity(
+                    Symbol(insert.FuelType),
+                    Symbol(insert.OxidiserType),
+                    result.FuelMoleCount.ToDouble(),
+                    result.OxidiserMoleCount.ToDouble(),
+                    outputs,
+                    autoC,
+                    Math.Round(outC)));
+            }
+
+            return burns;
+        }
+        catch (System.Exception)
+        {
+            return new StationpediaCombustionEntity[0];
+        }
+    }
+
+    private static string Symbol(Chemistry.GasType gas)
+    {
+        var symbol = Chemistry.GetSymbol(gas);
+        return string.IsNullOrWhiteSpace(symbol) ? gas.ToString() : symbol;
     }
 }

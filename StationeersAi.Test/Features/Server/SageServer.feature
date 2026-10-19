@@ -123,7 +123,7 @@ Feature: Sage HTTP API
 
   Scenario: Stationpedia search
     Given the stationpedia contains:
-      | Key       | Title      | Description  | Text                      |
+      | Key       | Title      | Description   | Text                      |
       | ItemCable | Cable Coil | Spooled wire. | Cable Coil carries power. |
     When I GET /sage/stationpedia?q=cable
     Then the response is:
@@ -135,7 +135,8 @@ Feature: Sage HTTP API
           "Description": "Spooled wire.",
           "Text": "Cable Coil carries power.",
           "UsedIn": null,
-          "HowToBuild": null
+          "HowToBuild": null,
+          "Combustion": null
         }
       ]
       """
@@ -300,6 +301,47 @@ Feature: Sage HTTP API
             "Detail": "Hydrocarbon x1",
             "Key": "ThingCentrifuge"
           }
+        ],
+        "Combustion": null
+      }
+      """
+
+  Scenario: Stationpedia read lists combustion
+    Given the stationpedia contains:
+      | Key          | Title   | Description | Text   |
+      | GasVolatiles | Volatiles | Burns.    | Fuel. |
+    And the stationpedia page "GasVolatiles" burns:
+      | Fuel | Oxidiser | FuelAmount | OxidiserAmount | Outputs      | AutoIgnitionC | OutputTemperatureC |
+      | CH4  | O2       | 2          | 1              | X x3; CO2 x6 | 300           | 2150               |
+    When I GET /sage/stationpedia/GasVolatiles
+    Then the response is:
+      """
+      {
+        "Key": "GasVolatiles",
+        "Title": "Volatiles",
+        "Description": "Burns.",
+        "Text": "Fuel.",
+        "UsedIn": null,
+        "HowToBuild": null,
+        "Combustion": [
+          {
+            "Fuel": "CH4",
+            "Oxidiser": "O2",
+            "FuelAmount": 2.0,
+            "OxidiserAmount": 1.0,
+            "Outputs": [
+              {
+                "Gas": "X",
+                "Quantity": 3.0
+              },
+              {
+                "Gas": "CO2",
+                "Quantity": 6.0
+              }
+            ],
+            "AutoIgnitionC": 300.0,
+            "OutputTemperatureC": 2150.0
+          }
         ]
       }
       """
@@ -317,7 +359,8 @@ Feature: Sage HTTP API
         "Description": "Spooled wire.",
         "Text": "Cable Coil carries power.",
       "UsedIn": null,
-      "HowToBuild": null
+      "HowToBuild": null,
+      "Combustion": null
       }
       """
 
@@ -334,7 +377,8 @@ Feature: Sage HTTP API
         "Description": "Moves air.",
         "Text": "Plain.",
       "UsedIn": null,
-      "HowToBuild": null
+      "HowToBuild": null,
+      "Combustion": null
       }
       """
 

@@ -62,12 +62,12 @@ Feature: Stationpedia tools
 
   Scenario: Read lists how to manufacture the subject
     Given the stationpedia contains:
-      | Key        | Title | Description | Text            |
+      | Key        | Title | Description   | Text          |
       | ItemSteel2 | Steel | Strong alloy. | Smelt to shape. |
     And the stationpedia page "ItemSteel2" is made in:
-      | Station          | Tier     | Detail                                       | Key                       |
-      | Advanced Furnace | Tier One | Temperature: 900 K to 100 kK; Iron x0.75    | ThingAdvancedFurnace      |
-      | Furnace          |          | Iron x0.5                                  | ThingStructureFurnace     |
+      | Station          | Tier     | Detail                                    | Key                   |
+      | Advanced Furnace | Tier One | Temperature: 900 K to 100 kK; Iron x0.75 | ThingAdvancedFurnace |
+      | Furnace          |          | Iron x0.5                               | ThingStructureFurnace |
     When I call the "read_stationpedia" tool with key "ItemSteel2"
     Then the tool succeeds
     And the tool result is:
@@ -77,4 +77,21 @@ Feature: Stationpedia tools
       Made in:
       Advanced Furnace (Tier One) - Temperature: 900 K to 100 kK; Iron x0.75
       Furnace - Iron x0.5
+      """
+
+  Scenario: Read lists how the subject burns
+    Given the stationpedia contains:
+      | Key          | Title     | Description | Text  |
+      | GasVolatiles | Volatiles | Burns.      | Fuel. |
+    And the stationpedia page "GasVolatiles" burns:
+      | Fuel | Oxidiser | FuelAmount | OxidiserAmount | Outputs      | AutoIgnitionC | OutputTemperatureC |
+      | CH4  | O2       | 2          | 1              | X x3; CO2 x6 | 300           | 2150               |
+    When I call the "read_stationpedia" tool with key "GasVolatiles"
+    Then the tool succeeds
+    And the tool result is:
+      """
+      Volatiles
+      Fuel.
+      Combustion:
+      2 x CH4 + 1 x O2 -> 3 x X + 6 x CO2; Auto Ignition 300 °C; 2150 °C
       """

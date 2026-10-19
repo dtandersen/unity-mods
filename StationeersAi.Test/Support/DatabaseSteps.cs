@@ -111,6 +111,7 @@ public sealed class DatabaseSteps
                 row.ContainsKey("Description") ? row["Description"] : null,
                 row.ContainsKey("Text") ? row["Text"] : null,
                 null,
+                null,
                 null));
         }
     }
@@ -130,7 +131,8 @@ public sealed class DatabaseSteps
                 row["Station"],
                 row.ContainsKey("Tier") && !string.IsNullOrWhiteSpace(row["Tier"]) ? row["Tier"] : null,
                 row.ContainsKey("Detail") && !string.IsNullOrWhiteSpace(row["Detail"]) ? row["Detail"] : null,
-                row.ContainsKey("Key") && !string.IsNullOrWhiteSpace(row["Key"]) ? row["Key"] : null)).ToArray()));
+                row.ContainsKey("Key") && !string.IsNullOrWhiteSpace(row["Key"]) ? row["Key"] : null)).ToArray(),
+            current?.Combustion));
     }
     [Given("the stationpedia page {string} is used in:")]
     public void GivenTheStationpediaPageIsUsedIn(string key, Table table)
@@ -146,7 +148,62 @@ public sealed class DatabaseSteps
                 row["Title"],
                 row.ContainsKey("Detail") && !string.IsNullOrWhiteSpace(row["Detail"]) ? row["Detail"] : null,
                 row.ContainsKey("Key") && !string.IsNullOrWhiteSpace(row["Key"]) ? row["Key"] : null)).ToArray(),
-            current?.HowToBuild));
+            current?.HowToBuild,
+            current?.Combustion));
+    }
+
+    [Given("the stationpedia page {string} burns:")]
+    public void GivenTheStationpediaPageBurns(string key, Table table)
+    {
+        var world = Hooks.GetWorld(_context);
+        var current = world.Stationpedia.GetByKey(key);
+        world.Stationpedia.Update(new StationpediaEntry(
+            key,
+            current?.Title ?? key,
+            current?.Description,
+            current?.Text,
+            current?.UsedIn,
+            current?.HowToBuild,
+            table.Rows.Select(row => new StationpediaCombustion(
+                row["Fuel"],
+                row["Oxidiser"],
+                row.ContainsKey("FuelAmount") && !string.IsNullOrWhiteSpace(row["FuelAmount"])
+                    ? double.Parse(row["FuelAmount"], CultureInfo.InvariantCulture)
+                    : 1,
+                row.ContainsKey("OxidiserAmount") && !string.IsNullOrWhiteSpace(row["OxidiserAmount"])
+                    ? double.Parse(row["OxidiserAmount"], CultureInfo.InvariantCulture)
+                    : 1,
+                Outputs(row.ContainsKey("Outputs") ? row["Outputs"] : null),
+                row.ContainsKey("AutoIgnitionC") && !string.IsNullOrWhiteSpace(row["AutoIgnitionC"])
+                    ? double.Parse(row["AutoIgnitionC"], CultureInfo.InvariantCulture)
+                    : (double?)null,
+                row.ContainsKey("OutputTemperatureC") && !string.IsNullOrWhiteSpace(row["OutputTemperatureC"])
+                    ? double.Parse(row["OutputTemperatureC"], CultureInfo.InvariantCulture)
+                    : (double?)null)).ToArray()));
+    }
+
+    internal static IReadOnlyList<StationpediaCombustionOutput> Outputs(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return Array.Empty<StationpediaCombustionOutput>();
+        }
+
+        // One output per ";", each as "<gas> x<amount>", e.g. "CO2 x6; X x3".
+        return value.Split(';')
+            .Select(part => part.Trim())
+            .Where(part => part.Length > 0)
+            .Select(part =>
+            {
+                var mark = part.LastIndexOf('x');
+                if (mark > 0 && double.TryParse(part.Substring(mark + 1).Trim(), NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out var amount))
+                {
+                    return new StationpediaCombustionOutput(part.Substring(0, mark).Trim(), amount);
+                }
+
+                return new StationpediaCombustionOutput(part, 1);
+            })
+            .ToArray();
     }
 
     [Given("my position is {string}, {string}, {string} on {string}")]
