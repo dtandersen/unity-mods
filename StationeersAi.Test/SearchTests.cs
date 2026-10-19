@@ -32,8 +32,8 @@ public class SearchTests
 
     private static InMemoryStationpediaRepository Pages() => new InMemoryStationpediaRepository(new[]
     {
-        new StationpediaEntry("ItemSteel", "Steel", "A sturdy alloy.", "Smelt iron and coal..."),
-        new StationpediaEntry("GasOxygen", "Oxygen", "Breathe it.", "Oxygen supports..."),
+        new StationpediaEntry("ItemSteel", "Steel", "A sturdy alloy.", "Smelt iron and coal...", null, null),
+        new StationpediaEntry("GasOxygen", "Oxygen", "Breathe it.", "Oxygen supports...", null, null),
     });
 
     [Test]

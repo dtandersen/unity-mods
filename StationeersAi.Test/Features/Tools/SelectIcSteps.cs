@@ -28,4 +28,16 @@ public sealed class SelectIcSteps
                 ["device"] = device,
             })));
     }
+
+    [When("I point computer {string} without a housing")]
+    public void WhenIPointComputerWithoutAHousing(string computer)
+    {
+        World.ToolResult = TestComposition.Tools(World).Handle(new ToolCall(
+            "call_1",
+            "select_ic",
+            new ToolArguments(new System.Collections.Generic.Dictionary<string, string>
+            {
+                ["computer"] = computer,
+            })));
+    }
 }

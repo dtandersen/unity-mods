@@ -127,6 +127,14 @@ public sealed class SageServerSteps
         reported.ToString().ShouldBe(message, "server body: " + _response.Body);
     }
 
+    [Then("the response contains {string}")]
+    public void ThenTheResponseContains(string fragment)
+    {
+        _response.ShouldNotBeNull("no request ran");
+        _response.Status.ShouldBe(200, "server body: " + _response.Body);
+        _response.Body.ShouldContain(fragment);
+    }
+
     private static SageCommands CommandsFrom(WorldContext world)
     {
         return new SageCommands(

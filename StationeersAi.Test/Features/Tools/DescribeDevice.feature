@@ -57,7 +57,7 @@ Feature: Describe device tool
       """
       Device: Furnace (StructureFurnace #101)
       Network: 7, On: yes
-      Build states: 1/3
+      Build states: 1/3.
       2. Wrench - Iron Sheets x2
       3. Welding Torch - Iron Sheets x2
       Logic: none readable.
@@ -78,20 +78,22 @@ Feature: Describe device tool
       """
 
   Scenario: Describe a structure needing tools
-    Given the device "Satellite Dish" stands at stage 1 of 3 with steps:
+    Given the device "Satellite Dish" stands at stage 1 of 4 with steps:
       | State | PrefabName      | Name         | Quantity |
       | 2     | ItemWrench      | Wrench       |          |
       | 2     | ItemSteelSheets | Steel Sheets | 20       |
       | 3     | ItemCableCoil   | Cable Coil   | 10       |
+      | 4     | ItemWrench      | Wrench       |          |
     When I describe the device "Satellite Dish"
     Then the tool succeeds
     And the tool result is:
       """
       Device: Satellite Dish (StructureSatelliteDish #101)
       Network: 7, On: yes
-      Build states: 1/3
+      Build states: 1/4.
       2. Wrench - Steel Sheets x20
       3. Cable Coil x10
+      4. Wrench
       Logic: none readable.
       Slots: none.
       """
@@ -99,6 +101,36 @@ Feature: Describe device tool
   Scenario: Describe needs a device
     When I call the "describe_device" tool without arguments
     Then the tool fails with "Missing required argument 'device'."
+
+  Scenario: Describe a device holding reagents
+    Given the device "Autolathe" holds:
+      | Reagent | Quantity |
+      | Iron    | 60       |
+    When I describe the device "Autolathe"
+    Then the tool succeeds
+    And the tool result is:
+      """
+      Device: Autolathe (StructureAutolathe #1456)
+      Network: none, On: no
+      Build states: unknown.
+      Logic: none readable.
+      Slots:
+      | # | SlotType | Occupant |
+      | - | -------- | -------- |
+      | 0 | Import   | empty    |
+      | 1 | Export   | empty    |
+      Storage:
+      | Reagent | Quantity |
+      | ------- | -------- |
+      | Iron    |       60 |
+      """
+
+  Scenario: Describe a device with empty storage
+    Given the device "Autolathe" holds:
+      | Reagent | Quantity |
+    When I describe the device "Autolathe"
+    Then the tool succeeds
+    And the tool result contains "Storage: empty."
 
   Scenario: Describe a housing
     Given the housing "Housing" exists

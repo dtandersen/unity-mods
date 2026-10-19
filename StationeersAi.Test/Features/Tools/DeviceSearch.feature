@@ -168,6 +168,11 @@ Feature: Device search tool
       Showing 2 of 12.
       """
 
+  Scenario: An offset must be a number
+    Given the world has 12 devices
+    When I search devices with offset "far"
+    Then the tool fails with "Offset 'far' is not a number."
+
   Scenario: Logic filter raises the cap
     Given the world has 12 logic devices
     When I search devices with logic "true"

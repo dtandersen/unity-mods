@@ -133,7 +133,9 @@ Feature: Sage HTTP API
           "Key": "ItemCable",
           "Title": "Cable Coil",
           "Description": "Spooled wire.",
-          "Text": "Cable Coil carries power."
+          "Text": "Cable Coil carries power.",
+          "UsedIn": null,
+          "HowToBuild": null
         }
       ]
       """
@@ -266,6 +268,42 @@ Feature: Sage HTTP API
       ]
       """
 
+  Scenario: Stationpedia read lists uses and manufacture
+    Given the stationpedia contains:
+      | Key           | Title | Description | Text    |
+      | ThingItemCoal | Coal  | Burns hot.  | Dug up. |
+    And the stationpedia page "ThingItemCoal" is used in:
+      | Title                  | Detail        | Key                |
+      | Generator (Solid Fuel) | 100 kW Energy | ThingSolidGenerator |
+    And the stationpedia page "ThingItemCoal" is made in:
+      | Station    | Tier | Detail         | Key             |
+      | Centrifuge |      | Hydrocarbon x1 | ThingCentrifuge |
+    When I GET /sage/stationpedia/ThingItemCoal
+    Then the response is:
+      """
+      {
+        "Key": "ThingItemCoal",
+        "Title": "Coal",
+        "Description": "Burns hot.",
+        "Text": "Dug up.",
+        "UsedIn": [
+          {
+            "Title": "Generator (Solid Fuel)",
+            "Detail": "100 kW Energy",
+            "Key": "ThingSolidGenerator"
+          }
+        ],
+        "HowToBuild": [
+          {
+            "Station": "Centrifuge",
+            "Tier": null,
+            "Detail": "Hydrocarbon x1",
+            "Key": "ThingCentrifuge"
+          }
+        ]
+      }
+      """
+
   Scenario: Stationpedia read
     Given the stationpedia contains:
       | Key       | Title      | Description   | Text                      |
@@ -277,7 +315,9 @@ Feature: Sage HTTP API
         "Key": "ItemCable",
         "Title": "Cable Coil",
         "Description": "Spooled wire.",
-        "Text": "Cable Coil carries power."
+        "Text": "Cable Coil carries power.",
+      "UsedIn": null,
+      "HowToBuild": null
       }
       """
 
@@ -292,7 +332,9 @@ Feature: Sage HTTP API
         "Key": "ItemFan",
         "Title": "Fan",
         "Description": "Moves air.",
-        "Text": "Plain."
+        "Text": "Plain.",
+      "UsedIn": null,
+      "HowToBuild": null
       }
       """
 
@@ -479,6 +521,41 @@ Feature: Sage HTTP API
           {
             "MoleType": "Nitrogen",
             "Moles": 40.0
+          }
+        ]
+      }
+      """
+
+  Scenario: API index lists routes
+    When I GET /sage/
+    Then the response contains "GET /sage/devices"
+
+  Scenario: API index reads as text
+    When I GET /sage/INDEX.md
+    Then the response contains "# Sage API"
+
+  Scenario: OpenAPI describes the devices route
+    When I GET /sage/openapi
+    Then the response contains "/sage/devices"
+
+  Scenario: Own room read
+    Given a sealed room 5 at 20 C and 101 kPa in 100 L holding:
+      | MoleType | Moles |
+      | Oxygen   | 10    |
+    And I stand in room 5
+    When I GET /sage/rooms
+    Then the response is:
+      """
+      {
+        "RoomId": 5,
+        "RoomType": "sealed",
+        "TemperatureC": 20.0,
+        "PressureKpa": 101.0,
+        "VolumeLitres": 100.0,
+        "Gases": [
+          {
+            "MoleType": "Oxygen",
+            "Moles": 10.0
           }
         ]
       }

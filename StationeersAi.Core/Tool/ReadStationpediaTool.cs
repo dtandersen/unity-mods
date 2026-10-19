@@ -1,4 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using StationeersAi.Command;
+using StationeersAi.Entity;
 using Caev.Tools;
 
 namespace StationeersAi.Tool;
@@ -38,8 +42,30 @@ public sealed class ReadStationpediaTool : ITool
             ? (entry.Description ?? string.Empty)
             : entry.Text;
 
+        var lines = new List<string> { $"{entry.Title}\n{text}".Trim() };
+        var uses = (entry.UsedIn ?? Array.Empty<StationpediaUse>()).ToArray();
+        if (uses.Length > 0)
+        {
+            lines.Add("Used in:");
+            foreach (var use in uses)
+            {
+                lines.Add(string.IsNullOrWhiteSpace(use.Detail) ? use.Title : $"{use.Title} - {use.Detail}");
+            }
+        }
+
+        var makes = (entry.HowToBuild ?? Array.Empty<StationpediaMake>()).ToArray();
+        if (makes.Length > 0)
+        {
+            lines.Add("Made in:");
+            foreach (var make in makes)
+            {
+                var station = string.IsNullOrWhiteSpace(make.Tier) ? make.Station : $"{make.Station} ({make.Tier})";
+                lines.Add(string.IsNullOrWhiteSpace(make.Detail) ? station : $"{station} - {make.Detail}");
+            }
+        }
+
         return new ToolSuccess<ReadStationpediaResult>(
             new ReadStationpediaResult(entry),
-            $"{entry.Title}\n{text}".Trim());
+            string.Join("\n", lines));
     }
 }

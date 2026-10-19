@@ -23,3 +23,11 @@ Feature: Import IC tool
     Given the computer points at nothing
     When I import into "1189"
     Then the tool fails with "The computer points at no housing. Pick the housing first."
+
+  Scenario: Import needs a computer
+    When I call the "import_ic" tool without arguments
+    Then the tool fails with "Missing required argument 'computer'."
+
+  Scenario: Import refuses a label
+    When I import into "Lab Computer"
+    Then the tool fails with "'computer' is not a thing id: 'Lab Computer'. Read it from search_devices."

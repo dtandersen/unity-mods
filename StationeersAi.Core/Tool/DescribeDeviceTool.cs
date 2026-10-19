@@ -86,7 +86,7 @@ public sealed class DescribeDeviceTool : ITool
             return "Build states: complete.";
         }
 
-        var lines = new List<string> { $"Build states: {build.Stage}/{build.Stages}" };
+        var lines = new List<string> { $"Build states: {build.Stage}/{build.Stages}." };
         foreach (var step in build.BuildStates ?? Array.Empty<BuildStep>())
         {
             lines.Add(BuildStepText.Format(step));

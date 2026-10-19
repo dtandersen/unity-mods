@@ -20,6 +20,12 @@ public sealed class InMemoryStationpediaRepository : IStationpediaRepository
         _entries.Add(entry);
     }
 
+    public void Update(StationpediaEntry entry)
+    {
+        _entries.RemoveAll(existing => existing.Key == entry.Key);
+        _entries.Add(entry);
+    }
+
     public IReadOnlyList<StationpediaEntry> GetAll()
     {
         return _entries;

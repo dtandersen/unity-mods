@@ -109,8 +109,44 @@ public sealed class DatabaseSteps
                 row["Key"],
                 row["Title"],
                 row.ContainsKey("Description") ? row["Description"] : null,
-                row.ContainsKey("Text") ? row["Text"] : null));
+                row.ContainsKey("Text") ? row["Text"] : null,
+                null,
+                null));
         }
+    }
+
+    [Given("the stationpedia page {string} is made in:")]
+    public void GivenTheStationpediaPageIsMadeIn(string key, Table table)
+    {
+        var world = Hooks.GetWorld(_context);
+        var current = world.Stationpedia.GetByKey(key);
+        world.Stationpedia.Update(new StationpediaEntry(
+            key,
+            current?.Title ?? key,
+            current?.Description,
+            current?.Text,
+            current?.UsedIn,
+            table.Rows.Select(row => new StationpediaMake(
+                row["Station"],
+                row.ContainsKey("Tier") && !string.IsNullOrWhiteSpace(row["Tier"]) ? row["Tier"] : null,
+                row.ContainsKey("Detail") && !string.IsNullOrWhiteSpace(row["Detail"]) ? row["Detail"] : null,
+                row.ContainsKey("Key") && !string.IsNullOrWhiteSpace(row["Key"]) ? row["Key"] : null)).ToArray()));
+    }
+    [Given("the stationpedia page {string} is used in:")]
+    public void GivenTheStationpediaPageIsUsedIn(string key, Table table)
+    {
+        var world = Hooks.GetWorld(_context);
+        var current = world.Stationpedia.GetByKey(key);
+        world.Stationpedia.Update(new StationpediaEntry(
+            key,
+            current?.Title ?? key,
+            current?.Description,
+            current?.Text,
+            table.Rows.Select(row => new StationpediaUse(
+                row["Title"],
+                row.ContainsKey("Detail") && !string.IsNullOrWhiteSpace(row["Detail"]) ? row["Detail"] : null,
+                row.ContainsKey("Key") && !string.IsNullOrWhiteSpace(row["Key"]) ? row["Key"] : null)).ToArray(),
+            current?.HowToBuild));
     }
 
     [Given("my position is {string}, {string}, {string} on {string}")]
