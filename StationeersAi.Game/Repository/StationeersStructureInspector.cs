@@ -340,7 +340,9 @@ public sealed class StationeersStructureInspector : IStructureInspector
     /// <summary>
     /// How far construction of the placed structure has come, with one step
     /// per unfinished state after the current one. Null when the game reports
-    /// no stages.
+    /// no stages. Follows the game's own rule: a state that can manufacture
+    /// counts as completed, so an operational printer with an optional mod
+    /// pending reports complete.
     /// </summary>
     private static BuildProgress? ReadBuild(Assets.Scripts.Objects.Structure? structure)
     {
@@ -350,6 +352,20 @@ public sealed class StationeersStructureInspector : IStructureInspector
             if (states == null || states.Count == 0)
             {
                 return null;
+            }
+
+            try
+            {
+                if (structure!.IsStructureCompleted)
+                {
+                    return new BuildProgress(
+                        states.Count,
+                        states.Count,
+                        Array.Empty<BuildStep>());
+                }
+            }
+            catch (Exception)
+            {
             }
 
             var index = structure!.CurrentBuildStateIndex;
