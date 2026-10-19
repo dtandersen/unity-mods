@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace StationeersAi.Entity;
 
 /// <summary>One gas in the outside air, as a share of the mix.</summary>
-public sealed record GasMixEntry(string Gas, double Percent);
+public sealed record GasMixEntry(string MoleType, double Percent);
 
 /// <summary>
 /// The world: setup (name, gravity), orbit (day length, year, shape),

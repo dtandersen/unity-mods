@@ -20,7 +20,7 @@ public sealed class SearchThingsTool : ITool
 
     public ToolDefinition Definition { get; } = new ToolDefinition(
         "search_things",
-        "Search loose world things by name: ores, ingots, plants, dropped items, wreckage. A query filters by name; origin is 'x, y, z' in meters (omit it for your position); distance is a radius in meters (omit it for everywhere). Nearest first, 10 at a time. Returns a Markdown table with columns Name, Type, Thing, Quantity, Distance, Direction, Room. Direction is the bearing in degrees relative to where you face (0 ahead, positive to the right); 'here' means at your feet.",
+        "Search loose world things by name: ores, ingots, plants, dropped items, wreckage. A query filters by name; origin is 'x, y, z' in meters (omit it for your position); distance is a radius in meters (omit it for everywhere). Nearest first, 10 at a time. Returns a Markdown table with columns Name, PrefabName, Id, Quantity, Distance, Direction, Room. Direction is the bearing in degrees relative to where you face (0 ahead, positive to the right); 'here' means at your feet.",
         new[]
         {
             new ToolParameter("query", "Name fragment, e.g. 'ore'. Omit to list everything in range.", Required: false),
@@ -63,8 +63,8 @@ public sealed class SearchThingsTool : ITool
         var rows = page.Select(match => new[]
         {
             match.Thing.Name ?? string.Empty,
-            match.Thing.Type ?? string.Empty,
-            match.Thing.Thing.ToString(),
+            match.Thing.PrefabName ?? string.Empty,
+            match.Thing.Id.ToString(),
             match.Thing.Quantity ?? "1",
             match.Distance.HasValue ? $"{match.Distance.Value:0.#} m" : "?",
             Bearing(match.Thing, search.Origin, search.Facing),
@@ -73,7 +73,7 @@ public sealed class SearchThingsTool : ITool
 
         return new ToolSuccess<SearchThingsResult>(
             new SearchThingsResult(search.Things),
-            Markdown.Build(new[] { "Name", "Type", "Thing", "Quantity", "Distance", "Direction", "Room" }, rows) +
+            Markdown.Build(new[] { "Name", "PrefabName", "Id", "Quantity", "Distance", "Direction", "Room" }, rows) +
             $"\nShowing {page.Length} of {total}.");
     }
 

@@ -76,18 +76,18 @@ public sealed class ReadRoomTool : ITool
         };
 
         var gases = info.Gases ?? new GasMoles[0];
-        var vapors = gases.Where(gas => !LiquidGases.Contains(gas.Gas)).ToArray();
-        var liquids = gases.Where(gas => LiquidGases.Contains(gas.Gas)).ToArray();
+        var vapors = gases.Where(gas => !LiquidGases.Contains(gas.MoleType)).ToArray();
+        var liquids = gases.Where(gas => LiquidGases.Contains(gas.MoleType)).ToArray();
         if (vapors.Length > 0)
         {
             lines.Add("Gas:");
-            lines.AddRange(vapors.Select(gas => $"{gas.Gas}: {gas.Moles:0.#} mol"));
+            lines.AddRange(vapors.Select(gas => $"{gas.MoleType}: {gas.Moles:0.#} mol"));
         }
 
         if (liquids.Length > 0)
         {
             lines.Add("Liquid:");
-            lines.AddRange(liquids.Select(gas => $"{gas.Gas}: {gas.Moles:0.#} mol"));
+            lines.AddRange(liquids.Select(gas => $"{gas.MoleType}: {gas.Moles:0.#} mol"));
         }
 
         if (vapors.Length == 0 && liquids.Length == 0)

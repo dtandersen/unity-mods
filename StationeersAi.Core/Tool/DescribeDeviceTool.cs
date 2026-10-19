@@ -19,7 +19,7 @@ public sealed class DescribeDeviceTool : ITool
 
     public ToolDefinition Definition { get; } = new ToolDefinition(
         "describe_device",
-        "Describe one live device: its logic settings with live values, its slots with occupants, and how far its construction has come. Find devices first with search_devices.",
+        "Describe one live structure: its logic settings with live values, its slots with occupants, and how far its construction has come. Find it first with search_devices.",
         new[]
         {
             new ToolParameter("device", "The device, by label or reference id."),
@@ -46,12 +46,12 @@ public sealed class DescribeDeviceTool : ITool
             return new ToolFailure(
                 ToolAnswer.Line(answer, "Device not found.") + " Matches:" +
                 "\n" + Markdown.Build(
-                    new[] { "Name", "Type", "Thing", "Network" },
+                    new[] { "Name", "PrefabName", "Id", "Network" },
                     candidates.Select(entry => new[]
                     {
                         entry.Name ?? string.Empty,
-                        entry.Type ?? string.Empty,
-                        entry.Thing.ToString(),
+                        entry.PrefabName ?? string.Empty,
+                        entry.Id.ToString(),
                         entry.NetworkId == 0 ? "none" : entry.NetworkId.ToString(),
                     })));
         }
@@ -99,7 +99,7 @@ public sealed class DescribeDeviceTool : ITool
     {
         var lines = new List<string>
         {
-            $"Device: {details.Name ?? "unknown"} ({details.Type ?? "unknown"} #{details.Thing})",
+            $"Device: {details.Name ?? "unknown"} ({details.PrefabName ?? "unknown"} #{details.Id})",
             $"Network: {(details.NetworkId == 0 ? "none" : details.NetworkId.ToString())}" +
                 (details.IsOn == null ? string.Empty : $", On: {(details.IsOn.Value ? "yes" : "no")}"),
             DescribeBuild(details.Build),
@@ -131,8 +131,8 @@ public sealed class DescribeDeviceTool : ITool
         {
             lines.Add("Slots:");
             lines.Add(Markdown.Build(
-                new[] { "#", "Slot", "Occupant" },
-                slots.Select(slot => new[] { slot.Index.ToString(), slot.Slot, slot.Occupant })));
+                new[] { "#", "SlotType", "Occupant" },
+                slots.Select(slot => new[] { slot.Index.ToString(), slot.SlotType, slot.Occupant })));
         }
 
         if (details.Storage != null)
@@ -155,12 +155,12 @@ public sealed class DescribeDeviceTool : ITool
         {
             lines.Add("Devices:");
             lines.Add(Markdown.Build(
-                new[] { "Index", "Label", "Thing" },
+                new[] { "Index", "Label", "Id" },
                 details.Devices.Select(entry => new[]
                 {
                     entry.Index,
                     entry.Label,
-                    entry.Thing == 0 ? "disconnected" : $"{entry.Label} #{entry.Thing}",
+                    entry.Id == 0 ? "disconnected" : $"{entry.Label} #{entry.Id}",
                 })));
         }
 

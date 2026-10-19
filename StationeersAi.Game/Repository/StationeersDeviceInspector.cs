@@ -49,7 +49,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
     private DeviceDetails? DescribeInner(string? device)
     {
         var matches = ThingMatching.Match(
-            UnityEngine.Object.FindObjectsOfType<Device>(),
+            UnityEngine.Object.FindObjectsOfType<Assets.Scripts.Objects.Structure>(),
             item => SafeName(item),
             item => item.ReferenceId,
             device);
@@ -59,10 +59,11 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
         }
 
         var target = matches[0];
+        var wired = target as Device;
         long network = 0;
         try
         {
-            var networkObject = target.DataCableNetwork;
+            var networkObject = wired != null ? wired.DataCableNetwork : null;
             network = networkObject != null ? networkObject.ReferenceId : 0;
         }
         catch (Exception)
@@ -72,9 +73,9 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
         bool? isOn = null;
         try
         {
-            if (target.HasOnOffState)
+            if (wired != null && wired.HasOnOffState)
             {
-                isOn = target.OnOff;
+                isOn = wired.OnOff;
             }
         }
         catch (Exception)
@@ -137,11 +138,11 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
     /// display value, and a hash of its code (never the code itself).
     /// Null unless a chip is slotted.
     /// </summary>
-    private static ChipState? ReadChip(Device target)
+    private static ChipState? ReadChip(Assets.Scripts.Objects.Structure? structure)
     {
         try
         {
-            var housing = target as CircuitHousing;
+            var housing = structure as CircuitHousing;
             var chip = housing?._ProgrammableChipSlot?.Get<ProgrammableChip>();
             if (chip == null)
             {
@@ -171,7 +172,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
             double? display = null;
             try
             {
-                var logicable = target as ILogicable;
+                var logicable = structure as ILogicable;
                 if (logicable != null && logicable.CanLogicRead(LogicType.Setting))
                 {
                     display = logicable.GetLogicValue(LogicType.Setting);
@@ -199,9 +200,9 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
         }
     }
 
-    private static IReadOnlyList<HousingDeviceEntry>? ReadHousingDevices(Device target)
+    private static IReadOnlyList<HousingDeviceEntry>? ReadHousingDevices(Assets.Scripts.Objects.Structure? structure)
     {
-        var holder = target as ICircuitHolder;
+        var holder = structure as ICircuitHolder;
         if (holder == null)
         {
             return null;
@@ -232,7 +233,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
 
             if (binding.Header == "db")
             {
-                entries.Add(new HousingDeviceEntry("db", SafeName(target) ?? "housing", SafeId(target)));
+                entries.Add(new HousingDeviceEntry("db", SafeName(structure) ?? "housing", SafeId(structure)));
                 continue;
             }
 
@@ -254,7 +255,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
 
             if (thing == null)
             {
-                var screwed = ScrewedIn(target, index);
+                var screwed = ScrewedIn(structure, index);
                 if (screwed != null)
                 {
                     entries.Add(new HousingDeviceEntry(binding.Header, screwed.Item1 + " (off network)", screwed.Item2));
@@ -393,11 +394,11 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
     /// reads it straight off the device. Null when the mixture itself is
     /// missing; empty when it exists but is unfilled.
     /// </summary>
-    private static IReadOnlyList<ReagentAmount>? ReadStorage(Device target)
+    private static IReadOnlyList<ReagentAmount>? ReadStorage(Assets.Scripts.Objects.Structure? structure)
     {
         try
         {
-            var thing = target as Thing;
+            var thing = structure as Thing;
             var mixture = thing != null ? thing.ReagentMixture : null;
             if (mixture == null)
             {
@@ -448,11 +449,11 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
     }
 
     /// <summary>The thing screwed into a housing screw, even when the chip cannot see it.</summary>
-    private static Tuple<string, long>? ScrewedIn(Device target, int index)
+    private static Tuple<string, long>? ScrewedIn(Assets.Scripts.Objects.Structure? structure, int index)
     {
         try
         {
-            var housing = target as CircuitHousing;
+            var housing = structure as CircuitHousing;
             if (housing == null || housing.Devices == null || index < 0 || index >= housing.Devices.Length)
             {
                 return null;
@@ -472,11 +473,11 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
         }
     }
 
-    private static string? SafeName(Device device)
+    private static string? SafeName(Thing thing)
     {
         try
         {
-            return device.DisplayName;
+            return thing.DisplayName;
         }
         catch (Exception)
         {
@@ -484,11 +485,11 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
         }
     }
 
-    private static string? SafeType(Device device)
+    private static string? SafeType(Thing thing)
     {
         try
         {
-            return device.PrefabName;
+            return thing.PrefabName;
         }
         catch (Exception)
         {
@@ -496,11 +497,11 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
         }
     }
 
-    private static long SafeId(Device device)
+    private static long SafeId(Thing thing)
     {
         try
         {
-            return device.ReferenceId;
+            return thing.ReferenceId;
         }
         catch (Exception)
         {

@@ -24,7 +24,7 @@ public sealed class ThingSearchSteps
     {
         World.ThingSlots.HasMatch = true;
         World.ThingSlots.Contents.AddRange(table.Rows.Select(row => new ThingSlot(
-            row["Slot"],
+            row["SlotType"],
             row["Item"],
             row["Quantity"])));
     }
@@ -36,8 +36,8 @@ public sealed class ThingSearchSteps
         {
             World.Things.Things.Add(new ThingInfo(
                 row["Name"],
-                row["Type"],
-                long.Parse(row["Thing"], CultureInfo.InvariantCulture),
+                row["PrefabName"],
+                long.Parse(row["Id"], CultureInfo.InvariantCulture),
                 row["Quantity"],
                 double.Parse(row["X"], CultureInfo.InvariantCulture),
                 double.Parse(row["Y"], CultureInfo.InvariantCulture),

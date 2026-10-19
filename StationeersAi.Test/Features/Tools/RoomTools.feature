@@ -7,7 +7,7 @@ Feature: Room tools
 
   Background:
     Given a Bedroom room 5 at 21.5 C and 101.3 kPa in 12500 L holding:
-      | Gas      | Moles |
+      | MoleType | Moles |
       | Oxygen   | 2500  |
       | Nitrogen | 9400  |
       | Steam    | 120   |
@@ -30,7 +30,7 @@ Feature: Room tools
 
   Scenario: Liquids list under Liquid
     Given a Bedroom room 6 at 20 C and 100 kPa in 8000 L holding:
-      | Gas   | Moles |
+      | MoleType | Moles |
       | Water | 300   |
     When I call the "read_room" tool with room "6"
     Then the tool succeeds
@@ -46,7 +46,7 @@ Feature: Room tools
 
   Scenario: A vacuum room reads without crashing
     Given a Bedroom room 7 at -50 C and 0 kPa in 8000 L holding:
-      | Gas | Moles |
+      | MoleType | Moles |
     When I call the "read_room" tool with room "7"
     Then the tool succeeds
     And the tool result is:

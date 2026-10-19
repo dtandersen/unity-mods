@@ -89,8 +89,8 @@ public sealed class DescribeDeviceSteps
         var details = World.Inspector.Details;
         World.Inspector.Details = new DeviceDetails(
             details.Name,
-            details.Type,
-            details.Thing,
+            details.PrefabName,
+            details.Id,
             details.NetworkId,
             details.IsOn,
             details.Logic,
@@ -174,8 +174,8 @@ public sealed class DescribeDeviceSteps
     public void GivenTwoDevicesShareTheName(string name)
     {
         World.Devices.Devices.Clear();
-        World.Devices.Devices.Add(new DeviceInfo(name, "StructureGasSensor", 1482, 1194, true, 5));
-        World.Devices.Devices.Add(new DeviceInfo(name, "StructureGasSensor", 1123, 1119, true, 5));
+        World.Devices.Devices.Add(new DeviceInfo(name, "StructureGasSensor", 1482, 1194, true, 5, new DevicePosition(1, 2, 3)));
+        World.Devices.Devices.Add(new DeviceInfo(name, "StructureGasSensor", 1123, 1119, true, 5, new DevicePosition(4, 5, 6)));
         World.Inspector.Details = null;
     }
 

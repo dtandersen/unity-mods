@@ -5,17 +5,17 @@ Feature: Read slots tool
 
   Scenario: List a belt's slots
     Given the "Mining Belt" holds:
-      | Slot   | Item       | Quantity |
-      | Slot 1 | Iron Ore   | x12      |
-      | Slot 2 | Copper Ore | x4       |
+      | SlotType | Item       | Quantity |
+      | Slot 1   | Iron Ore   | x12      |
+      | Slot 2   | Copper Ore | x4       |
     When I read slots of thing "Mining Belt"
     Then the tool succeeds
     And the tool result is:
       """
-      | Slot   | Name       | Quantity |
-      | ------ | ---------- | -------- |
-      | Slot 1 | Iron Ore   | x12      |
-      | Slot 2 | Copper Ore | x4       |
+      | SlotType | Name       | Quantity |
+      | -------- | ---------- | -------- |
+      | Slot 1   | Iron Ore   | x12      |
+      | Slot 2   | Copper Ore | x4       |
       """
 
   Scenario: Thing with no slots reads empty

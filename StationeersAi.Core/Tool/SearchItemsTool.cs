@@ -50,10 +50,10 @@ public sealed class SearchItemsTool : ITool
         var rows = items.Select(item => new[]
         {
             item.Name ?? string.Empty,
-            item.Type ?? string.Empty,
+            item.ItemType ?? string.Empty,
             item.PrefabName ?? string.Empty,
         });
 
-        return Csv.Build(new[] { "Name", "Type", "PrefabName" }, rows);
+        return Csv.Build(new[] { "Name", "ItemType", "PrefabName" }, rows);
     }
 }

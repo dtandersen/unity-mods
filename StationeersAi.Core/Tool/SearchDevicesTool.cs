@@ -19,7 +19,7 @@ public sealed class SearchDevicesTool : ITool
 
     public ToolDefinition Definition { get; } = new ToolDefinition(
         "search_devices",
-        "Search built things by name: devices, pipes, walls. Labels, prefab types, thing ids, data networks, rooms, and whether each speaks logic. Logic devices list first, 10 at a time (30 for logic-only); pass offset to page. Returns a Markdown table with columns Name, Type, Thing, Network, Logic, Room.",
+        "Search built things by name: devices, pipes, walls. Labels, prefab names, ids, data networks, rooms, positions in meters, and whether each speaks logic. Logic devices list first, 10 at a time (30 for logic-only); pass offset to page. Returns a Markdown table with columns Name, PrefabName, Id, Network, Logic, Room, Position.",
         new[]
         {
             new ToolParameter("query", "Text to match against device names, e.g. 'vent'. Omit to list all.", Required: false),
@@ -134,14 +134,15 @@ public sealed class SearchDevicesTool : ITool
         var rows = devices.Select(device => new[]
         {
             device.Name ?? string.Empty,
-            device.Type ?? string.Empty,
-            device.Thing.ToString(),
+            device.PrefabName ?? string.Empty,
+            device.Id.ToString(),
             device.NetworkId == 0 ? "none" : device.NetworkId.ToString(),
             device.Logic ? "yes" : "no",
             device.RoomId == 0 ? "none" : device.RoomId.ToString(),
+            $"{device.Position.X:0.0}, {device.Position.Y:0.0}, {device.Position.Z:0.0}",
         });
 
-        return Markdown.Build(new[] { "Name", "Type", "Thing", "Network", "Logic", "Room" }, rows) +
+        return Markdown.Build(new[] { "Name", "PrefabName", "Id", "Network", "Logic", "Room", "Position" }, rows) +
             $"\nShowing {devices.Count} of {total}.";
     }
 }

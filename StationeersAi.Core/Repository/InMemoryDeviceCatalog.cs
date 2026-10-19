@@ -28,7 +28,7 @@ public sealed class InMemoryDeviceCatalog : IDeviceCatalog
                 (!room.HasValue || device.RoomId == room.Value) &&
                 (string.IsNullOrWhiteSpace(query) ||
                 (device.Name != null && device.Name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0) ||
-                (device.Type != null && device.Type.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)))
+                (device.PrefabName != null && device.PrefabName.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)))
             .ToArray();
     }
 }

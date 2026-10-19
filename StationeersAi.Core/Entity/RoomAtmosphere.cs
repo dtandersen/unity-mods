@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace StationeersAi.Entity;
 
 /// <summary>One gas in a room, in moles.</summary>
-public sealed record GasMoles(string Gas, double Moles);
+public sealed record GasMoles(string MoleType, double Moles);
 
 /// <summary>
 /// A room's atmospherics: what kind of room it is, temperature, pressure,

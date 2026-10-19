@@ -16,7 +16,7 @@ public sealed class InMemoryThingCatalog : IThingCatalog
             .Where(thing =>
                 (string.IsNullOrWhiteSpace(query) ||
                 (thing.Name != null && thing.Name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0) ||
-                (thing.Type != null && thing.Type.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)) &&
+                (thing.PrefabName != null && thing.PrefabName.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)) &&
                 (origin == null || !maxDistanceM.HasValue || Distance(thing, origin) <= maxDistanceM.Value))
             .ToArray();
     }

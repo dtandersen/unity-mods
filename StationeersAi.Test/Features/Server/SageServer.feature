@@ -58,28 +58,33 @@ Feature: Sage HTTP API
 
   Scenario: Device search
     Given live devices exist:
-      | Name      | Type              | Thing | Network | Logic | Room |
-      | Air Vent  | StructureAirVent  | 101   | 7       | true  | 5    |
-      | Gas Sensor | StructureGasSensor | 102  | 0       | true  | 5    |
+      | Name       | PrefabName         | Id    | Network | Logic | Room | Position |
+      | Air Vent   | StructureAirVent   | 101   | 7       | true  | 5    | 1,2,3    |
+      | Gas Sensor | StructureGasSensor | 102   | 0       | true  | 5    | 4,5,6    |
     When I GET /sage/devices?q=vent
     Then the response is:
       """
       [
         {
           "Name": "Air Vent",
-          "Type": "StructureAirVent",
-          "Thing": 101,
+          "PrefabName": "StructureAirVent",
+          "Id": 101,
           "NetworkId": 7,
           "Logic": true,
-          "RoomId": 5
+          "RoomId": 5,
+          "position": {
+            "x": 1.0,
+            "y": 2.0,
+            "z": 3.0
+          }
         }
       ]
       """
 
   Scenario: Item catalogue search
     Given the item database contains:
-      | Name       | Type  |
-      | Cable Coil | Item  |
+      | Name       | ItemType |
+      | Cable Coil | Item     |
     When I GET /sage/items?q=coil
     Then the response is:
       """
@@ -87,7 +92,7 @@ Feature: Sage HTTP API
         {
           "PrefabName": "Cable Coil",
           "Name": "Cable Coil",
-          "Type": "Item"
+          "ItemType": "Item"
         }
       ]
       """
@@ -216,11 +221,11 @@ Feature: Sage HTTP API
         "OutsidePressureKpa": 0.0,
         "OutsideAir": [
           {
-            "Gas": "Nitrogen",
+            "MoleType": "Nitrogen",
             "Percent": 90.0
           },
           {
-            "Gas": "Oxygen",
+            "MoleType": "Oxygen",
             "Percent": 10.0
           }
         ]
@@ -298,8 +303,8 @@ Feature: Sage HTTP API
       """
       {
         "Name": "Air Vent",
-        "Type": "StructureAirVent",
-        "Thing": 101,
+        "PrefabName": "StructureAirVent",
+        "Id": 101,
         "NetworkId": 7,
         "IsOn": true,
         "Logic": [
@@ -317,7 +322,7 @@ Feature: Sage HTTP API
         "Slots": [
           {
             "Index": 0,
-            "Slot": "Filter",
+            "SlotType": "Filter",
             "Occupant": "empty"
           }
         ],
@@ -338,20 +343,20 @@ Feature: Sage HTTP API
       """
       {
         "Name": "Autolathe",
-        "Type": "StructureAutolathe",
-        "Thing": 1456,
+        "PrefabName": "StructureAutolathe",
+        "Id": 1456,
         "NetworkId": 0,
         "IsOn": false,
         "Logic": [],
         "Slots": [
           {
             "Index": 0,
-            "Slot": "Import",
+            "SlotType": "Import",
             "Occupant": "empty"
           },
           {
             "Index": 1,
-            "Slot": "Export",
+            "SlotType": "Export",
             "Occupant": "empty"
           }
         ],
@@ -373,8 +378,8 @@ Feature: Sage HTTP API
 
   Scenario: Thing search
     Given these world things exist:
-      | Name       | Type | Thing | Quantity | X | Y | Z | Room |
-      | Iron Ingot | Ingot | 501  | x5       | 1 | 2 | 4 | 0    |
+      | Name       | PrefabName | Id  | Quantity | X | Y | Z | Room |
+      | Iron Ingot | Ingot | 501 | x5       | 1 | 2 | 4 | 0    |
     When I GET /sage/things?q=ingot
     Then the response is:
       """
@@ -382,8 +387,8 @@ Feature: Sage HTTP API
         "things": [
           {
             "Name": "Iron Ingot",
-            "Type": "Ingot",
-            "Thing": 501,
+            "PrefabName": "Ingot",
+            "Id": 501,
             "Quantity": "x5",
             "X": 1.0,
             "Y": 2.0,
@@ -402,20 +407,20 @@ Feature: Sage HTTP API
 
   Scenario: Thing slots list container slots
     Given the "Mining Belt" holds:
-      | Slot   | Item       | Quantity |
-      | Slot 1 | Iron Ore   | x12      |
-      | Slot 2 | Copper Ore | x4       |
+      | SlotType | Item       | Quantity |
+      | Slot 1   | Iron Ore   | x12      |
+      | Slot 2   | Copper Ore | x4       |
     When I GET /sage/things/301/slots
     Then the response is:
       """
       [
         {
-          "Slot": "Slot 1",
+          "SlotType": "Slot 1",
           "Name": "Iron Ore",
           "Quantity": "x12"
         },
         {
-          "Slot": "Slot 2",
+          "SlotType": "Slot 2",
           "Name": "Copper Ore",
           "Quantity": "x4"
         }
@@ -424,8 +429,8 @@ Feature: Sage HTTP API
 
   Scenario: Thing quantity ships without rich text
     Given these world things exist:
-      | Name           | Type   | Thing | Quantity              | X   | Y   | Z   | Room |
-      | Methane Filter | Filter | 502   | 100<size=75%>%</size> | 1   | 2   | 4   | 0    |
+      | Name           | PrefabName | Id  | Quantity              | X   | Y   | Z   | Room |
+      | Methane Filter | Filter     | 502 | 100<size=75%>%</size> | 1   | 2   | 4   | 0    |
     When I GET /sage/things?q=methane
     Then the response is:
       """
@@ -433,8 +438,8 @@ Feature: Sage HTTP API
         "things": [
           {
             "Name": "Methane Filter",
-            "Type": "Filter",
-            "Thing": 502,
+            "PrefabName": "Filter",
+            "Id": 502,
             "Quantity": "100%",
             "X": 1.0,
             "Y": 2.0,
@@ -453,7 +458,7 @@ Feature: Sage HTTP API
 
   Scenario: Room read
     Given a sealed room 5 at 20 C and 101 kPa in 100 L holding:
-      | Gas      | Moles |
+      | MoleType | Moles |
       | Oxygen   | 10    |
       | Nitrogen | 40    |
     And I stand in room 5
@@ -468,11 +473,11 @@ Feature: Sage HTTP API
         "VolumeLitres": 100.0,
         "Gases": [
           {
-            "Gas": "Oxygen",
+            "MoleType": "Oxygen",
             "Moles": 10.0
           },
           {
-            "Gas": "Nitrogen",
+            "MoleType": "Nitrogen",
             "Moles": 40.0
           }
         ]

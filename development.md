@@ -156,3 +156,15 @@ Never commit credentials.
 | Shouldly | 4.3.0 | Assertions |
 | TngTech.ArchUnitNET | 0.13.4 | Architecture (namespace dependency) rules |
 | TngTech.ArchUnitNET.TUnit | 0.13.4 | TUnit integration for ArchUnitNET |
+
+## Data dictionary
+
+- Id: ReferenceId of a thing instance (0 when the screw is empty)
+- PrefabName: name of the Unity prefab (e.g. StructureFurnace)
+- Name: localized display name of a thing
+- RoomId: room the thing stands in (0 outside rooms)
+- NetworkId: data network the thing sits on (0 when it joins none)
+- position: x, y, z coordinates of a thing in meters
+- BuildState: one unfinished build stage — its number and requirements (tool held, materials with quantities)
+- RecipeId: prefab name of what the recipe makes (the station names the machine)
+- Quantity: how much is there — game text on carried stacks (x5, 75%), a number on build entries (blank means a tool you hold)

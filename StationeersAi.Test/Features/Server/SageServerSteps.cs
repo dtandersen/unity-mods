@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Newtonsoft.Json.Linq;
 using Reqnroll;
 using Shouldly;
@@ -22,6 +23,15 @@ public sealed class SageServerSteps
 
     private WorldContext World => Hooks.GetWorld(_context);
 
+    private static DevicePosition Position(string value)
+    {
+        var parts = value.Split(',');
+        return new DevicePosition(
+            double.Parse(parts[0], CultureInfo.InvariantCulture),
+            double.Parse(parts[1], CultureInfo.InvariantCulture),
+            double.Parse(parts[2], CultureInfo.InvariantCulture));
+    }
+
     [Given("live devices exist:")]
     public void GivenLiveDevicesExist(Table table)
     {
@@ -29,11 +39,12 @@ public sealed class SageServerSteps
         {
             World.Devices.Devices.Add(new DeviceInfo(
                 row["Name"],
-                row["Type"],
-                long.Parse(row["Thing"]),
+                row["PrefabName"],
+                long.Parse(row["Id"]),
                 long.Parse(row["Network"]),
                 bool.Parse(row["Logic"]),
-                long.Parse(row["Room"])));
+                long.Parse(row["Room"]),
+                Position(row["Position"])));
         }
     }
 

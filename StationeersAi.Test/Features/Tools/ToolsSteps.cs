@@ -84,14 +84,14 @@ public sealed class ToolsSteps
     [Then("the item result is:")]
     public void ThenTheItemResultIs(Table table)
     {
-        var actual = ItemResults().ToDictionary(item => item.Name, item => item.Type);
+        var actual = ItemResults().ToDictionary(item => item.Name, item => item.ItemType);
         actual.Count.ShouldBe(table.Rows.Count);
 
         foreach (var row in table.Rows)
         {
             var name = row["Name"];
             actual.ContainsKey(name).ShouldBeTrue($"expected '{name}' in the result");
-            actual[name].ShouldBe(row["Type"]);
+            actual[name].ShouldBe(row["ItemType"]);
         }
     }
 

@@ -56,13 +56,13 @@ public sealed class ReadSlotsTool : ITool
 
         var rows = slots.Select(slot => new[]
         {
-            slot.Slot,
+            slot.SlotType,
             slot.Name,
             slot.Quantity ?? string.Empty,
         });
 
         return new ToolSuccess<SlotsResult>(
             answer,
-            Markdown.Build(new[] { "Slot", "Name", "Quantity" }, rows));
+            Markdown.Build(new[] { "SlotType", "Name", "Quantity" }, rows));
     }
 }

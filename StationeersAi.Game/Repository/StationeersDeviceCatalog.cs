@@ -111,11 +111,24 @@ public sealed class StationeersDeviceCatalog : IDeviceCatalog
     {
         try
         {
-            return new DeviceInfo(thing.DisplayName, thing.PrefabName, thing.ReferenceId, network, logic, room);
+            var center = SafeCenter(thing);
+            return new DeviceInfo(thing.DisplayName, thing.PrefabName, thing.ReferenceId, network, logic, room, new DevicePosition(center.x, center.y, center.z));
         }
         catch (Exception)
         {
             return null;
+        }
+    }
+
+    private static Vector3 SafeCenter(Thing thing)
+    {
+        try
+        {
+            return thing != null ? thing.CenterPosition : Vector3.zero;
+        }
+        catch (Exception)
+        {
+            return Vector3.zero;
         }
     }
 
@@ -127,6 +140,6 @@ public sealed class StationeersDeviceCatalog : IDeviceCatalog
         }
 
         return (info.Name != null && info.Name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0) ||
-            (info.Type != null && info.Type.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0);
+            (info.PrefabName != null && info.PrefabName.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0);
     }
 }

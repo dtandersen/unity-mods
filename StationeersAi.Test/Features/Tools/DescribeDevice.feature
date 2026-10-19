@@ -19,9 +19,9 @@ Feature: Describe device tool
       | On       |     1 | yes      |
       | Pressure | 101.3 | no       |
       Slots:
-      | # | Slot   | Occupant |
-      | - | ------ | -------- |
-      | 0 | Filter | empty    |
+      | # | SlotType | Occupant |
+      | - | -------- | -------- |
+      | 0 | Filter   | empty    |
       """
 
   Scenario: Describe by reference id
@@ -39,9 +39,9 @@ Feature: Describe device tool
       | On       |     1 | yes      |
       | Pressure | 101.3 | no       |
       Slots:
-      | # | Slot   | Occupant |
-      | - | ------ | -------- |
-      | 0 | Filter | empty    |
+      | # | SlotType | Occupant |
+      | - | -------- | -------- |
+      | 0 | Filter   | empty    |
       """
 
   Scenario: Describe an unfinished structure
@@ -112,7 +112,7 @@ Feature: Describe device tool
       Logic: none readable.
       Slots: none.
       Devices:
-      | Index | Label   | Thing        |
+      | Index | Label   | Id           |
       | ----- | ------- | ------------ |
       | db    | Housing | Housing #100 |
       | d0    | Heater  | Heater #101  |
@@ -131,7 +131,7 @@ Feature: Describe device tool
       Logic: none readable.
       Slots: none.
       Devices:
-      | Index | Label   | Thing        |
+      | Index | Label   | Id           |
       | ----- | ------- | ------------ |
       | db    | Housing | Housing #100 |
       | d0    | Heater  | Heater #101  |
@@ -195,8 +195,8 @@ Feature: Describe device tool
     Then the tool fails with:
       """
       No single device matches 'Gas Sensor'. Matches:
-      | Name       | Type               | Thing | Network |
-      | ---------- | ------------------ | ----- | ------- |
-      | Gas Sensor | StructureGasSensor |  1482 |    1194 |
-      | Gas Sensor | StructureGasSensor |  1123 |    1119 |
+      | Name       | PrefabName         | Id   | Network |
+      | ---------- | ------------------ | ---- | ------- |
+      | Gas Sensor | StructureGasSensor | 1482 |    1194 |
+      | Gas Sensor | StructureGasSensor | 1123 |    1119 |
       """

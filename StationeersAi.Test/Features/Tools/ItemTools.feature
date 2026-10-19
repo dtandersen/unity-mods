@@ -5,7 +5,7 @@ Feature: Item tools
 
   Background:
     Given the item database contains:
-      | Name        | Type  |
+      | Name        | ItemType |
       | Steel       | Ingot |
       | Steel Sheets| Ingot |
       | Copper Ore  | Ore   |
@@ -14,7 +14,7 @@ Feature: Item tools
     When I call the "search_items" tool with query "steel sheets"
     Then the tool succeeds
     And the item result is:
-      | Name         | Type  |
+      | Name         | ItemType |
       | Steel Sheets | Ingot |
 
   Scenario: Matching item names ignores case and excludes non-matches
@@ -22,7 +22,7 @@ Feature: Item tools
     Then the tool succeeds
     And the tool result is:
       """
-      Name,Type,PrefabName
+      Name,ItemType,PrefabName
       Steel,Ingot,Steel
       Steel Sheets,Ingot,Steel Sheets
       """

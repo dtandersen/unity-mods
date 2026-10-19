@@ -26,7 +26,7 @@ public sealed class RoomToolsSteps
         foreach (var row in gases.Rows)
         {
             amounts.Add(new GasMoles(
-                row["Gas"],
+                row["MoleType"],
                 double.Parse(row["Moles"], CultureInfo.InvariantCulture)));
         }
 

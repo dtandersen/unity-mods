@@ -26,7 +26,7 @@ public sealed class DatabaseSteps
 
         foreach (var row in table.Rows)
         {
-            world.Items.Add(new Item(row["Name"], row["Name"], row["Type"]));
+            world.Items.Add(new Item(row["Name"], row["Name"], row["ItemType"]));
         }
     }
 

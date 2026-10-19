@@ -65,7 +65,7 @@ public sealed class StationeersItemRepository : IItemRepository
             items.Add(new ItemEntity(
                 PrefabName: prefab.PrefabName,
                 Name: name,
-                Type: prefab.GetType().Name));
+                ItemType: prefab.GetType().Name));
         }
 
         return items;

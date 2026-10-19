@@ -60,7 +60,7 @@ public sealed class GetWorldTool : ITool
 
         if (info.OutsideAir != null && info.OutsideAir.Count > 0)
         {
-            lines.Add("Air mix: " + string.Join(", ", info.OutsideAir.Select(entry => $"{entry.Gas} {entry.Percent:0.#}%")));
+            lines.Add("Air mix: " + string.Join(", ", info.OutsideAir.Select(entry => $"{entry.MoleType} {entry.Percent:0.#}%")));
         }
 
         return string.Join("\n", lines);
