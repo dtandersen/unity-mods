@@ -85,7 +85,13 @@ public sealed class DatabaseSteps
                 row.ContainsKey("Text") ? row["Text"] : null,
                 null,
                 null,
-                null));
+                null,
+                null,
+                NumberOrNull(row, "PowerGenerationW"),
+                NumberOrNull(row, "PowerStorageJ"),
+                NumberOrNull(row, "PowerDrawW"),
+                NumberOrNull(row, "FuelEnergyPerSecondW"),
+                NumberOrNull(row, "TickSeconds")));
         }
     }
 
@@ -106,7 +112,12 @@ public sealed class DatabaseSteps
                 row.ContainsKey("Detail") && !string.IsNullOrWhiteSpace(row["Detail"]) ? row["Detail"] : null,
                 row.ContainsKey("Key") && !string.IsNullOrWhiteSpace(row["Key"]) ? row["Key"] : null)).ToArray(),
             current?.Combustion,
-            current?.BuildSteps));
+            current?.BuildSteps,
+            current?.PowerGenerationW,
+            current?.PowerStorageJ,
+            current?.PowerDrawW,
+            current?.FuelEnergyPerSecondW,
+            current?.TickSeconds));
     }
     [Given("the stationpedia page {string} is used in:")]
     public void GivenTheStationpediaPageIsUsedIn(string key, Table table)
@@ -121,10 +132,41 @@ public sealed class DatabaseSteps
             table.Rows.Select(row => new StationpediaUse(
                 row["Title"],
                 row.ContainsKey("Detail") && !string.IsNullOrWhiteSpace(row["Detail"]) ? row["Detail"] : null,
-                row.ContainsKey("Key") && !string.IsNullOrWhiteSpace(row["Key"]) ? row["Key"] : null)).ToArray(),
+                row.ContainsKey("Key") && !string.IsNullOrWhiteSpace(row["Key"]) ? row["Key"] : null,
+                NumberOrNull(row, "EnergyPerSecondW"),
+                NumberOrNull(row, "GeneratorPowerW"),
+                IntOrNull(row, "BurnTicks"),
+                NumberOrNull(row, "TotalJoules"),
+                NumberOrNull(row, "BurnSeconds"),
+                NumberOrNull(row, "TickSeconds"))).ToArray(),
             current?.HowToBuild,
             current?.Combustion,
-            current?.BuildSteps));
+            current?.BuildSteps,
+            current?.PowerGenerationW,
+            current?.PowerStorageJ,
+            current?.PowerDrawW,
+            current?.FuelEnergyPerSecondW,
+            current?.TickSeconds));
+    }
+
+    private static double? NumberOrNull(dynamic row, string column)
+    {
+        if (!row.ContainsKey(column) || string.IsNullOrWhiteSpace(row[column]))
+        {
+            return null;
+        }
+
+        return double.Parse(row[column], CultureInfo.InvariantCulture);
+    }
+
+    private static int? IntOrNull(dynamic row, string column)
+    {
+        if (!row.ContainsKey(column) || string.IsNullOrWhiteSpace(row[column]))
+        {
+            return null;
+        }
+
+        return int.Parse(row[column], CultureInfo.InvariantCulture);
     }
 
     [Given("the stationpedia page {string} burns:")]
@@ -155,7 +197,12 @@ public sealed class DatabaseSteps
                 row.ContainsKey("OutputTemperatureC") && !string.IsNullOrWhiteSpace(row["OutputTemperatureC"])
                     ? double.Parse(row["OutputTemperatureC"], CultureInfo.InvariantCulture)
                     : (double?)null)).ToArray(),
-            current?.BuildSteps));
+            current?.BuildSteps,
+            current?.PowerGenerationW,
+            current?.PowerStorageJ,
+            current?.PowerDrawW,
+            current?.FuelEnergyPerSecondW,
+            current?.TickSeconds));
     }
 
     internal static IReadOnlyList<StationpediaCombustionOutput> Outputs(string value)
@@ -195,7 +242,12 @@ public sealed class DatabaseSteps
             current?.UsedIn,
             current?.HowToBuild,
             current?.Combustion,
-            table.Rows.Select(row => row["Step"]).ToArray()));
+            table.Rows.Select(row => row["Step"]).ToArray(),
+            current?.PowerGenerationW,
+            current?.PowerStorageJ,
+            current?.PowerDrawW,
+            current?.FuelEnergyPerSecondW,
+            current?.TickSeconds));
     }
 
     [Given("my position is {string}, {string}, {string} on {string}")]

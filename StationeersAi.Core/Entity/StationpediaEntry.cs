@@ -6,9 +6,14 @@ namespace StationeersAi.Entity;
 /// One “used in” line of a Stationpedia page: what consumes the subject
 /// (<see cref="Title"/>, e.g. <c>Generator (Solid Fuel)</c>), with detail
 /// when the game states any (e.g. <c>100 kW Energy</c> for fuels), and the
-/// key of the consumer's own page when one exists.
+/// key of the consumer's own page when one exists. When the subject is a
+/// solid fuel and the consumer is a power generator, the numeric fields
+/// carry the same maths the game uses: energy per second of one unit,
+/// the generator output, burn ticks, total joules, burn seconds for one
+/// unit, and the tick length. All numeric fields hold null when the game
+/// gives none.
 /// </summary>
-public sealed record StationpediaUse(string Title, string? Detail, string? Key);
+public sealed record StationpediaUse(string Title, string? Detail, string? Key, double? EnergyPerSecondW = null, double? GeneratorPowerW = null, int? BurnTicks = null, double? TotalJoules = null, double? BurnSeconds = null, double? TickSeconds = null);
 
 /// <summary>
 /// One “how to manufacture” line of a Stationpedia page: the station that
@@ -38,5 +43,9 @@ public sealed record StationpediaCombustion(string Fuel, string Oxidiser, double
 /// lists what consumes the subject, <see cref="HowToBuild"/> how to make
 /// it, <see cref="BuildSteps"/> how to place it stage by stage, and
 /// <see cref="Combustion"/> how it burns (all null when the page states none).
+/// Numeric specs hold raw game numbers when the subject states any, else null:
+/// power generation in watts, power storage in joules, power draw in watts,
+/// fuel energy per second in watts for solid fuels, and the tick length in
+/// seconds that burn ticks last.
 /// </summary>
-public sealed record StationpediaEntry(string Key, string Title, string Description, string Text, IReadOnlyList<StationpediaUse>? UsedIn, IReadOnlyList<StationpediaMake>? HowToBuild, IReadOnlyList<StationpediaCombustion>? Combustion = null, IReadOnlyList<string>? BuildSteps = null);
+public sealed record StationpediaEntry(string Key, string Title, string Description, string Text, IReadOnlyList<StationpediaUse>? UsedIn, IReadOnlyList<StationpediaMake>? HowToBuild, IReadOnlyList<StationpediaCombustion>? Combustion = null, IReadOnlyList<string>? BuildSteps = null, double? PowerGenerationW = null, double? PowerStorageJ = null, double? PowerDrawW = null, double? FuelEnergyPerSecondW = null, double? TickSeconds = null);

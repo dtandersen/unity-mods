@@ -1,7 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Assets.Scripts;
 using Assets.Scripts.Atmospherics;
+using Assets.Scripts.Objects;
+using Assets.Scripts.Objects.Electrical;
+using Assets.Scripts.Objects.Items;
+using Assets.Scripts.Objects.Pipes;
 using Assets.Scripts.UI;
 using StationeersAi.Entity;
 using StationeersAi.Formatting;
@@ -71,10 +76,15 @@ public sealed class StationeersStationpediaRepository : IStationpediaRepository
                 Title: string.IsNullOrWhiteSpace(page.Title) ? page.Key : page.Title,
                 Description: page.Description,
                 Text: string.IsNullOrWhiteSpace(page.Text) ? page.ConstructWithText : page.Text,
-                UsedIn: SafeUsedIn(page),
+                UsedIn: SafeUsedIn(page, SubjectFuelEps(page), TickSeconds()),
                 HowToBuild: SafeHowToBuild(page),
                 Combustion: SafeCombustion(page),
-                BuildSteps: SafeBuildSteps(page)));
+                BuildSteps: SafeBuildSteps(page),
+                PowerGenerationW: SubjectPowerGenerationW(page),
+                PowerStorageJ: SubjectPowerStorageJ(page),
+                PowerDrawW: SubjectPowerDrawW(page),
+                FuelEnergyPerSecondW: SubjectFuelEps(page),
+                TickSeconds: TickSeconds()));
         }
 
         return entries;
@@ -83,10 +93,14 @@ public sealed class StationeersStationpediaRepository : IStationpediaRepository
     /// <summary>
     /// What consumes the page's subject, with the energy detail on fuels
     /// (e.g. <c>100 kW Energy</c>). Rich text is stripped to plain words.
+    /// When the subject is a solid fuel and the consumer is a power
+    /// generator, the numeric fuel fields carry the game's own maths:
+    /// burn ticks = round(energy per second / generator output) * 2,
+    /// total joules = ticks * output, burn seconds = ticks * tick length.
     /// A page that fails to report keeps no uses rather than dropping the
     /// whole encyclopedia.
     /// </summary>
-    private static IReadOnlyList<StationpediaUseEntity> SafeUsedIn(StationpediaPage page)
+    private static IReadOnlyList<StationpediaUseEntity> SafeUsedIn(StationpediaPage page, double? subjectFuelEps, double? tickSeconds)
     {
         try
         {
@@ -105,10 +119,31 @@ public sealed class StationeersStationpediaRepository : IStationpediaRepository
                     detail = (UnityRichText.Strip(fueled.SubText) + " " + UnityRichText.Strip(fueled.SubValue)).Trim();
                 }
 
+                double? generatorPower = null;
+                int? burnTicks = null;
+                double? totalJoules = null;
+                double? burnSeconds = null;
+                if (subjectFuelEps.HasValue && tickSeconds.HasValue)
+                {
+                    generatorPower = GeneratorPowerW(insert.PrefabHash);
+                    if (generatorPower.HasValue && generatorPower.Value > 0)
+                    {
+                        burnTicks = (int)Math.Round(subjectFuelEps.Value / generatorPower.Value) * 2;
+                        totalJoules = burnTicks.Value * generatorPower.Value;
+                        burnSeconds = burnTicks.Value * tickSeconds.Value;
+                    }
+                }
+
                 uses.Add(new StationpediaUseEntity(
                     insert.NameOfThing,
                     string.IsNullOrWhiteSpace(detail) ? null : detail,
-                    string.IsNullOrWhiteSpace(insert.PageLink) ? null : insert.PageLink));
+                    string.IsNullOrWhiteSpace(insert.PageLink) ? null : insert.PageLink,
+                    subjectFuelEps,
+                    generatorPower,
+                    burnTicks,
+                    totalJoules,
+                    burnSeconds,
+                    tickSeconds));
             }
 
             return uses;
@@ -116,6 +151,140 @@ public sealed class StationeersStationpediaRepository : IStationpediaRepository
         catch (System.Exception)
         {
             return new StationpediaUseEntity[0];
+        }
+    }
+
+    private static double? TickSeconds()
+    {
+        try
+        {
+            return GameManager.GameTickSpeedSeconds;
+        }
+        catch (System.Exception)
+        {
+            return 0.5;
+        }
+    }
+
+    private static Thing? SubjectPrefab(StationpediaPage page)
+    {
+        try
+        {
+            if (page == null || page.PrefabHash == 0)
+            {
+                return null;
+            }
+
+            return Prefab.Find(page.PrefabHash);
+        }
+        catch (System.Exception)
+        {
+            return null;
+        }
+    }
+
+    private static double? SubjectFuelEps(StationpediaPage page)
+    {
+        try
+        {
+            var subject = SubjectPrefab(page);
+            if (subject is ISolidFuel fuel)
+            {
+                return fuel.GetEnergyPerSecond();
+            }
+
+            return null;
+        }
+        catch (System.Exception)
+        {
+            return null;
+        }
+    }
+
+    private static double? GeneratorPowerW(int prefabHash)
+    {
+        try
+        {
+            if (prefabHash == 0)
+            {
+                return null;
+            }
+
+            var prefab = Prefab.Find(prefabHash);
+            if (prefab is PowerGeneratorSlot slot)
+            {
+                return slot.PowerGenerated;
+            }
+
+            if (prefab is global::Objects.IPowerGenerator generator)
+            {
+                return generator.GetMaxPowerGenerated();
+            }
+
+            return null;
+        }
+        catch (System.Exception)
+        {
+            return null;
+        }
+    }
+
+    private static double? SubjectPowerGenerationW(StationpediaPage page)
+    {
+        try
+        {
+            var subject = SubjectPrefab(page);
+            if (subject is PowerGeneratorSlot slot)
+            {
+                return slot.PowerGenerated;
+            }
+
+            if (subject is global::Objects.IPowerGenerator generator)
+            {
+                return generator.GetMaxPowerGenerated();
+            }
+
+            return null;
+        }
+        catch (System.Exception)
+        {
+            return null;
+        }
+    }
+
+    private static double? SubjectPowerStorageJ(StationpediaPage page)
+    {
+        try
+        {
+            var subject = SubjectPrefab(page);
+            if (subject is IChargable chargable)
+            {
+                return chargable.GetPowerMaximum();
+            }
+
+            return null;
+        }
+        catch (System.Exception)
+        {
+            return null;
+        }
+    }
+
+    private static double? SubjectPowerDrawW(StationpediaPage page)
+    {
+        try
+        {
+            var subject = SubjectPrefab(page);
+            if (subject is Device device && device.UsedPower > 0)
+            {
+                return device.UsedPower;
+            }
+
+            return null;
+        }
+        catch (System.Exception)
+        {
+            return null;
         }
     }
 

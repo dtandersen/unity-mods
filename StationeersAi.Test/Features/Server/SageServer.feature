@@ -144,7 +144,12 @@ Feature: Sage HTTP API
           "UsedIn": null,
           "HowToBuild": null,
           "Combustion": null,
-          "BuildSteps": null
+          "BuildSteps": null,
+          "PowerGenerationW": null,
+          "PowerStorageJ": null,
+          "PowerDrawW": null,
+          "FuelEnergyPerSecondW": null,
+          "TickSeconds": null
         }
       ]
       """
@@ -265,7 +270,13 @@ Feature: Sage HTTP API
           {
             "Title": "Generator (Solid Fuel)",
             "Detail": "100 kW Energy",
-            "Key": "ThingSolidGenerator"
+            "Key": "ThingSolidGenerator",
+            "EnergyPerSecondW": null,
+            "GeneratorPowerW": null,
+            "BurnTicks": null,
+            "TotalJoules": null,
+            "BurnSeconds": null,
+            "TickSeconds": null
           }
         ],
         "HowToBuild": [
@@ -277,7 +288,12 @@ Feature: Sage HTTP API
           }
         ],
         "Combustion": null,
-        "BuildSteps": null
+        "BuildSteps": null,
+        "PowerGenerationW": null,
+        "PowerStorageJ": null,
+        "PowerDrawW": null,
+        "FuelEnergyPerSecondW": null,
+        "TickSeconds": null
       }
       """
 
@@ -318,7 +334,12 @@ Feature: Sage HTTP API
             "OutputTemperatureC": 2150.0
           }
         ],
-        "BuildSteps": null
+        "BuildSteps": null,
+        "PowerGenerationW": null,
+        "PowerStorageJ": null,
+        "PowerDrawW": null,
+        "FuelEnergyPerSecondW": null,
+        "TickSeconds": null
       }
       """
 
@@ -344,7 +365,12 @@ Feature: Sage HTTP API
         "BuildSteps": [
           "Kit (Furnace) x1",
           "Wrench - Iron Sheets x2"
-        ]
+        ],
+        "PowerGenerationW": null,
+        "PowerStorageJ": null,
+        "PowerDrawW": null,
+        "FuelEnergyPerSecondW": null,
+        "TickSeconds": null
       }
       """
 
@@ -363,7 +389,12 @@ Feature: Sage HTTP API
       "UsedIn": null,
       "HowToBuild": null,
       "Combustion": null,
-      "BuildSteps": null
+      "BuildSteps": null,
+      "PowerGenerationW": null,
+      "PowerStorageJ": null,
+      "PowerDrawW": null,
+      "FuelEnergyPerSecondW": null,
+      "TickSeconds": null
       }
       """
 
@@ -382,7 +413,12 @@ Feature: Sage HTTP API
       "UsedIn": null,
       "HowToBuild": null,
       "Combustion": null,
-      "BuildSteps": null
+      "BuildSteps": null,
+      "PowerGenerationW": null,
+      "PowerStorageJ": null,
+      "PowerDrawW": null,
+      "FuelEnergyPerSecondW": null,
+      "TickSeconds": null
       }
       """
 

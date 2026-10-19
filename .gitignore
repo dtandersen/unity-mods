@@ -38,3 +38,6 @@ integration.settings.json
 .DS_Store
 Thumbs.db
 data/
+
+# Local run scratch (power watch CSVs, ad-hoc captures)
+.run/

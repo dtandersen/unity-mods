@@ -43,13 +43,43 @@ public sealed class ReadStationpediaTool : ITool
             : entry.Text;
 
         var lines = new List<string> { $"{entry.Title}\n{text}".Trim() };
+        if (entry.PowerGenerationW.HasValue || entry.PowerStorageJ.HasValue || entry.PowerDrawW.HasValue || entry.FuelEnergyPerSecondW.HasValue)
+        {
+            lines.Add("Specs:");
+            if (entry.PowerGenerationW.HasValue)
+            {
+                lines.Add($"Power generation: {FormatAmount(entry.PowerGenerationW.Value)} W");
+            }
+
+            if (entry.PowerStorageJ.HasValue)
+            {
+                lines.Add($"Power storage: {FormatAmount(entry.PowerStorageJ.Value)} J");
+            }
+
+            if (entry.PowerDrawW.HasValue)
+            {
+                lines.Add($"Power draw: {FormatAmount(entry.PowerDrawW.Value)} W");
+            }
+
+            if (entry.FuelEnergyPerSecondW.HasValue)
+            {
+                lines.Add($"Fuel energy: {FormatAmount(entry.FuelEnergyPerSecondW.Value)} W");
+            }
+
+            if (entry.TickSeconds.HasValue && (entry.PowerGenerationW.HasValue || entry.FuelEnergyPerSecondW.HasValue))
+            {
+                lines.Add($"Tick: {FormatAmount(entry.TickSeconds.Value)} s");
+            }
+        }
+
         var uses = (entry.UsedIn ?? Array.Empty<StationpediaUse>()).ToArray();
         if (uses.Length > 0)
         {
             lines.Add("Used in:");
             foreach (var use in uses)
             {
-                lines.Add(string.IsNullOrWhiteSpace(use.Detail) ? use.Title : $"{use.Title} - {use.Detail}");
+                var head = string.IsNullOrWhiteSpace(use.Detail) ? use.Title : $"{use.Title} - {use.Detail}";
+                lines.Add(head + FormatFuelUse(use));
             }
         }
 
@@ -87,6 +117,28 @@ public sealed class ReadStationpediaTool : ITool
         return new ToolSuccess<ReadStationpediaResult>(
             new ReadStationpediaResult(entry),
             string.Join("\n", lines));
+    }
+
+    internal static string FormatFuelUse(StationpediaUse use)
+    {
+        if (!use.BurnTicks.HasValue || !use.TotalJoules.HasValue || !use.GeneratorPowerW.HasValue)
+        {
+            return string.Empty;
+        }
+
+        var line = $" ({FormatAmount(use.EnergyPerSecondW ?? 0)} W, {use.BurnTicks.Value} ticks";
+        if (use.BurnSeconds.HasValue)
+        {
+            line += $", {FormatAmount(use.BurnSeconds.Value)} s";
+        }
+
+        line += $", {FormatAmount(use.TotalJoules.Value)} J per unit";
+        if (use.TickSeconds.HasValue)
+        {
+            line += $", {FormatAmount(use.TickSeconds.Value)} s per tick";
+        }
+
+        return line + ")";
     }
 
     internal static string FormatCombustion(StationpediaCombustion burn)

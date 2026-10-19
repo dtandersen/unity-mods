@@ -96,6 +96,51 @@ Feature: Stationpedia tools
       2 x CH4 + 1 x O2 -> 3 x X + 6 x CO2; Auto Ignition 300 °C; 2150 °C
       """
 
+  Scenario: Read lists solid fuel numbers for coal
+    Given the stationpedia contains:
+      | Key           | Title | Description | Text                | FuelEnergyPerSecondW | TickSeconds |
+      | ThingItemCoal | Coal  | Burns hot.  | Dug from asteroids. | 100000               | 0.5         |
+    And the stationpedia page "ThingItemCoal" is used in:
+      | Title                | Detail        | Key                          | EnergyPerSecondW | GeneratorPowerW | BurnTicks | TotalJoules | BurnSeconds | TickSeconds |
+      | Generator (Solid Fuel) | 100 kW Energy | ThingStructureSolidGenerator | 100000           | 20000           | 10        | 200000      | 5           | 0.5         |
+    When I call the "read_stationpedia" tool with key "ThingItemCoal"
+    Then the tool succeeds
+    And the tool result is:
+      """
+      Coal
+      Dug from asteroids.
+      Specs:
+      Fuel energy: 100000 W
+      Tick: 0.5 s
+      Used in:
+      Generator (Solid Fuel) - 100 kW Energy (100000 W, 10 ticks, 5 s, 200000 J per unit, 0.5 s per tick)
+      """
+
+  Scenario: Read lists power specs for generator and battery
+    Given the stationpedia contains:
+      | Key                          | Title                  | Description   | Text        | PowerGenerationW | PowerStorageJ | TickSeconds |
+      | ThingStructureSolidGenerator | Generator (Solid Fuel) | Burns fuel.   | Burns coal. | 20000            |               | 0.5         |
+      | ThingStructureBattery        | Battery                | Stores power. | Holds charge. |                  | 3600000       |             |
+    When I call the "read_stationpedia" tool with key "ThingStructureSolidGenerator"
+    Then the tool succeeds
+    And the tool result is:
+      """
+      Generator (Solid Fuel)
+      Burns coal.
+      Specs:
+      Power generation: 20000 W
+      Tick: 0.5 s
+      """
+    When I call the "read_stationpedia" tool with key "ThingStructureBattery"
+    Then the tool succeeds
+    And the tool result is:
+      """
+      Battery
+      Holds charge.
+      Specs:
+      Power storage: 3600000 J
+      """
+
   Scenario: Read lists how to place the subject
     Given the stationpedia contains:
       | Key                 | Title   | Description | Text   |
