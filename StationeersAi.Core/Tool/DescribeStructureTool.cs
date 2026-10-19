@@ -3,64 +3,65 @@ using System.Collections.Generic;
 using System.Linq;
 using StationeersAi.Command;
 using StationeersAi.Entity;
+using StationeersAi.Formatting;
 using Caev.Tools;
 
 namespace StationeersAi.Tool;
 
-/// <summary>Tool: describe one live device in full: ports, settings, slots.</summary>
-public sealed class DescribeDeviceTool : ITool
+/// <summary>Tool: describe one live structure in full: ports, settings, slots.</summary>
+public sealed class DescribeStructureTool : ITool
 {
-    private readonly DescribeDeviceCommand _command;
+    private readonly DescribeStructureCommand _command;
 
-    public DescribeDeviceTool(DescribeDeviceCommand command)
+    public DescribeStructureTool(DescribeStructureCommand command)
     {
         _command = command;
     }
 
     public ToolDefinition Definition { get; } = new ToolDefinition(
-        "describe_device",
-        "Describe one live structure: its logic settings with live values, its slots with occupants, and how far its construction has come. Find it first with search_devices.",
+        "describe_structure",
+        "Describe one live structure: its logic settings with live values, its slots with occupants, and how far its construction has come. Find it first with search_structures.",
         new[]
         {
-            new ToolParameter("device", "The device, by label or reference id."),
+            new ToolParameter("structure", "The structure, by label or reference id."),
             new ToolParameter("full", "Show every logic setting including zeros ('true'). Omit for the short list.", Required: false),
         });
 
     public ToolResult Execute(ToolArguments arguments)
     {
-        var device = arguments.Get("device");
-        if (string.IsNullOrWhiteSpace(device))
+        var structure = arguments.Get("structure") ?? arguments.Get("device");
+        if (string.IsNullOrWhiteSpace(structure))
         {
-            return new ToolFailure("Missing required argument 'device'.");
+            return new ToolFailure("Missing required argument 'structure'.");
         }
 
-        var answer = _command.Execute(new DescribeDeviceRequest(device));
+        var answer = _command.Execute(new DescribeStructureRequest(structure));
         if (answer.Status != Status.SUCCESS)
         {
             var candidates = answer.Candidates;
             if (candidates.Count == 0)
             {
-                return new ToolFailure(ToolAnswer.Line(answer, "Device not found."));
+                return new ToolFailure(ToolAnswer.Line(answer, "Structure not found."));
             }
 
             return new ToolFailure(
-                ToolAnswer.Line(answer, "Device not found.") + " Matches:" +
+                ToolAnswer.Line(answer, "Structure not found.") + " Matches:" +
                 "\n" + Markdown.Build(
-                    new[] { "Name", "PrefabName", "Id", "Network" },
+                    new[] { "Name", "PrefabName", "Id", "Connections" },
                     candidates.Select(entry => new[]
                     {
                         entry.Name ?? string.Empty,
                         entry.PrefabName ?? string.Empty,
                         entry.Id.ToString(),
-                        entry.NetworkId == 0 ? "none" : entry.NetworkId.ToString(),
-                    })));
+                        NetworkConnections.Format(entry.Connections),
+                    })));;
         }
 
         var details = answer.Details!;
 
         var full = IsTrue(arguments.Get("full"));
-        return new ToolSuccess<DescribeDeviceResult>(
-            new DescribeDeviceResult(details),
+        return new ToolSuccess<DescribeStructureResult>(
+            new DescribeStructureResult(details),
             Describe(details, full));
     }
 
@@ -95,17 +96,17 @@ public sealed class DescribeDeviceTool : ITool
         return string.Join("\n", lines);
     }
 
-    private static string Describe(DeviceDetails details, bool full)
+    private static string Describe(StructureDetails details, bool full)
     {
         var lines = new List<string>
         {
-            $"Device: {details.Name ?? "unknown"} ({details.PrefabName ?? "unknown"} #{details.Id})",
-            $"Network: {(details.NetworkId == 0 ? "none" : details.NetworkId.ToString())}" +
+            $"Structure: {details.Name ?? "unknown"} ({details.PrefabName ?? "unknown"} #{details.Id})",
+            $"Connections: {NetworkConnections.Format(details.Connections)}" +
                 (details.IsOn == null ? string.Empty : $", On: {(details.IsOn.Value ? "yes" : "no")}"),
             DescribeBuild(details.Build),
         };
 
-        var logic = (details.Logic ?? Array.Empty<DeviceLogicValue>())
+        var logic = (details.Logic ?? Array.Empty<StructureLogicValue>())
             .Where(entry => full || entry.Value != 0)
             .OrderBy(entry => PriorityIndex(entry.Name))
             .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
@@ -122,7 +123,7 @@ public sealed class DescribeDeviceTool : ITool
                 logic.Select(entry => new[] { entry.Name, Format(entry.Value), entry.Writable ? "yes" : "no" })));
         }
 
-        var slots = details.Slots ?? Array.Empty<DeviceSlotInfo>();
+        var slots = details.Slots ?? Array.Empty<StructureSlotInfo>();
         if (slots.Count == 0)
         {
             lines.Add("Slots: none.");
@@ -153,7 +154,7 @@ public sealed class DescribeDeviceTool : ITool
 
         if (details.Devices != null)
         {
-            lines.Add("Devices:");
+            lines.Add("Structures:");
             lines.Add(Markdown.Build(
                 new[] { "Index", "Label", "Id" },
                 details.Devices.Select(entry => new[]

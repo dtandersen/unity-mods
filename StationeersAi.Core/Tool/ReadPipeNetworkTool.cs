@@ -28,7 +28,7 @@ public sealed class ReadPipeNetworkTool : ITool
 
     public ToolResult Execute(ToolArguments arguments)
     {
-        var networkText = arguments.Get("pipenetwork") ?? arguments.Get("network");
+        var networkText = arguments.Get("pipenetwork");
         var device = arguments.Get("device");
 
         long? pipeNetworkId = null;

@@ -30,33 +30,6 @@ public sealed class DatabaseSteps
         }
     }
 
-    [Given("the structure database contains:")]
-    public void GivenTheStructureDatabaseContains(Table table)
-    {
-        var world = Hooks.GetWorld(_context);
-
-        foreach (var row in table.Rows)
-        {
-            world.Structures.Add(new Structure(
-                row["Name"],
-                row["Name"],
-                row.ContainsKey("Description") ? row["Description"] : null,
-                Array.Empty<BuildStep>()));
-        }
-    }
-
-    [Given("the structure {string} has build states:")]
-    public void GivenTheStructureHasBuildStates(string name, Table table)
-    {
-        var world = Hooks.GetWorld(_context);
-        var current = world.Structures.GetById(name);
-        world.Structures.Update(new Structure(
-            name,
-            current?.Name ?? name,
-            current?.Description,
-            Steps(table)));
-    }
-
     internal static IReadOnlyList<BuildStep> Steps(Table table)
     {
         return table.Rows
@@ -132,7 +105,8 @@ public sealed class DatabaseSteps
                 row.ContainsKey("Tier") && !string.IsNullOrWhiteSpace(row["Tier"]) ? row["Tier"] : null,
                 row.ContainsKey("Detail") && !string.IsNullOrWhiteSpace(row["Detail"]) ? row["Detail"] : null,
                 row.ContainsKey("Key") && !string.IsNullOrWhiteSpace(row["Key"]) ? row["Key"] : null)).ToArray(),
-            current?.Combustion));
+            current?.Combustion,
+            current?.BuildSteps));
     }
     [Given("the stationpedia page {string} is used in:")]
     public void GivenTheStationpediaPageIsUsedIn(string key, Table table)
@@ -149,7 +123,8 @@ public sealed class DatabaseSteps
                 row.ContainsKey("Detail") && !string.IsNullOrWhiteSpace(row["Detail"]) ? row["Detail"] : null,
                 row.ContainsKey("Key") && !string.IsNullOrWhiteSpace(row["Key"]) ? row["Key"] : null)).ToArray(),
             current?.HowToBuild,
-            current?.Combustion));
+            current?.Combustion,
+            current?.BuildSteps));
     }
 
     [Given("the stationpedia page {string} burns:")]
@@ -179,7 +154,8 @@ public sealed class DatabaseSteps
                     : (double?)null,
                 row.ContainsKey("OutputTemperatureC") && !string.IsNullOrWhiteSpace(row["OutputTemperatureC"])
                     ? double.Parse(row["OutputTemperatureC"], CultureInfo.InvariantCulture)
-                    : (double?)null)).ToArray()));
+                    : (double?)null)).ToArray(),
+            current?.BuildSteps));
     }
 
     internal static IReadOnlyList<StationpediaCombustionOutput> Outputs(string value)
@@ -204,6 +180,22 @@ public sealed class DatabaseSteps
                 return new StationpediaCombustionOutput(part, 1);
             })
             .ToArray();
+    }
+
+    [Given("the stationpedia page {string} builds in:")]
+    public void GivenTheStationpediaPageBuildsIn(string key, Table table)
+    {
+        var world = Hooks.GetWorld(_context);
+        var current = world.Stationpedia.GetByKey(key);
+        world.Stationpedia.Update(new StationpediaEntry(
+            key,
+            current?.Title ?? key,
+            current?.Description,
+            current?.Text,
+            current?.UsedIn,
+            current?.HowToBuild,
+            current?.Combustion,
+            table.Rows.Select(row => row["Step"]).ToArray()));
     }
 
     [Given("my position is {string}, {string}, {string} on {string}")]

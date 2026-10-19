@@ -1,4 +1,6 @@
 using Shouldly;
+using System.Collections.Generic;
+using StationeersAi.Entity;
 using StationeersAi.Formatting;
 using StationeersAi.Tool;
 
@@ -31,6 +33,28 @@ public class FormattingTests
         LogText.Sanitize(null).ShouldBeNull();
     }
 
+    [Test]
+    public void Connections_lists_every_port()
+    {
+        NetworkConnections.Format(null).ShouldBe("none");
+        NetworkConnections.Format(new List<NetworkConnection>()).ShouldBe("none");
+        NetworkConnections.Format(new List<NetworkConnection>
+        {
+            new NetworkConnection("power", 0, 29457),
+            new NetworkConnection("power", 1, 29457),
+            new NetworkConnection("data", 0, 7),
+        }).ShouldBe("p0:29457 p1:29457 d0:7");
+        NetworkConnections.Format(new List<NetworkConnection>
+        {
+            new NetworkConnection("pipe", 0, 11, "input"),
+            new NetworkConnection("pipe", 2, 22, "output"),
+            new NetworkConnection("pipe", 3, 33, "output2"),
+        }).ShouldBe("input:11 output:22 output2:33");
+        NetworkConnections.Format(new List<NetworkConnection>
+        {
+            new NetworkConnection("chute", 0, 9),
+        }).ShouldBe("c0:9");
+    }
     [Test]
     public void Code_hash_is_stable_short_hex()
     {

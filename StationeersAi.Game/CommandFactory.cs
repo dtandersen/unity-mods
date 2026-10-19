@@ -30,11 +30,6 @@ public sealed class CommandFactory
         return new StationeersItemRepository(_prefabs, _executor, _log);
     }
 
-    public IStructureRepository Structures()
-    {
-        return new StationeersStructureRepository(_prefabs, _executor, _log);
-    }
-
     public IRecipeRepository Recipes()
     {
         return new StationeersRecipeRepository(_recipes, _executor, _log);
@@ -65,19 +60,24 @@ public sealed class CommandFactory
         return new StationeersMipsReference(_log);
     }
 
-    public IDeviceCatalog Devices()
+    public IStructureCatalog Structures()
     {
-        return new StationeersDeviceCatalog(_executor, _log);
+        return new StationeersStructureCatalog(_executor, _log);
     }
 
-    public IDeviceInspector Inspector()
+    public IStructureInspector StructureInspector()
     {
-        return new StationeersDeviceInspector(_executor, _log);
+        return new StationeersStructureInspector(_executor, _log);
     }
 
     public IThingCatalog Things()
     {
         return new StationeersThingCatalog(_executor, _log);
+    }
+
+    public IThingInspector ThingInspector()
+    {
+        return new StationeersThingInspector(_executor, StructureInspector(), _log);
     }
 
     public IThingSlots Slots()
@@ -103,15 +103,15 @@ public sealed class CommandFactory
     {
         return new SageCommands(
             Items(),
-            Structures(),
             Recipes(),
             Stationpedia(),
             Player(),
             Worlds(),
             IcDevices(),
             Mips(),
-            Devices(),
-            Inspector(),
+            Structures(),
+            StructureInspector(),
+            ThingInspector(),
             Things(),
             Slots(),
             Rooms(),

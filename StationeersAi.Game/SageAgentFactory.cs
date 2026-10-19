@@ -103,7 +103,6 @@ public sealed class SageAgentFactory : AgentSettings
         var tools = new ToolHandler(new ITool[]
         {
             new SearchItemsTool(commands.SearchItems()),
-            new SearchStructuresTool(commands.SearchStructures()),
             new SearchRecipesTool(commands.SearchRecipes()),
             new SearchStationpediaTool(commands.SearchStationpedia()),
             new ReadStationpediaTool(commands.ReadStationpedia()),
@@ -116,8 +115,9 @@ public sealed class SageAgentFactory : AgentSettings
             new ImportIcTool(commands.ImportChip()),
             new SelectIcTool(commands.SelectHousing()),
             new ListInstructionsTool(commands.ListInstructions()),
-            new SearchDevicesTool(commands.SearchDevices()),
-            new DescribeDeviceTool(commands.DescribeDevice()),
+            new SearchStructuresTool(commands.SearchStructures()),
+            new DescribeStructureTool(commands.DescribeStructure()),
+            new DescribeThingTool(commands.DescribeThing()),
             new SearchThingsTool(commands.SearchThings()),
             new ReadSlotsTool(commands.ReadThingSlots()),
             new ReadRoomTool(commands.ReadRoom()),

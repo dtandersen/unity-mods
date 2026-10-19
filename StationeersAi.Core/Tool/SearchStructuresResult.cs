@@ -3,5 +3,5 @@ using StationeersAi.Entity;
 
 namespace StationeersAi.Tool;
 
-/// <summary>Structures matching a search.</summary>
-public sealed record SearchStructuresResult(IReadOnlyList<Structure> Structures);
+/// <summary>Live structures matching a search.</summary>
+public sealed record SearchStructuresResult(IReadOnlyList<StructureInfo> Structures);

@@ -23,29 +23,61 @@ public sealed class SageServerSteps
 
     private WorldContext World => Hooks.GetWorld(_context);
 
-    private static DevicePosition Position(string value)
+    private static StructurePosition Position(string value)
     {
         var parts = value.Split(',');
-        return new DevicePosition(
+        return new StructurePosition(
             double.Parse(parts[0], CultureInfo.InvariantCulture),
             double.Parse(parts[1], CultureInfo.InvariantCulture),
             double.Parse(parts[2], CultureInfo.InvariantCulture));
     }
 
-    [Given("live devices exist:")]
-    public void GivenLiveDevicesExist(Table table)
+    [Given("live structures exist:")]
+    public void GivenLiveStructuresExist(Table table)
     {
         foreach (var row in table.Rows)
         {
-            World.Devices.Devices.Add(new DeviceInfo(
+            World.Structures.Structures.Add(new StructureInfo(
                 row["Name"],
                 row["PrefabName"],
                 long.Parse(row["Id"]),
-                long.Parse(row["Network"]),
+                ParseConnections(row["Connections"]),
                 bool.Parse(row["Logic"]),
                 long.Parse(row["Room"]),
                 Position(row["Position"])));
         }
+    }
+
+    private static List<NetworkConnection> ParseConnections(string value)
+    {
+        var connections = new List<NetworkConnection>();
+        if (string.IsNullOrWhiteSpace(value) || value.Trim().Equals("none", StringComparison.OrdinalIgnoreCase))
+        {
+            return connections;
+        }
+
+        foreach (var token in value.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries))
+        {
+            var parts = token.Split(':');
+            if (parts.Length != 2 || !long.TryParse(parts[1], out var id))
+            {
+                continue;
+            }
+
+            var label = parts[0];
+            if (label.Length > 1 && (label[0] == 'p' || label[0] == 'd' || label[0] == 'c') && int.TryParse(label.Substring(1), out var port))
+            {
+                var kind = label[0] == 'p' ? "power" : label[0] == 'd' ? "data" : "chute";
+                connections.Add(new NetworkConnection(kind, port, id));
+            }
+            else if (label == "input" || label == "input2" || label == "output" || label == "output2")
+            {
+                var index = label == "input" ? 0 : label == "input2" ? 1 : label == "output" ? 2 : 3;
+                connections.Add(new NetworkConnection("pipe", index, id, label));
+            }
+        }
+
+        return connections;
     }
 
     [Given("the MIPS reference contains {string} and {string}")]
@@ -139,15 +171,15 @@ public sealed class SageServerSteps
     {
         return new SageCommands(
             world.Items,
-            world.Structures,
             world.Recipes,
             world.Stationpedia,
             world.Player,
             world.Worlds,
             world.IcDevices,
             world.Mips,
-            world.Devices,
-            world.Inspector,
+            world.Structures,
+            world.StructureInspector,
+            world.ThingInspector,
             world.Things,
             world.ThingSlots,
             world.RoomInspector,

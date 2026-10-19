@@ -23,6 +23,6 @@ internal static class ThingId
     /// <summary>The sentence naming the argument that failed to parse.</summary>
     internal static string NotAThingId(string argument, string? value)
     {
-        return $"'{argument}' is not a thing id: '{value}'. Read it from search_devices.";
+        return $"'{argument}' is not a thing id: '{value}'. Read it from search_structures.";
     }
 }

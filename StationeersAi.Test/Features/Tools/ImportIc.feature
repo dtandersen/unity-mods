@@ -30,4 +30,4 @@ Feature: Import IC tool
 
   Scenario: Import refuses a label
     When I import into "Lab Computer"
-    Then the tool fails with "'computer' is not a thing id: 'Lab Computer'. Read it from search_devices."
+    Then the tool fails with "'computer' is not a thing id: 'Lab Computer'. Read it from search_structures."

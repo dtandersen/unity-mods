@@ -36,6 +36,7 @@ public sealed record StationpediaCombustion(string Fuel, string Oxidiser, double
 /// A Stationpedia page: the in-game encyclopedia of items, structures, gases,
 /// and mechanics. <see cref="Text"/> is the full page body. <see cref="UsedIn"/>
 /// lists what consumes the subject, <see cref="HowToBuild"/> how to make
-/// it, and <see cref="Combustion"/> how it burns (all null when the page states none).
+/// it, <see cref="BuildSteps"/> how to place it stage by stage, and
+/// <see cref="Combustion"/> how it burns (all null when the page states none).
 /// </summary>
-public sealed record StationpediaEntry(string Key, string Title, string Description, string Text, IReadOnlyList<StationpediaUse>? UsedIn, IReadOnlyList<StationpediaMake>? HowToBuild, IReadOnlyList<StationpediaCombustion>? Combustion = null);
+public sealed record StationpediaEntry(string Key, string Title, string Description, string Text, IReadOnlyList<StationpediaUse>? UsedIn, IReadOnlyList<StationpediaMake>? HowToBuild, IReadOnlyList<StationpediaCombustion>? Combustion = null, IReadOnlyList<string>? BuildSteps = null);

@@ -157,15 +157,32 @@ Never commit credentials.
 | TngTech.ArchUnitNET | 0.13.4 | Architecture (namespace dependency) rules |
 | TngTech.ArchUnitNET.TUnit | 0.13.4 | TUnit integration for ArchUnitNET |
 
+## Live objects vs definitions
+
+- `/things` lists loose things (ore, ingots, plants, dropped items).
+  `/things/{thing}` reads one live thing of either kind.
+- `/structures` lists built structures (machines, pipes, walls).
+  `/structures/{structure}` reads one built structure in full.
+- `/stationpedia` defines what things are: how to make them
+  (`HowToBuild`), how to place them stage by stage (`BuildSteps`),
+  what uses them (`UsedIn`), and how they burn (`Combustion`).
+
 ## Data dictionary
 
 - Id: ReferenceId of a thing instance (0 when the screw is empty)
+- Kind: `structure` for built things, `thing` for loose ones
 - PrefabName: name of the Unity prefab (e.g. StructureFurnace)
 - Name: localized display name of a thing
 - RoomId: room the thing stands in (0 outside rooms)
-- NetworkId: referenceid to a data network
-- PipeNetworkId: referenceid to a pipe network
+- Connections: every port on a built thing, each with Kind (power, data,
+  pipe, chute), Index within that kind, NetworkId joined, and Port for
+  pipes (input, input2, output, output2 — output2 often carries liquids,
+  e.g. the furnace liquid out). A battery reads power 0, power 1, data 0;
+  a furnace reads pipe input, pipe output, pipe output2. Empty when the
+  thing joins nothing; one wire can carry both power and data when entries
+  share a network id.
 - position: x, y, z coordinates of a thing in meters
 - BuildState: one unfinished build stage — its number and requirements (tool held, materials with quantities)
+- BuildSteps: placement plan from Stationpedia, one line per stage
 - RecipeId: prefab name of what the recipe makes (the station names the machine)
 - Quantity: how much is there — game text on carried stacks (x5, 75%), a number on build entries (blank means a tool you hold)

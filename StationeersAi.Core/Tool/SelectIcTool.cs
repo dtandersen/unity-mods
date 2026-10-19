@@ -19,8 +19,8 @@ public sealed class SelectIcTool : ITool
         "Point a computer's dropdown at one housing on its network. Moves nothing but the selection: write_ic guards on the hash of whatever it points at now.",
         new[]
         {
-            new ToolParameter("computer", "The computer or laptop, by thing id. Read it from search_devices."),
-            new ToolParameter("device", "The housing to point at, by thing id. Read it from search_devices."),
+            new ToolParameter("computer", "The computer or laptop, by thing id. Read it from search_structures."),
+            new ToolParameter("device", "The housing to point at, by thing id. Read it from search_structures."),
         });
 
     public ToolResult Execute(ToolArguments arguments)

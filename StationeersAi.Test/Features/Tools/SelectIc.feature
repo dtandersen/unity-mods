@@ -19,7 +19,7 @@ Feature: Select IC tool
 
   Scenario: Point names the housing by label
     When I point computer "1189" at housing "Climate Control"
-    Then the tool fails with "'device' is not a thing id: 'Climate Control'. Read it from search_devices."
+    Then the tool fails with "'device' is not a thing id: 'Climate Control'. Read it from search_structures."
 
   Scenario: Point needs a computer
     When I call the "select_ic" tool without arguments
@@ -27,7 +27,7 @@ Feature: Select IC tool
 
   Scenario: Point names the computer by label
     When I point computer "Lab Computer" at housing "2200"
-    Then the tool fails with "'computer' is not a thing id: 'Lab Computer'. Read it from search_devices."
+    Then the tool fails with "'computer' is not a thing id: 'Lab Computer'. Read it from search_structures."
 
   Scenario: Point needs a housing
     When I point computer "1189" without a housing

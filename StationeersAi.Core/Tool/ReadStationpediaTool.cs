@@ -64,6 +64,16 @@ public sealed class ReadStationpediaTool : ITool
             }
         }
 
+        var steps = (entry.BuildSteps ?? Array.Empty<string>()).ToArray();
+        if (steps.Length > 0)
+        {
+            lines.Add("Build:");
+            foreach (var step in steps)
+            {
+                lines.Add(step);
+            }
+        }
+
         var burns = (entry.Combustion ?? Array.Empty<StationpediaCombustion>()).ToArray();
         if (burns.Length > 0)
         {

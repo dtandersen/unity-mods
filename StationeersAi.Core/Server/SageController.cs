@@ -70,23 +70,24 @@ public sealed class SageController
         return SageResponse.Ok(_commands.SearchInventory().Execute(new SearchInventoryRequest(q)).Items);
     }
 
-    [SageGet("/devices", "Search devices by name, network, or room.")]
-    public SageResponse Devices(DeviceSearchRequest request)
+    [SageGet("/structures", "Search built structures by name, power or data network, or room.")]
+    public SageResponse Structures(StructureSearchRequest request)
     {
-        return SageResponse.Ok(_commands.SearchDevices().Execute(new SearchDevicesRequest(
+        return SageResponse.Ok(_commands.SearchStructures().Execute(new SearchStructuresRequest(
             request.Query,
-            request.Network,
+            request.PowerNetworkId,
+            request.DataNetworkId,
             request.Logic,
-            request.Room)).Devices);
+            request.Room)).Structures);
     }
 
-    [SageGet("/devices/{device}", "Read one device's values and settings.")]
-    public SageResponse DescribeDevice(string? device)
+    [SageGet("/structures/{structure}", "Read one structure's values and settings.")]
+    public SageResponse DescribeStructure(string? structure)
     {
-        var result = _commands.DescribeDevice().Execute(new DescribeDeviceRequest(device));
+        var result = _commands.DescribeStructure().Execute(new DescribeStructureRequest(structure));
         if (result.Status != Status.SUCCESS)
         {
-            return Failure(result, "Device not found.");
+            return Failure(result, "Structure not found.");
         }
 
         return SageResponse.Ok(result.Details);
@@ -97,6 +98,18 @@ public sealed class SageController
     {
         var result = _commands.SearchThings().Execute(new SearchThingsRequest(request.Query, null, request.MaxDistance));
         return SageResponse.Ok(new ThingsResult(result.Things, result.Origin, result.Facing));
+    }
+
+    [SageGet("/things/{thing}", "Read one live thing: a built structure returns its structure values, a loose item returns quantity and position.")]
+    public SageResponse DescribeThing(string? thing)
+    {
+        var result = _commands.DescribeThing().Execute(new DescribeThingRequest(thing));
+        if (result.Status != Status.SUCCESS)
+        {
+            return Failure(result, "Thing not found.");
+        }
+
+        return SageResponse.Ok(result.Details);
     }
 
     [SageGet("/things/{thing}/slots", "List the slots of one thing.")]
@@ -146,12 +159,6 @@ public sealed class SageController
     public SageResponse Items(string? q)
     {
         return SageResponse.Ok(_commands.SearchItems().Execute(new SearchItemsRequest(q)).Items);
-    }
-
-    [SageGet("/structures", "Search structures by name.")]
-    public SageResponse Structures(string? q)
-    {
-        return SageResponse.Ok(_commands.SearchStructures().Execute(new SearchStructuresRequest(q)).Structures);
     }
 
     [SageGet("/recipes", "Search recipes by name.")]

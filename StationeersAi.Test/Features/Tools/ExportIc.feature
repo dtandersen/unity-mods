@@ -25,7 +25,7 @@ Feature: Export IC tool
 
   Scenario: Export names the housing by label
     When I export from computer "1189" to "Climate Control"
-    Then the tool fails with "'device' is not a thing id: 'Climate Control'. Read it from search_devices."
+    Then the tool fails with "'device' is not a thing id: 'Climate Control'. Read it from search_structures."
 
   Scenario: Export to a housing off the network
     Given the export succeeds

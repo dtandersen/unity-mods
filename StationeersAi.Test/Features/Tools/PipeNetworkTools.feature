@@ -2,7 +2,7 @@ Feature: Pipe network tools
 
   The read_pipenetwork tool reads a pipe network's air so the assistant can
   judge what flows through pipes: pressure, temperature, and gas moles.
-  A pipe network id comes from describe_device; a device label or id finds the
+  A pipe network id comes from describe_structure; a device label or id finds the
   pipe networks joined to it. Data networks (cables) are separate.
 
   Background:

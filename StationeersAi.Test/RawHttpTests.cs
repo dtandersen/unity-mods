@@ -9,13 +9,13 @@ public class RawHttpTests
     [Test]
     public void Parses_get_with_query()
     {
-        var request = RawHttpRequest.TryParse("GET /sage/devices?q=vent&network=7 HTTP/1.1\r\nHost: x\r\n\r\n", null);
+        var request = RawHttpRequest.TryParse("GET /sage/structures?q=vent&cableNetworkId=7 HTTP/1.1\r\nHost: x\r\n\r\n", null);
 
         request.ShouldNotBeNull();
         request.Method.ShouldBe("GET");
-        request.Path.ShouldBe("/sage/devices");
+        request.Path.ShouldBe("/sage/structures");
         request.Query["q"].ShouldBe("vent");
-        request.Query["network"].ShouldBe("7");
+        request.Query["cableNetworkId"].ShouldBe("7");
     }
 
     [Test]
@@ -34,7 +34,7 @@ public class RawHttpTests
     [Test]
     public void Rejects_unknown_methods()
     {
-        RawHttpRequest.TryParse("DELETE /sage/devices HTTP/1.1\r\n\r\n", null).ShouldBeNull();
+        RawHttpRequest.TryParse("DELETE /sage/structures HTTP/1.1\r\n\r\n", null).ShouldBeNull();
         RawHttpRequest.TryParse("garbage", null).ShouldBeNull();
     }
 

@@ -16,12 +16,6 @@ public class SearchTests
         new Item("ItemCopper", "Copper", "Ore"),
     });
 
-    private static InMemoryStructureRepository Structures() => new InMemoryStructureRepository(new[]
-    {
-        new Structure("StructureSolarPanel", "Solar Panel", "Generates power.", new BuildStep[0]),
-        new Structure("StructureSolidFuelGenerator", "Solid Fuel Generator", "Burns coal.", new BuildStep[0]),
-    });
-
     private static InMemoryRecipeRepository Recipes() => new InMemoryRecipeRepository(new[]
     {
         new Recipe("ItemCableCoil", "ItemCableCoil", "Cable Coil", 1, "Electronics Printer",
@@ -53,15 +47,6 @@ public class SearchTests
         index.Search("  ").ShouldBeEmpty();
         index.Search(null).ShouldBeEmpty();
         index.Search("plastic").ShouldBeEmpty();
-    }
-
-    [Test]
-    public void Structure_search_matches_by_name()
-    {
-        var index = new StructureIndex(Structures());
-        index.Search("solar").Count.ShouldBe(1);
-        index.Search("generator")[0].PrefabName.ShouldBe("StructureSolidFuelGenerator");
-        index.Search("airlock").ShouldBeEmpty();
     }
 
     [Test]

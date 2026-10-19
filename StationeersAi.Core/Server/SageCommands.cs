@@ -13,15 +13,15 @@ namespace StationeersAi.Server;
 public sealed class SageCommands
 {
     private readonly IItemRepository _items;
-    private readonly IStructureRepository _structures;
     private readonly IRecipeRepository _recipes;
     private readonly IStationpediaRepository _stationpedia;
     private readonly IPlayerContext _player;
     private readonly IWorldContext _worlds;
     private readonly IIcDevices _icDevices;
     private readonly IMipsReference _mips;
-    private readonly IDeviceCatalog _devices;
-    private readonly IDeviceInspector _inspector;
+    private readonly IStructureCatalog _structures;
+    private readonly IStructureInspector _structureInspector;
+    private readonly IThingInspector _thingInspector;
     private readonly IThingCatalog _things;
     private readonly IThingSlots _slots;
     private readonly IRoomInspector _rooms;
@@ -29,30 +29,30 @@ public sealed class SageCommands
 
     public SageCommands(
         IItemRepository items,
-        IStructureRepository structures,
         IRecipeRepository recipes,
         IStationpediaRepository stationpedia,
         IPlayerContext player,
         IWorldContext worlds,
         IIcDevices icDevices,
         IMipsReference mips,
-        IDeviceCatalog devices,
-        IDeviceInspector inspector,
+        IStructureCatalog structures,
+        IStructureInspector structureInspector,
+        IThingInspector thingInspector,
         IThingCatalog things,
         IThingSlots slots,
         IRoomInspector rooms,
         IPipeNetworkInspector pipeNetworks)
     {
         _items = items;
-        _structures = structures;
         _recipes = recipes;
         _stationpedia = stationpedia;
         _player = player;
         _worlds = worlds;
         _icDevices = icDevices;
         _mips = mips;
-        _devices = devices;
-        _inspector = inspector;
+        _structures = structures;
+        _structureInspector = structureInspector;
+        _thingInspector = thingInspector;
         _things = things;
         _slots = slots;
         _rooms = rooms;
@@ -62,11 +62,6 @@ public sealed class SageCommands
     public SearchItemsCommand SearchItems()
     {
         return new SearchItemsCommand(new ItemIndex(_items));
-    }
-
-    public SearchStructuresCommand SearchStructures()
-    {
-        return new SearchStructuresCommand(new StructureIndex(_structures));
     }
 
     public SearchRecipesCommand SearchRecipes()
@@ -134,14 +129,19 @@ public sealed class SageCommands
         return new ListInstructionsCommand(_mips);
     }
 
-    public SearchDevicesCommand SearchDevices()
+    public SearchStructuresCommand SearchStructures()
     {
-        return new SearchDevicesCommand(_devices);
+        return new SearchStructuresCommand(_structures);
     }
 
-    public DescribeDeviceCommand DescribeDevice()
+    public DescribeStructureCommand DescribeStructure()
     {
-        return new DescribeDeviceCommand(_inspector, _devices);
+        return new DescribeStructureCommand(_structureInspector, _structures);
+    }
+
+    public DescribeThingCommand DescribeThing()
+    {
+        return new DescribeThingCommand(_thingInspector, _structures, _things);
     }
 
     public SearchThingsCommand SearchThings()

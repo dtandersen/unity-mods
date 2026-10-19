@@ -23,7 +23,6 @@ internal static class TestComposition
         return new ToolHandler(new ITool[]
         {
             new SearchItemsTool(new SearchItemsCommand(new ItemIndex(world.Items))),
-            new SearchStructuresTool(new SearchStructuresCommand(new StructureIndex(world.Structures))),
             new SearchRecipesTool(new SearchRecipesCommand(new RecipeIndex(world.Recipes))),
             new SearchStationpediaTool(new SearchStationpediaCommand(new StationpediaIndex(world.Stationpedia))),
             new ReadStationpediaTool(new ReadStationpediaCommand(world.Stationpedia)),
@@ -36,8 +35,9 @@ internal static class TestComposition
             new ImportIcTool(new ImportChipCommand(world.IcDevices)),
             new SelectIcTool(new SelectHousingCommand(world.IcDevices)),
             new ListInstructionsTool(new ListInstructionsCommand(world.Mips)),
-            new SearchDevicesTool(new SearchDevicesCommand(world.Devices)),
-            new DescribeDeviceTool(new DescribeDeviceCommand(world.Inspector, world.Devices)),
+            new SearchStructuresTool(new SearchStructuresCommand(world.Structures)),
+            new DescribeStructureTool(new DescribeStructureCommand(world.StructureInspector, world.Structures)),
+            new DescribeThingTool(new DescribeThingCommand(world.ThingInspector, world.Structures, world.Things)),
             new SearchThingsTool(new SearchThingsCommand(world.Things, world.Player)),
             new ReadSlotsTool(new ReadThingSlotsCommand(world.ThingSlots)),
             new ReadRoomTool(new ReadRoomCommand(world.RoomInspector, world.Player)),

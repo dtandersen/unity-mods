@@ -23,7 +23,7 @@ public sealed class WriteIcTool : ITool
         "Place MIPS source in a computer or laptop's IC editor so the stationeer can review and Export it. Takes the computer's thing id, the hash of the chip now under that computer's dropdown, and the full code. The write refuses when the hash is not the chip in front of the editor, so a stale or wrong selection cannot lose a program. Never writes to housings or chips.",
         new[]
         {
-            new ToolParameter("computer", "The computer or laptop, by thing id. Read it from search_devices."),
+            new ToolParameter("computer", "The computer or laptop, by thing id. Read it from search_structures."),
             new ToolParameter("hash", "The code hash of the chip under the dropdown. Read it from read_ic."),
             new ToolParameter("code", "The full MIPS source for its editor, 127 lines max."),
         });

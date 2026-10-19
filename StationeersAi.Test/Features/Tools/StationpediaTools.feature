@@ -95,3 +95,22 @@ Feature: Stationpedia tools
       Combustion:
       2 x CH4 + 1 x O2 -> 3 x X + 6 x CO2; Auto Ignition 300 °C; 2150 °C
       """
+
+  Scenario: Read lists how to place the subject
+    Given the stationpedia contains:
+      | Key                 | Title   | Description | Text   |
+      | ThingStructureFurnace | Furnace | Smelts ore. | Hot. |
+    And the stationpedia page "ThingStructureFurnace" builds in:
+      | Step                          |
+      | Kit (Furnace) x1              |
+      | Wrench - Iron Sheets x2       |
+    When I call the "read_stationpedia" tool with key "ThingStructureFurnace"
+    Then the tool succeeds
+    And the tool result is:
+      """
+      Furnace
+      Hot.
+      Build:
+      Kit (Furnace) x1
+      Wrench - Iron Sheets x2
+      """

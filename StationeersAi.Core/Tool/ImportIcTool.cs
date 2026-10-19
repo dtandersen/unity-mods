@@ -19,7 +19,7 @@ public sealed class ImportIcTool : ITool
         "Pull the chip under a computer's dropdown into its editor, overwriting the screen text. Point the dropdown first with select_ic: the game's button takes no target. Burns nothing; read_ic shows what landed on the screen.",
         new[]
         {
-            new ToolParameter("computer", "The computer or laptop whose screen takes the text, by thing id. Read it from search_devices."),
+            new ToolParameter("computer", "The computer or laptop whose screen takes the text, by thing id. Read it from search_structures."),
         });
 
     public ToolResult Execute(ToolArguments arguments)

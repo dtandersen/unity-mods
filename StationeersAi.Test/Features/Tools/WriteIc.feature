@@ -52,7 +52,7 @@ Feature: Write IC tool
       """
       yield
       """
-    Then the tool fails with "'computer' is not a thing id: 'Lab Computer'. Read it from search_devices."
+    Then the tool fails with "'computer' is not a thing id: 'Lab Computer'. Read it from search_structures."
 
   Scenario: Unknown computer
     Given no computer is found

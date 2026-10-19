@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using StationeersAi.Core;
 using StationeersAi.Game;
 using Logger = StationeersAi.Core.Logger;
@@ -17,27 +18,27 @@ using UnityEngine;
 namespace StationeersAi.Repository;
 
 /// <summary>
-/// Describes one live device: on/off state, every readable logic setting
+/// Describes one live structure: on/off state, every readable logic setting
 /// with its live value and writability, and slots with occupants.
 /// Snapshotted on Unity's main thread; unreadable entries are skipped,
 /// never fatal.
 /// </summary>
-public sealed class StationeersDeviceInspector : IDeviceInspector
+public sealed class StationeersStructureInspector : IStructureInspector
 {
     private readonly IMainThread _threads;
 
     private readonly Logger _log;
 
-    public StationeersDeviceInspector(IMainThread mainThread, Logger log)
+    public StationeersStructureInspector(IMainThread mainThread, Logger log)
     {
         _threads = mainThread;
         _log = log;
     }
-    public DeviceDetails? Describe(string? device)
+    public StructureDetails? Describe(string? structure)
     {
         try
         {
-            return _threads.RunSync(() => DescribeInner(device));
+            return _threads.RunSync(() => DescribeInner(structure));
         }
         catch (Exception ex)
         {
@@ -46,13 +47,13 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
         }
     }
 
-    private DeviceDetails? DescribeInner(string? device)
+    private StructureDetails? DescribeInner(string? structure)
     {
         var matches = ThingMatching.Match(
             UnityEngine.Object.FindObjectsOfType<Assets.Scripts.Objects.Structure>(),
             item => SafeName(item),
             item => item.ReferenceId,
-            device);
+            structure);
         if (matches.Count != 1)
         {
             return null;
@@ -60,15 +61,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
 
         var target = matches[0];
         var wired = target as Device;
-        long network = 0;
-        try
-        {
-            var networkObject = wired != null ? wired.DataCableNetwork : null;
-            network = networkObject != null ? networkObject.ReferenceId : 0;
-        }
-        catch (Exception)
-        {
-        }
+        var connections = ReadConnections(target);
 
         bool? isOn = null;
         try
@@ -82,11 +75,11 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
         {
         }
 
-        return new DeviceDetails(
+        return new StructureDetails(
             SafeName(target),
             SafeType(target),
             SafeId(target),
-            network,
+            connections,
             isOn,
             ReadLogic(target as ILogicable),
             ReadSlots(target as ILogicable),
@@ -96,10 +89,258 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
             ReadBuild(target as Assets.Scripts.Objects.Structure));
     }
 
+    private static List<NetworkConnection> ReadConnections(Assets.Scripts.Objects.Structure? structure)
+    {
+        var connections = new List<NetworkConnection>();
+        if (structure == null)
+        {
+            return connections;
+        }
+
+        var wired = structure as Device;
+        if (wired != null)
+        {
+            AddCableConnections(connections, wired);
+            AddPipeConnections(connections, structure, wired);
+            AddChuteConnections(connections, structure, wired);
+        }
+        else
+        {
+            AddPipeConnections(connections, structure, null);
+            AddChuteConnections(connections, structure, null);
+        }
+
+        return connections;
+    }
+
+    private static void AddCableConnections(List<NetworkConnection> connections, Device wired)
+    {
+        try
+        {
+            var power = wired.PowerCables;
+            if (power != null)
+            {
+                for (var i = 0; i < power.Length; i++)
+                {
+                    try
+                    {
+                        var network = power[i] != null ? power[i].CableNetwork : null;
+                        if (network != null)
+                        {
+                            connections.Add(new NetworkConnection("power", i, network.ReferenceId));
+                        }
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
+            }
+        }
+        catch (Exception)
+        {
+        }
+
+        try
+        {
+            var data = wired.DataCables;
+            if (data != null)
+            {
+                for (var i = 0; i < data.Length; i++)
+                {
+                    try
+                    {
+                        var network = data[i] != null ? data[i].CableNetwork : null;
+                        if (network != null)
+                        {
+                            connections.Add(new NetworkConnection("data", i, network.ReferenceId));
+                        }
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
+            }
+        }
+        catch (Exception)
+        {
+        }
+    }
+
+    /// <summary>
+    /// Every pipe mouth: a lone pipe joins one network; a device with
+    /// mouths reports input, input2, output, output2 in that order
+    /// (output2 often carries liquids, e.g. the furnace liquid out).
+    /// Anything else on pipe networks joins by network id.
+    /// </summary>
+    private static void AddPipeConnections(List<NetworkConnection> connections, Assets.Scripts.Objects.Structure structure, Device? wired)
+    {
+        try
+        {
+            var pipe = structure as Pipe;
+            if (pipe != null)
+            {
+                try
+                {
+                    var own = pipe.PipeNetwork;
+                    if (own != null)
+                    {
+                        connections.Add(new NetworkConnection("pipe", 0, own.ReferenceId));
+                    }
+                }
+                catch (Exception)
+                {
+                }
+
+                return;
+            }
+        }
+        catch (Exception)
+        {
+        }
+
+        try
+        {
+            var io = structure as DeviceInputOutput;
+            if (io != null)
+            {
+                AddPipe(connections, "input", 0, SafePipeId(() => io.InputNetwork));
+                AddPipe(connections, "input2", 1, SafePipeId(() => io.InputNetwork2));
+                AddPipe(connections, "output", 2, SafePipeId(() => io.OutputNetwork));
+                AddPipe(connections, "output2", 3, SafePipeId(() => io.OutputNetwork2));
+                return;
+            }
+        }
+        catch (Exception)
+        {
+        }
+
+        if (wired == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var joined = wired.ConnectedPipeNetworks;
+            if (joined == null)
+            {
+                return;
+            }
+
+            var index = 0;
+            foreach (var network in joined)
+            {
+                try
+                {
+                    if (network == null)
+                    {
+                        continue;
+                    }
+
+                    var id = network.ReferenceId;
+                    if (connections.Any(c => c.Kind == "pipe" && c.NetworkId == id))
+                    {
+                        continue;
+                    }
+
+                    connections.Add(new NetworkConnection("pipe", index++, id));
+                }
+                catch (Exception)
+                {
+                }
+            }
+        }
+        catch (Exception)
+        {
+        }
+    }
+
+    private static void AddPipe(List<NetworkConnection> connections, string port, int index, long? networkId)
+    {
+        if (networkId.HasValue && networkId.Value != 0)
+        {
+            connections.Add(new NetworkConnection("pipe", index, networkId.Value, port));
+        }
+    }
+
+    private static long? SafePipeId(Func<object?> get)
+    {
+        try
+        {
+            var network = get() as Assets.Scripts.Networks.PipeNetwork;
+            return network == null ? (long?)null : network.ReferenceId;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    private static void AddChuteConnections(List<NetworkConnection> connections, Assets.Scripts.Objects.Structure structure, Device? wired)
+    {
+        try
+        {
+            var chute = structure as Chute;
+            if (chute != null)
+            {
+                try
+                {
+                    var own = chute.ChuteNetwork;
+                    if (own != null)
+                    {
+                        connections.Add(new NetworkConnection("chute", 0, own.ReferenceId));
+                    }
+                }
+                catch (Exception)
+                {
+                }
+
+                return;
+            }
+        }
+        catch (Exception)
+        {
+        }
+
+        if (wired == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var joined = wired.ConnectedChuteNetworks;
+            if (joined == null)
+            {
+                return;
+            }
+
+            var index = 0;
+            foreach (var network in joined)
+            {
+                try
+                {
+                    if (network == null)
+                    {
+                        continue;
+                    }
+
+                    connections.Add(new NetworkConnection("chute", index++, network.ReferenceId));
+                }
+                catch (Exception)
+                {
+                }
+            }
+        }
+        catch (Exception)
+        {
+        }
+    }
+
     /// <summary>
     /// How far construction of the placed structure has come, with one step
-    /// per unfinished state after the current one. Null when the device is
-    /// no structure or the game reports no stages.
+    /// per unfinished state after the current one. Null when the game reports
+    /// no stages.
     /// </summary>
     private static BuildProgress? ReadBuild(Assets.Scripts.Objects.Structure? structure)
     {
@@ -292,9 +533,9 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
         return entries;
     }
 
-    private static IReadOnlyList<DeviceLogicValue> ReadLogic(ILogicable logicable)
+    private static IReadOnlyList<StructureLogicValue> ReadLogic(ILogicable logicable)
     {
-        var values = new List<DeviceLogicValue>();
+        var values = new List<StructureLogicValue>();
         if (logicable == null)
         {
             return values;
@@ -309,7 +550,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
                     continue;
                 }
 
-                values.Add(new DeviceLogicValue(type.ToString(), logicable.GetLogicValue(type), logicable.CanLogicWrite(type)));
+                values.Add(new StructureLogicValue(type.ToString(), logicable.GetLogicValue(type), logicable.CanLogicWrite(type)));
             }
             catch (Exception)
             {
@@ -319,9 +560,9 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
         return values;
     }
 
-    private static IReadOnlyList<DeviceSlotInfo> ReadSlots(ILogicable logicable)
+    private static IReadOnlyList<StructureSlotInfo> ReadSlots(ILogicable logicable)
     {
-        var slots = new List<DeviceSlotInfo>();
+        var slots = new List<StructureSlotInfo>();
         if (logicable == null)
         {
             return slots;
@@ -381,7 +622,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
             {
             }
 
-            slots.Add(new DeviceSlotInfo(index, name, occupant));
+            slots.Add(new StructureSlotInfo(index, name, occupant));
         }
 
         return slots;
@@ -391,7 +632,7 @@ public sealed class StationeersDeviceInspector : IDeviceInspector
     /// Internal reagents of fabricators (autolathe, electronics printer),
     /// furnaces, and anything else holding a mixture: the hopper contents
     /// stockpile tallies need. Every <c>Thing</c> carries a mixture, so this
-    /// reads it straight off the device. Null when the mixture itself is
+    /// reads it straight off the structure. Null when the mixture itself is
     /// missing; empty when it exists but is unfilled.
     /// </summary>
     private static IReadOnlyList<ReagentAmount>? ReadStorage(Assets.Scripts.Objects.Structure? structure)

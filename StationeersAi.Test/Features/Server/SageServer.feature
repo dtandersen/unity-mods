@@ -56,12 +56,12 @@ Feature: Sage HTTP API
       ]
       """
 
-  Scenario: Device search
-    Given live devices exist:
-      | Name       | PrefabName         | Id    | Network | Logic | Room | Position |
-      | Air Vent   | StructureAirVent   | 101   | 7       | true  | 5    | 1,2,3    |
-      | Gas Sensor | StructureGasSensor | 102   | 0       | true  | 5    | 4,5,6    |
-    When I GET /sage/devices?q=vent
+  Scenario: Structure search
+    Given live structures exist:
+      | Name       | PrefabName         | Id    | Connections | Logic | Room | Position |
+      | Air Vent   | StructureAirVent   | 101   | p0:7        | true  | 5    | 1,2,3    |
+      | Gas Sensor | StructureGasSensor | 102   | none      | true  | 5    | 4,5,6    |
+    When I GET /sage/structures?q=vent
     Then the response is:
       """
       [
@@ -69,7 +69,14 @@ Feature: Sage HTTP API
           "Name": "Air Vent",
           "PrefabName": "StructureAirVent",
           "Id": 101,
-          "NetworkId": 7,
+          "Connections": [
+            {
+              "Kind": "power",
+              "Index": 0,
+              "NetworkId": 7,
+              "Port": null
+            }
+          ],
           "Logic": true,
           "RoomId": 5,
           "position": {
@@ -136,7 +143,8 @@ Feature: Sage HTTP API
           "Text": "Cable Coil carries power.",
           "UsedIn": null,
           "HowToBuild": null,
-          "Combustion": null
+          "Combustion": null,
+          "BuildSteps": null
         }
       ]
       """
@@ -235,40 +243,6 @@ Feature: Sage HTTP API
       }
       """
 
-  Scenario: Structure catalogue search
-    Given the structure database contains:
-      | Name       | Description |
-      | Air Vent   | Moves air.  |
-    When I GET /sage/structures?q=vent
-    Then the response is:
-      """
-      [
-        {
-          "PrefabName": "Air Vent",
-          "Name": "Air Vent",
-          "Description": "Moves air.",
-          "BuildStates": []
-        }
-      ]
-      """
-
-  Scenario: Structure names ship without rich text
-    Given the structure database contains:
-      | Name                          | Description |
-      | <color=green>Autolathe</color> | Prints.     |
-    When I GET /sage/structures?q=autolathe
-    Then the response is:
-      """
-      [
-        {
-          "PrefabName": "Autolathe",
-          "Name": "Autolathe",
-          "Description": "Prints.",
-          "BuildStates": []
-        }
-      ]
-      """
-
   Scenario: Stationpedia read lists uses and manufacture
     Given the stationpedia contains:
       | Key           | Title | Description | Text    |
@@ -302,7 +276,8 @@ Feature: Sage HTTP API
             "Key": "ThingCentrifuge"
           }
         ],
-        "Combustion": null
+        "Combustion": null,
+        "BuildSteps": null
       }
       """
 
@@ -342,6 +317,33 @@ Feature: Sage HTTP API
             "AutoIgnitionC": 300.0,
             "OutputTemperatureC": 2150.0
           }
+        ],
+        "BuildSteps": null
+      }
+      """
+
+  Scenario: Stationpedia read lists build steps
+    Given the stationpedia contains:
+      | Key                   | Title   | Description | Text |
+      | ThingStructureFurnace | Furnace | Smelts ore. | Hot. |
+    And the stationpedia page "ThingStructureFurnace" builds in:
+      | Step                     |
+      | Kit (Furnace) x1         |
+      | Wrench - Iron Sheets x2  |
+    When I GET /sage/stationpedia/ThingStructureFurnace
+    Then the response is:
+      """
+      {
+        "Key": "ThingStructureFurnace",
+        "Title": "Furnace",
+        "Description": "Smelts ore.",
+        "Text": "Hot.",
+        "UsedIn": null,
+        "HowToBuild": null,
+        "Combustion": null,
+        "BuildSteps": [
+          "Kit (Furnace) x1",
+          "Wrench - Iron Sheets x2"
         ]
       }
       """
@@ -360,7 +362,8 @@ Feature: Sage HTTP API
         "Text": "Cable Coil carries power.",
       "UsedIn": null,
       "HowToBuild": null,
-      "Combustion": null
+      "Combustion": null,
+      "BuildSteps": null
       }
       """
 
@@ -378,20 +381,28 @@ Feature: Sage HTTP API
         "Text": "Plain.",
       "UsedIn": null,
       "HowToBuild": null,
-      "Combustion": null
+      "Combustion": null,
+      "BuildSteps": null
       }
       """
 
-  Scenario: Device describe
-    Given the device "Air Vent" exists
-    When I GET /sage/devices/Air Vent
+  Scenario: Structure describe
+    Given the structure "Air Vent" exists
+    When I GET /sage/structures/Air Vent
     Then the response is:
       """
       {
         "Name": "Air Vent",
         "PrefabName": "StructureAirVent",
         "Id": 101,
-        "NetworkId": 7,
+        "Connections": [
+          {
+            "Kind": "power",
+            "Index": 0,
+            "NetworkId": 7,
+            "Port": null
+          }
+        ],
         "IsOn": true,
         "Logic": [
           {
@@ -419,19 +430,19 @@ Feature: Sage HTTP API
       }
       """
 
-  Scenario: Device describe includes fabricator storage
-    Given the device "Autolathe" holds:
+  Scenario: Structure describe includes fabricator storage
+    Given the structure "Autolathe" holds:
       | Reagent | Quantity |
       | Iron    | 60       |
       | Copper  | 12.5     |
-    When I GET /sage/devices/1456
+    When I GET /sage/structures/1456
     Then the response is:
       """
       {
         "Name": "Autolathe",
         "PrefabName": "StructureAutolathe",
         "Id": 1456,
-        "NetworkId": 0,
+        "Connections": [],
         "IsOn": false,
         "Logic": [],
         "Slots": [
@@ -513,6 +524,101 @@ Feature: Sage HTTP API
       ]
       """
 
+  Scenario: Thing describe returns a structure with its structure values
+    Given the structure thing "Air Vent" exists
+    When I GET /sage/things/101
+    Then the response is:
+      """
+      {
+        "Name": "Air Vent",
+        "PrefabName": "StructureAirVent",
+        "Id": 101,
+        "Kind": "structure",
+        "Quantity": null,
+        "position": {
+          "x": 1.0,
+          "y": 2.0,
+          "z": 3.0
+        },
+        "RoomId": 5,
+        "Connections": [
+          {
+            "Kind": "power",
+            "Index": 0,
+            "NetworkId": 7,
+            "Port": null
+          }
+        ],
+        "Logic": true,
+        "Details": {
+          "Name": "Air Vent",
+          "PrefabName": "StructureAirVent",
+          "Id": 101,
+          "Connections": [
+            {
+              "Kind": "power",
+              "Index": 0,
+              "NetworkId": 7,
+              "Port": null
+            }
+          ],
+          "IsOn": true,
+          "Logic": [
+            {
+              "Name": "Pressure",
+              "Value": 101.3,
+              "Writable": false
+            },
+            {
+              "Name": "On",
+              "Value": 1.0,
+              "Writable": true
+            }
+          ],
+          "Slots": [
+            {
+              "Index": 0,
+              "SlotType": "Filter",
+              "Occupant": "empty"
+            }
+          ],
+          "Devices": null,
+          "Chip": null,
+          "Storage": null,
+          "Build": null
+        }
+      }
+      """
+
+  Scenario: Thing describe returns a loose thing without structure values
+    Given the loose thing "Iron Ore" exists
+    When I GET /sage/things/201
+    Then the response is:
+      """
+      {
+        "Name": "Iron Ore",
+        "PrefabName": "OreIron",
+        "Id": 201,
+        "Kind": "thing",
+        "Quantity": "x5",
+        "position": {
+          "x": 4.0,
+          "y": 5.0,
+          "z": 6.0
+        },
+        "RoomId": 0,
+        "Connections": [],
+        "Logic": false,
+        "Details": null
+      }
+      """
+
+  Scenario: Thing describe misses with 404
+    Given no thing matches
+    When I GET /sage/things/999
+    Then the response status is 404
+    And the response reports "No single thing matches '999'."
+
   Scenario: Thing quantity ships without rich text
     Given these world things exist:
       | Name           | PrefabName | Id  | Quantity              | X   | Y   | Z   | Room |
@@ -572,15 +678,15 @@ Feature: Sage HTTP API
 
   Scenario: API index lists routes
     When I GET /sage/
-    Then the response contains "GET /sage/devices"
+    Then the response contains "GET /sage/structures"
 
   Scenario: API index reads as text
     When I GET /sage/INDEX.md
     Then the response contains "# Sage API"
 
-  Scenario: OpenAPI describes the devices route
+  Scenario: OpenAPI describes the structures route
     When I GET /sage/openapi
-    Then the response contains "/sage/devices"
+    Then the response contains "/sage/structures"
 
   Scenario: Own room read
     Given a sealed room 5 at 20 C and 101 kPa in 100 L holding:

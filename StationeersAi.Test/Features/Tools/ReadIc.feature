@@ -27,7 +27,7 @@ Feature: Read IC tool
   Scenario: Read by label is refused
     Given the editor holds "yield"
     When I read computer "Lab Computer"
-    Then the tool fails with "'computer' is not a thing id: 'Lab Computer'. Read it from search_devices."
+    Then the tool fails with "'computer' is not a thing id: 'Lab Computer'. Read it from search_structures."
 
   Scenario: Unknown computer
     Given no computer is found

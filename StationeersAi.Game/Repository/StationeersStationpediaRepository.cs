@@ -73,7 +73,8 @@ public sealed class StationeersStationpediaRepository : IStationpediaRepository
                 Text: string.IsNullOrWhiteSpace(page.Text) ? page.ConstructWithText : page.Text,
                 UsedIn: SafeUsedIn(page),
                 HowToBuild: SafeHowToBuild(page),
-                Combustion: SafeCombustion(page)));
+                Combustion: SafeCombustion(page),
+                BuildSteps: SafeBuildSteps(page)));
         }
 
         return entries;
@@ -149,6 +150,43 @@ public sealed class StationeersStationpediaRepository : IStationpediaRepository
         catch (System.Exception)
         {
             return new StationpediaMakeEntity[0];
+        }
+    }
+
+    /// <summary>
+    /// How to place the page's subject stage by stage: one line per build
+    /// state from the game's own Stationpedia data, rich text stripped to
+    /// plain words. A page that fails to report keeps no steps rather than
+    /// dropping the whole encyclopedia.
+    /// </summary>
+    private static IReadOnlyList<string> SafeBuildSteps(StationpediaPage page)
+    {
+        try
+        {
+            var steps = new List<string>();
+            foreach (var insert in page.BuildStates)
+            {
+                if (insert == null)
+                {
+                    continue;
+                }
+
+                var details = UnityRichText.Strip(insert.Details);
+                var description = UnityRichText.Strip(insert.Description);
+                var line = (details + " " + description).Trim();
+                if (string.IsNullOrWhiteSpace(line))
+                {
+                    continue;
+                }
+
+                steps.Add(line);
+            }
+
+            return steps;
+        }
+        catch (System.Exception)
+        {
+            return new List<string>();
         }
     }
 

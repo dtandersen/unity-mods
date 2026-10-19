@@ -20,8 +20,6 @@ public sealed class WorldContext : IDisposable, AgentSettings
 {
     public InMemoryItemRepository Items { get; } = new InMemoryItemRepository(Array.Empty<Item>());
 
-    public InMemoryStructureRepository Structures { get; } = new InMemoryStructureRepository(Array.Empty<Structure>());
-
     public InMemoryRecipeRepository Recipes { get; } = new InMemoryRecipeRepository(Array.Empty<Recipe>());
 
     public InMemoryStationpediaRepository Stationpedia { get; } = new InMemoryStationpediaRepository(Array.Empty<StationpediaEntry>());
@@ -40,9 +38,11 @@ public sealed class WorldContext : IDisposable, AgentSettings
 
     public InMemoryMipsReference Mips { get; } = new InMemoryMipsReference();
 
-    public InMemoryDeviceCatalog Devices { get; } = new InMemoryDeviceCatalog();
+    public InMemoryStructureCatalog Structures { get; } = new InMemoryStructureCatalog();
 
-    public InMemoryDeviceInspector Inspector { get; } = new InMemoryDeviceInspector();
+    public InMemoryStructureInspector StructureInspector { get; } = new InMemoryStructureInspector();
+
+    public InMemoryThingInspector ThingInspector { get; } = new InMemoryThingInspector();
 
     public InMemoryThingCatalog Things { get; } = new InMemoryThingCatalog();
 

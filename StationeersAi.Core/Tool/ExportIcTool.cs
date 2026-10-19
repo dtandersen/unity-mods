@@ -19,8 +19,8 @@ public sealed class ExportIcTool : ITool
         "Copy a computer's editor text onto a housing chip and verify the burn by code hash. Takes the computer and the housing, each by thing id. Only ask for this when the stationeer agrees.",
         new[]
         {
-            new ToolParameter("computer", "The computer or laptop holding the code, by thing id. Read it from search_devices."),
-            new ToolParameter("device", "The housing to burn, by thing id. Read it from search_devices."),
+            new ToolParameter("computer", "The computer or laptop holding the code, by thing id. Read it from search_structures."),
+            new ToolParameter("device", "The housing to burn, by thing id. Read it from search_structures."),
         });
 
     public ToolResult Execute(ToolArguments arguments)

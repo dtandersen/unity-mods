@@ -20,7 +20,7 @@ public sealed class ReadSlotsTool : ITool
         "List the slots of one thing and what sits in each: a belt, a crate, a held tool. Takes the thing's label or reference id. Reads only.",
         new[]
         {
-            new ToolParameter("thing", "The thing to look inside, by label or reference id. Read it from search_things or search_devices."),
+            new ToolParameter("thing", "The thing to look inside, by label or reference id. Read it from search_things or search_structures."),
         });
 
     public ToolResult Execute(ToolArguments arguments)

@@ -23,7 +23,7 @@ public sealed class ReadIcTool : ITool
         "Read the full text in a computer or laptop's IC editor, and optionally a housing's burned chip. Takes the computer's thing id, with an optional housing thing id. Never writes.",
         new[]
         {
-            new ToolParameter("computer", "The computer or laptop, by thing id. Read it from search_devices."),
+            new ToolParameter("computer", "The computer or laptop, by thing id. Read it from search_structures."),
             new ToolParameter("device", "The housing holding the chip, by thing id. Omit it to read only the editor.", false),
         });
 

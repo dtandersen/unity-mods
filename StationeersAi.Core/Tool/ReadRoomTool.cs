@@ -19,7 +19,7 @@ public sealed class ReadRoomTool : ITool
 
     public ToolDefinition Definition { get; } = new ToolDefinition(
         "read_room",
-        "Read a room's atmospherics: type, temperature, pressure, volume, and gas moles. Pass a room id from the Room column of search_devices. Omit room to read the room you stand in.",
+        "Read a room's atmospherics: type, temperature, pressure, volume, and gas moles. Pass a room id from the Room column of search_structures. Omit room to read the room you stand in.",
         new[]
         {
             new ToolParameter("room", "The room id, e.g. '5'. Omit it to read your own room.", Required: false),

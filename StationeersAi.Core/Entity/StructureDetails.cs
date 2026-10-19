@@ -3,15 +3,15 @@ using System.Collections.Generic;
 namespace StationeersAi.Entity;
 
 /// <summary>One readable logic setting: its name, current value, and whether it writes.</summary>
-public sealed record DeviceLogicValue(string Name, double Value, bool Writable);
+public sealed record StructureLogicValue(string Name, double Value, bool Writable);
 
-/// <summary>One device slot: its index, slot type, and occupant label.</summary>
-public sealed record DeviceSlotInfo(int Index, string? SlotType, string Occupant);
+/// <summary>One structure slot: its index, slot type, and occupant label.</summary>
+public sealed record StructureSlotInfo(int Index, string? SlotType, string Occupant);
 
 /// <summary>The running chip in a housing: its error, display value, and code hash. Null when not a housing or chipless.</summary>
 public sealed record ChipState(string? ErrorType, string? ErrorLine, double? Display, string? CodeHash);
 
-/// <summary>One device on a housing: its d-index, label, and id (0 when the screw is empty).</summary>
+/// <summary>One structure on a housing: its d-index, label, and id (0 when the screw is empty).</summary>
 public sealed record HousingDeviceEntry(string Index, string? Label, long Id);
 
 /// <summary>One reagent inside a machine: its display name and stored quantity.</summary>
@@ -41,22 +41,21 @@ public sealed record BuildStep(int State, IReadOnlyList<BuildEntry> Entries);
 public sealed record BuildProgress(int Stage, int Stages, IReadOnlyList<BuildStep> BuildStates);
 
 /// <summary>
-/// One device in full: identity, on/off state (null when it has no switch),
-/// readable logic settings, slots, and, for housings, the devices on its
+/// One structure in full: identity, on/off state (null when it has no switch),
+/// readable logic settings, slots, and, for housings, the structures on its
 /// screws (null for anything else). Storage holds internal reagents for
-/// fabricators and furnaces (null when the device stores none). Build tells
-/// how far construction has come (null when the device is no structure or
-/// the game reports no stages). Live readings are absent when the game does
-/// not expose them.
+/// fabricators and furnaces (null when the structure stores none). Build tells
+/// how far construction has come (null when the game reports no stages).
+/// Live readings are absent when the game does not expose them.
 /// </summary>
-public sealed record DeviceDetails(
+public sealed record StructureDetails(
     string? Name,
     string? PrefabName,
     long Id,
-    long NetworkId,
+    IReadOnlyList<NetworkConnection> Connections,
     bool? IsOn,
-    IReadOnlyList<DeviceLogicValue>? Logic,
-    IReadOnlyList<DeviceSlotInfo>? Slots,
+    IReadOnlyList<StructureLogicValue>? Logic,
+    IReadOnlyList<StructureSlotInfo>? Slots,
     IReadOnlyList<HousingDeviceEntry>? Devices,
     ChipState? Chip,
     IReadOnlyList<ReagentAmount>? Storage,

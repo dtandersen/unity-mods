@@ -2,7 +2,7 @@ Feature: Room tools
 
   The read_room tool reads a room's atmospherics so the assistant can judge
   air it cannot see: temperature, pressure, and gas moles. A room id comes
-  from the Room column of search_devices; omitting it reads the room the
+  from the Room column of search_structures; omitting it reads the room the
   player stands in.
 
   Background:
