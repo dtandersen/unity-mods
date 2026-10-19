@@ -159,3 +159,33 @@ Feature: Stationpedia tools
       Kit (Furnace) x1
       Wrench - Iron Sheets x2
       """
+
+  Scenario: Read lists logic and connections for a logic writer
+    Given the stationpedia contains:
+      | Key                       | Title        | Description   | Text           |
+      | ThingStructureLogicWriter | Logic Writer | Writes logic. | Links devices. |
+    And the stationpedia page "ThingStructureLogicWriter" has logic:
+      | Name       | Access     |
+      | Power      | Read       |
+      | On         | Read Write |
+      | ForceWrite | Write      |
+    And the stationpedia page "ThingStructureLogicWriter" has connections:
+      | Name        | Index |
+      | Data Input  | 0     |
+      | Data Output | 1     |
+      | Connection  | 2     |
+    When I call the "read_stationpedia" tool with key "ThingStructureLogicWriter"
+    Then the tool succeeds
+    And the tool result is:
+      """
+      Logic Writer
+      Links devices.
+      Logic:
+      Power - Read
+      On - Read Write
+      ForceWrite - Write
+      Connections:
+      Data Input 0
+      Data Output 1
+      Connection 2
+      """

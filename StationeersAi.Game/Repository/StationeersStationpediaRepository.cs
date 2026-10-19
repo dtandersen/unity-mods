@@ -84,7 +84,9 @@ public sealed class StationeersStationpediaRepository : IStationpediaRepository
                 PowerStorageJ: SubjectPowerStorageJ(page),
                 PowerDrawW: SubjectPowerDrawW(page),
                 FuelEnergyPerSecondW: SubjectFuelEps(page),
-                TickSeconds: TickSeconds()));
+                TickSeconds: TickSeconds(),
+                Logic: SafeLogic(page),
+                Connections: SafeConnections(page)));
         }
 
         return entries;
@@ -285,6 +287,84 @@ public sealed class StationeersStationpediaRepository : IStationpediaRepository
         catch (System.Exception)
         {
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Logic variables the page's subject reads or writes, taken from the
+    /// game's own Stationpedia data. Names are plain words (e.g. Power,
+    /// On, ForceWrite) and access is Read, Write, or Read Write. A page
+    /// that fails to report keeps no logic rather than dropping the whole
+    /// encyclopedia.
+    /// </summary>
+    private static IReadOnlyList<StationeersAi.Entity.StationpediaLogic> SafeLogic(StationpediaPage page)
+    {
+        try
+        {
+            var lines = new List<StationeersAi.Entity.StationpediaLogic>();
+            foreach (var insert in page.LogicInsert)
+            {
+                if (insert == null || string.IsNullOrWhiteSpace(insert.LogicName))
+                {
+                    continue;
+                }
+
+                var name = UnityRichText.Strip(insert.LogicName).Trim();
+                var access = UnityRichText.Strip(insert.LogicAccessTypes).Trim();
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    continue;
+                }
+
+                lines.Add(new StationeersAi.Entity.StationpediaLogic(
+                    name,
+                    string.IsNullOrWhiteSpace(access) ? "Read" : access));
+            }
+
+            return lines;
+        }
+        catch (System.Exception)
+        {
+            return new StationeersAi.Entity.StationpediaLogic[0];
+        }
+    }
+
+    /// <summary>
+    /// Data and cable ports of the page's subject, taken from the game's
+    /// own Stationpedia data. Names are plain words (e.g. Data Input,
+    /// Data Output) with the port index on the prefab. A page that fails
+    /// to report keeps no ports rather than dropping the whole
+    /// encyclopedia.
+    /// </summary>
+    private static IReadOnlyList<StationeersAi.Entity.StationpediaConnection> SafeConnections(StationpediaPage page)
+    {
+        try
+        {
+            var ports = new List<StationeersAi.Entity.StationpediaConnection>();
+            foreach (var insert in page.ConnectionInsert)
+            {
+                if (insert == null || string.IsNullOrWhiteSpace(insert.LogicName))
+                {
+                    continue;
+                }
+
+                var name = UnityRichText.Strip(insert.LogicName).Trim();
+                var index = UnityRichText.Strip(insert.LogicAccessTypes).Trim();
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    continue;
+                }
+
+                ports.Add(new StationeersAi.Entity.StationpediaConnection(
+                    name,
+                    string.IsNullOrWhiteSpace(index) ? "0" : index));
+            }
+
+            return ports;
+        }
+        catch (System.Exception)
+        {
+            return new StationeersAi.Entity.StationpediaConnection[0];
         }
     }
 

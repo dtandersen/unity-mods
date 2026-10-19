@@ -19,8 +19,8 @@ public sealed class ReadStationpediaTool : ITool
 
     public ToolDefinition Definition { get; } = new ToolDefinition(
         "read_stationpedia",
-        "Read the full text of one Stationpedia page. Find pages first with search_stationpedia.",
-        new[] { new ToolParameter("key", "The page Key from search_stationpedia, e.g. 'ItemSteel'.") });
+        "Read the full text of one Stationpedia page. Find pages first with search_stationpedia and copy the Key exactly.",
+        new[] { new ToolParameter("key", "The page Key from search_stationpedia, e.g. 'ThingItemSteelIngot'. Keys vary by kind: Thing*, Gas*, Reagent*, LogicType*.") });
 
     public ToolResult Execute(ToolArguments arguments)
     {
@@ -111,6 +111,26 @@ public sealed class ReadStationpediaTool : ITool
             foreach (var burn in burns)
             {
                 lines.Add(FormatCombustion(burn));
+            }
+        }
+
+        var logic = (entry.Logic ?? Array.Empty<StationpediaLogic>()).ToArray();
+        if (logic.Length > 0)
+        {
+            lines.Add("Logic:");
+            foreach (var row in logic)
+            {
+                lines.Add(string.IsNullOrWhiteSpace(row.Access) ? row.Name : $"{row.Name} - {row.Access}");
+            }
+        }
+
+        var ports = (entry.Connections ?? Array.Empty<StationpediaConnection>()).ToArray();
+        if (ports.Length > 0)
+        {
+            lines.Add("Connections:");
+            foreach (var port in ports)
+            {
+                lines.Add(string.IsNullOrWhiteSpace(port.Index) ? port.Name : $"{port.Name} {port.Index}");
             }
         }
 

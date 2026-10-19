@@ -149,7 +149,9 @@ Feature: Sage HTTP API
           "PowerStorageJ": null,
           "PowerDrawW": null,
           "FuelEnergyPerSecondW": null,
-          "TickSeconds": null
+          "TickSeconds": null,
+          "Logic": null,
+          "Connections": null
         }
       ]
       """
@@ -293,7 +295,9 @@ Feature: Sage HTTP API
         "PowerStorageJ": null,
         "PowerDrawW": null,
         "FuelEnergyPerSecondW": null,
-        "TickSeconds": null
+        "TickSeconds": null,
+        "Logic": null,
+        "Connections": null
       }
       """
 
@@ -339,7 +343,9 @@ Feature: Sage HTTP API
         "PowerStorageJ": null,
         "PowerDrawW": null,
         "FuelEnergyPerSecondW": null,
-        "TickSeconds": null
+        "TickSeconds": null,
+        "Logic": null,
+        "Connections": null
       }
       """
 
@@ -370,7 +376,9 @@ Feature: Sage HTTP API
         "PowerStorageJ": null,
         "PowerDrawW": null,
         "FuelEnergyPerSecondW": null,
-        "TickSeconds": null
+        "TickSeconds": null,
+        "Logic": null,
+        "Connections": null
       }
       """
 
@@ -394,7 +402,9 @@ Feature: Sage HTTP API
       "PowerStorageJ": null,
       "PowerDrawW": null,
       "FuelEnergyPerSecondW": null,
-      "TickSeconds": null
+      "TickSeconds": null,
+        "Logic": null,
+        "Connections": null
       }
       """
 
@@ -418,7 +428,9 @@ Feature: Sage HTTP API
       "PowerStorageJ": null,
       "PowerDrawW": null,
       "FuelEnergyPerSecondW": null,
-      "TickSeconds": null
+      "TickSeconds": null,
+        "Logic": null,
+        "Connections": null
       }
       """
 

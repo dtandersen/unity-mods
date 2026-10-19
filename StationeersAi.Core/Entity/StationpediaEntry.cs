@@ -25,6 +25,20 @@ public sealed record StationpediaUse(string Title, string? Detail, string? Key, 
 public sealed record StationpediaMake(string Station, string? Tier, string? Detail, string? Key);
 
 /// <summary>
+/// One logic line of a Stationpedia page: the logic variable name
+/// (e.g. <c>Power</c>, <c>On</c>, <c>ForceWrite</c>) and how it can be used
+/// (<c>Read</c>, <c>Write</c>, or <c>Read Write</c>).
+/// </summary>
+public sealed record StationpediaLogic(string Name, string Access);
+
+/// <summary>
+/// One connection of a Stationpedia page: the port name (e.g.
+/// <c>Data Input</c>, <c>Data Output</c>) and its index on the prefab
+/// (e.g. <c>0</c>, <c>1</c>). The game numbers ports in build order.
+/// </summary>
+public sealed record StationpediaConnection(string Name, string Index);
+
+/// <summary>
 /// One combustion output of a Stationpedia page: the gas made and how much.
 /// Gas holds the game symbol (e.g. <c>CO2</c>, <c>X</c> for pollutant).
 /// </summary>
@@ -46,6 +60,8 @@ public sealed record StationpediaCombustion(string Fuel, string Oxidiser, double
 /// Numeric specs hold raw game numbers when the subject states any, else null:
 /// power generation in watts, power storage in joules, power draw in watts,
 /// fuel energy per second in watts for solid fuels, and the tick length in
-/// seconds that burn ticks last.
+/// seconds that burn ticks last. <see cref="Logic"/> lists the logic
+/// variables the subject reads or writes, and <see cref="Connections"/>
+/// lists its data and cable ports (both null when the page states none).
 /// </summary>
-public sealed record StationpediaEntry(string Key, string Title, string Description, string Text, IReadOnlyList<StationpediaUse>? UsedIn, IReadOnlyList<StationpediaMake>? HowToBuild, IReadOnlyList<StationpediaCombustion>? Combustion = null, IReadOnlyList<string>? BuildSteps = null, double? PowerGenerationW = null, double? PowerStorageJ = null, double? PowerDrawW = null, double? FuelEnergyPerSecondW = null, double? TickSeconds = null);
+public sealed record StationpediaEntry(string Key, string Title, string Description, string Text, IReadOnlyList<StationpediaUse>? UsedIn, IReadOnlyList<StationpediaMake>? HowToBuild, IReadOnlyList<StationpediaCombustion>? Combustion = null, IReadOnlyList<string>? BuildSteps = null, double? PowerGenerationW = null, double? PowerStorageJ = null, double? PowerDrawW = null, double? FuelEnergyPerSecondW = null, double? TickSeconds = null, IReadOnlyList<StationpediaLogic>? Logic = null, IReadOnlyList<StationpediaConnection>? Connections = null);

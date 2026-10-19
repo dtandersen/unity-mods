@@ -91,7 +91,9 @@ public sealed class DatabaseSteps
                 NumberOrNull(row, "PowerStorageJ"),
                 NumberOrNull(row, "PowerDrawW"),
                 NumberOrNull(row, "FuelEnergyPerSecondW"),
-                NumberOrNull(row, "TickSeconds")));
+                NumberOrNull(row, "TickSeconds"),
+                null,
+                null));
         }
     }
 
@@ -117,7 +119,9 @@ public sealed class DatabaseSteps
             current?.PowerStorageJ,
             current?.PowerDrawW,
             current?.FuelEnergyPerSecondW,
-            current?.TickSeconds));
+            current?.TickSeconds,
+            current?.Logic,
+            current?.Connections));
     }
     [Given("the stationpedia page {string} is used in:")]
     public void GivenTheStationpediaPageIsUsedIn(string key, Table table)
@@ -146,7 +150,9 @@ public sealed class DatabaseSteps
             current?.PowerStorageJ,
             current?.PowerDrawW,
             current?.FuelEnergyPerSecondW,
-            current?.TickSeconds));
+            current?.TickSeconds,
+            current?.Logic,
+            current?.Connections));
     }
 
     private static double? NumberOrNull(dynamic row, string column)
@@ -202,7 +208,9 @@ public sealed class DatabaseSteps
             current?.PowerStorageJ,
             current?.PowerDrawW,
             current?.FuelEnergyPerSecondW,
-            current?.TickSeconds));
+            current?.TickSeconds,
+            current?.Logic,
+            current?.Connections));
     }
 
     internal static IReadOnlyList<StationpediaCombustionOutput> Outputs(string value)
@@ -247,7 +255,59 @@ public sealed class DatabaseSteps
             current?.PowerStorageJ,
             current?.PowerDrawW,
             current?.FuelEnergyPerSecondW,
-            current?.TickSeconds));
+            current?.TickSeconds,
+            current?.Logic,
+            current?.Connections));
+    }
+
+    [Given("the stationpedia page {string} has logic:")]
+    public void GivenTheStationpediaPageHasLogic(string key, Table table)
+    {
+        var world = Hooks.GetWorld(_context);
+        var current = world.Stationpedia.GetByKey(key);
+        world.Stationpedia.Update(new StationpediaEntry(
+            key,
+            current?.Title ?? key,
+            current?.Description,
+            current?.Text,
+            current?.UsedIn,
+            current?.HowToBuild,
+            current?.Combustion,
+            current?.BuildSteps,
+            current?.PowerGenerationW,
+            current?.PowerStorageJ,
+            current?.PowerDrawW,
+            current?.FuelEnergyPerSecondW,
+            current?.TickSeconds,
+            table.Rows.Select(row => new StationpediaLogic(
+                row["Name"],
+                row.ContainsKey("Access") && !string.IsNullOrWhiteSpace(row["Access"]) ? row["Access"] : "Read")).ToArray(),
+            current?.Connections));
+    }
+
+    [Given("the stationpedia page {string} has connections:")]
+    public void GivenTheStationpediaPageHasConnections(string key, Table table)
+    {
+        var world = Hooks.GetWorld(_context);
+        var current = world.Stationpedia.GetByKey(key);
+        world.Stationpedia.Update(new StationpediaEntry(
+            key,
+            current?.Title ?? key,
+            current?.Description,
+            current?.Text,
+            current?.UsedIn,
+            current?.HowToBuild,
+            current?.Combustion,
+            current?.BuildSteps,
+            current?.PowerGenerationW,
+            current?.PowerStorageJ,
+            current?.PowerDrawW,
+            current?.FuelEnergyPerSecondW,
+            current?.TickSeconds,
+            current?.Logic,
+            table.Rows.Select(row => new StationpediaConnection(
+                row["Name"],
+                row.ContainsKey("Index") && !string.IsNullOrWhiteSpace(row["Index"]) ? row["Index"] : "0")).ToArray()));
     }
 
     [Given("my position is {string}, {string}, {string} on {string}")]
