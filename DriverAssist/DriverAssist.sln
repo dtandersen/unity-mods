@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33815.320
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DriverAssist", "DriverAssist\DriverAssist.csproj", "{31423A9C-92C3-4783-9E3F-2F8A0D0D57CB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DriverAssist.Test", "DriverAssist.Test\DriverAssist.Test.csproj", "{DCA0F847-EFD8-4AB4-BB16-69314135371E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{31423A9C-92C3-4783-9E3F-2F8A0D0D57CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31423A9C-92C3-4783-9E3F-2F8A0D0D57CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31423A9C-92C3-4783-9E3F-2F8A0D0D57CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31423A9C-92C3-4783-9E3F-2F8A0D0D57CB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCA0F847-EFD8-4AB4-BB16-69314135371E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCA0F847-EFD8-4AB4-BB16-69314135371E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCA0F847-EFD8-4AB4-BB16-69314135371E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCA0F847-EFD8-4AB4-BB16-69314135371E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AA6F0743-853A-4AF5-AD5E-DE6919E0A7EB}
+	EndGlobalSection
+EndGlobal

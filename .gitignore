@@ -45,3 +45,9 @@ data/
 
 # Local MCP servers (machine-specific browser ports, paths)
 .pi/mcp.json
+
+# Derail Valley DriverAssist scratch
+dist/
+build/
+temp/
+copy/

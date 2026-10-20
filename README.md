@@ -12,6 +12,9 @@ solution; shared libraries sit at the root.
   a BepInEx 5 plugin, answering questions about recipes, food stats, and the
   in-game compendium of lore and Munin's hints. Solution:
   `Valheim/OdinsAi.sln`.
+- **Derail Valley — [Driver Assist](DriverAssist/README.md):** a cruise
+  control plugin (Unity Mod Manager) that holds speed, handling acceleration,
+  braking, and reversing. Solution: `DriverAssist/DriverAssist.sln`.
 
 ## Shared
 
@@ -41,8 +44,10 @@ dotnet test Valheim/OdinsAi.sln -c Release
 
 Copy `local.props.example` to `local.props` and set `GamePath` to the game
 for the solution you are building. Per-game details live in
-[Stationeers](Stationeers/README.md) and [Valheim](Valheim/README.md).
+[Stationeers](Stationeers/README.md), [Valheim](Valheim/README.md), and
+[DriverAssist](DriverAssist/README.md).
 
 ## License
 
 Sage: [MIT](license.md). Odin's Eye: public domain.
+Driver Assist: see [DriverAssist/LICENSE](DriverAssist/LICENSE).
