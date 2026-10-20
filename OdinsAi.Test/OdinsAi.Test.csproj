@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>OdinsAi.Test</AssemblyName>
+    <RootNamespace>OdinsAi.Test</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TUnit" Version="1.67.0" />
+    <PackageReference Include="Reqnroll.TUnit" Version="3.3.4" />
+    <PackageReference Include="Shouldly" Version="4.3.0" />
+    <PackageReference Include="TngTech.ArchUnitNET" Version="0.13.4" />
+    <PackageReference Include="TngTech.ArchUnitNET.TUnit" Version="0.13.4" />
+    <!-- Compiled against by OdinsAi.Core with runtime assets excluded; tests need it at runtime. -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OdinsAi.Core\OdinsAi.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="reqnroll.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Local integration credentials; absent on a fresh clone. -->
+    <None Update="integration.settings.json" CopyToOutputDirectory="PreserveNewest"
+          Condition="Exists('$(MSBuildProjectDirectory)/integration.settings.json')" />
+  </ItemGroup>
+
+</Project>

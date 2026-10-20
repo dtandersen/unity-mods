@@ -1,0 +1,70 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using OdinsAi.Command;
+using OdinsAi.Entity;
+
+namespace OdinsAi.Tool
+{
+    /// <summary>Tool: find recipes whose name matches a query, as CSV.</summary>
+    public sealed class SearchRecipesTool : ITool
+    {
+        private readonly SearchRecipesCommand _command;
+
+        public SearchRecipesTool(SearchRecipesCommand command)
+        {
+            _command = command;
+        }
+
+        public ToolDefinition Definition { get; } = new ToolDefinition(
+            "search_recipes",
+            "Search the game's recipes by name. Returns CSV with columns Name, Station, Ingredients, Unlocked. Unlocked means the player has discovered the recipe.",
+            new[] { new ToolParameter("query", "Text to match against recipe names, e.g. 'stew'.") });
+
+        public ToolResult Execute(ToolArguments arguments)
+        {
+            var query = arguments.Get("query");
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return new ToolFailure("Missing required argument 'query'.");
+            }
+
+            var summaries = _command.Execute(query)
+                .OrderBy(recipe => recipe.Recipe.Name, StringComparer.OrdinalIgnoreCase)
+                .Take(ToolLimits.MaxResults)
+                .Select(recipe => ToSummary(recipe.Recipe, recipe.Unlocked))
+                .ToArray();
+
+            return new ToolSuccess<SearchRecipesResult>(
+                new SearchRecipesResult(summaries),
+                FormatContent(query, summaries));
+        }
+
+        private static RecipeSummary ToSummary(Recipe recipe, bool unlocked)
+        {
+            return new RecipeSummary(
+                recipe.Name,
+                recipe.CraftingStation,
+                recipe.Ingredients.Select(i => new IngredientResult(i.ItemId, i.Amount)).ToArray(),
+                unlocked);
+        }
+
+        private static string FormatContent(string query, IReadOnlyList<RecipeSummary> summaries)
+        {
+            if (summaries.Count == 0)
+            {
+                return $"No recipes found for '{query}'.";
+            }
+
+            var rows = summaries.Select(summary => new[]
+            {
+                summary.Name,
+                summary.CraftingStation ?? string.Empty,
+                string.Join("; ", summary.Ingredients.Select(i => $"{i.ItemId} x{i.Amount}")),
+                summary.Unlocked ? "Yes" : "No",
+            });
+
+            return Csv.Build(new[] { "Name", "Station", "Ingredients", "Unlocked" }, rows);
+        }
+    }
+}

@@ -4,21 +4,27 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+env:
+  # Anonymous-downloadable dedicated server. Contains the same
+  # assembly_valheim / UnityEngine managed DLLs the Valheim plugin compiles against.
+  VALHEIM_APP_ID: "896660"
+  GAME_DIR: /tmp/valheim-server
+  BEPINEX_VERSION: 5.4.22
 jobs:
   build:
     runs-on: steamcmd
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      # No game install here: stationeers.targets auto-uses the minimal
+      # No Stationeers install here: stationeers.targets auto-uses the minimal
       # source stubs (Stationeers/StationeersStubs/) when Assembly-CSharp.dll is absent.
       # This compiles the full solution, including Game/Mod, but game behavior
       # is faked. The shipped zip holds only our DLLs, which resolve against
       # the real game at runtime. Real behavior is only tested locally with
       # the game installed.
-      - name: Test
+      - name: Test Stationeers
         run: dotnet test StationeersMods.sln -c Release -p:DeployOnBuild=false -p:DeployLocalOnBuild=false
-      - name: Build mod zip
+      - name: Build Sage mod zip
         run: |
           dotnet build Stationeers/Sage.Mod/Sage.Mod.csproj -c Release \
             -p:DeployOnBuild=false \
@@ -26,11 +32,58 @@ jobs:
             -p:PackageOnBuild=true
           echo "=== artifacts ==="
           ls -la Stationeers/Sage.Mod/artifacts/
+      # Cache the whole GAME_DIR (server + BepInEx). Cache hit restores it,
+      # then steamcmd below only fetches the delta. Requires cache storage
+      # enabled on the Forgejo instance; a miss just means a full download.
+      - name: Cache Valheim server + BepInEx
+        uses: actions/cache@v4
+        with:
+          path: /tmp/valheim-server
+          key: valheim-server-${{ env.VALHEIM_APP_ID }}-bepinex-${{ env.BEPINEX_VERSION }}-v1
+      - name: Download Valheim dedicated server via steamcmd
+        run: |
+          mkdir -p "$GAME_DIR"
+          steamcmd.sh \
+            +force_install_dir "$GAME_DIR" \
+            +login anonymous \
+            +app_update "$VALHEIM_APP_ID" \
+            +quit
+          echo "=== server layout ==="
+          ls "$GAME_DIR"
+          echo "=== managed ==="
+          ls "$GAME_DIR/valheim_server_Data/Managed" | head -30
+      - name: Install BepInEx (compile-time refs only)
+        run: |
+          if [ -f "$GAME_DIR/BepInEx/core/BepInEx.dll" ]; then
+            echo "BepInEx restored from cache, skipping download."
+          else
+            cd /tmp
+            wget -q "https://github.com/BepInEx/BepInEx/releases/download/v${BEPINEX_VERSION}/BepInEx_x64_${BEPINEX_VERSION}.0.zip" -O bepinex.zip
+            unzip -q -o bepinex.zip -d "$GAME_DIR"
+          fi
+          echo "=== bepinex ==="
+          ls "$GAME_DIR/BepInEx/core" | head
+      - name: Test Valheim
+        run: dotnet test ValheimMods.sln -c Release
+      - name: Build OdinsAi mod zip
+        run: |
+          dotnet build OdinsAi.Mod/OdinsAi.Mod.csproj -c Release \
+            -p:DeployOnBuild=false \
+            -p:PackageOnBuild=true \
+            -p:GamePath="$GAME_DIR"
+          echo "=== artifacts ==="
+          ls -la OdinsAi.Mod/artifacts/
       # Forgejo's own fork: v4 API speaking the protocol Forgejo implements
       # (upstream v4+ hits GHESNotSupportedError against this instance).
-      - name: Upload zip
+      - name: Upload Sage zip
         uses: https://data.forgejo.org/forgejo/upload-artifact@v4
         with:
           name: Sage.Mod
           path: Stationeers/Sage.Mod/artifacts/*.zip
+          if-no-files-found: error
+      - name: Upload OdinsAi zip
+        uses: https://data.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          name: OdinsAi.Mod
+          path: OdinsAi.Mod/artifacts/*.zip
           if-no-files-found: error

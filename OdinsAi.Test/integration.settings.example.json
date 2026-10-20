@@ -1,0 +1,5 @@
+{
+  "endpoint": "https://your-vllm-host/v1",
+  "apiKey": "your-api-key",
+  "model": "your-model-name"
+}

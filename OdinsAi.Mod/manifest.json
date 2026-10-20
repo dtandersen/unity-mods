@@ -1,0 +1,9 @@
+{
+  "name": "OdinsAi",
+  "version_number": "0.1.1",
+  "website_url": "",
+  "description": "Odin's Eye - an LLM assistant for Valheim. Ask /ai <question> in chat to look up recipes and food stats.",
+  "dependencies": [
+    "ValheimModding-Jotunn-2.30.0"
+  ]
+}
