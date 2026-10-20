@@ -37,6 +37,11 @@ local.props.example    # template for local.props
 StationeersMods.sln
 lib/BepInEx/           # bundled BepInEx 5.4.22 references (compile fallback when the
                        #   game has no BepInEx installed; never shipped)
+StationeersStubs/      # minimal hand-written fakes of the game API (Assembly-CSharp).
+StationeersStubs.Unity/ # minimal hand-written fakes of UnityEngine (assembly UnityEngine).
+                       #   Used only when the game is absent (CI). Compile only,
+                       #   never shipped. Keep minimal: only what Game/Mod compile
+                       #   against. Namespaces mirror the real game.
 StationeersAi.Common/
 StationeersAi.Core/
 Caev/
@@ -141,6 +146,14 @@ errors and on unload, so crash context still lands without that setting.
 ```bash
 dotnet test
 ```
+
+CI (`.github/workflows/ci.yml`) builds and tests the full solution on
+GitHub with no game installed: `stationeers.targets` auto-sets
+`UseGameStubs=true` when `Assembly-CSharp.dll` is absent, compiling
+`Game`/`Mod` against `StationeersStubs/` instead. Force the stub build
+locally with `-p:UseGameStubs=true` after touching the stubs. The stubs
+are compile-only fakes (bodies never run); keep them minimal and mirror
+the real signatures in `../stationeers`.
 
 Gherkin `.feature` files under `StationeersAi.Test/Features/` state the
 requirements, with step definitions binding them to fakes. The fakes replace

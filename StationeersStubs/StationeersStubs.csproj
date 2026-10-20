@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Compile-only fakes of the Stationeers API surface the mod uses.
+         Referenced only when the real game DLLs are absent (CI). Never shipped,
+         never deployed. AssemblyName matches the real Assembly-CSharp.dll.
+         Keep net48 so it links cleanly with Game/Mod. -->
+    <AssemblyName>Assembly-CSharp</AssemblyName>
+    <RootNamespace>Assets.Scripts</RootNamespace>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StationeersStubs.Unity\UnityStubs.csproj" />
+  </ItemGroup>
+
+</Project>
