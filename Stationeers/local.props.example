@@ -1,0 +1,34 @@
+<!-- Machine-specific Stationeers paths (git-ignored). Copy local.props.example here and adjust. -->
+<Project>
+  <PropertyGroup>
+    <!-- Stationeers install directory (contains rocketstation.exe and rocketstation_Data/). -->
+    <StationeersGamePath>D:\SteamLibrary\steamapps\common\Stationeers</StationeersGamePath>
+
+    <!-- Where BepInEx.dll / 0Harmony.dll live. Default: $(StationeersGamePath)\BepInEx. -->
+    <!-- <BepInExPath>C:\Games\Stationeers\BepInEx</BepInExPath> -->
+
+    <!-- Where built plugins are copied. Default: $(BepInExPath)\plugins -->
+    <!-- <PluginDeployDir>C:\Games\Stationeers\BepInEx\plugins</PluginDeployDir> -->
+
+    <!-- Folder under PluginDeployDir that builds deploy into. Default: $(ProjectName). -->
+    <!-- <DeployFolderName>Sage</DeployFolderName> -->
+
+    <!-- Game managed assemblies. Default: $(StationeersGamePath)\rocketstation_Data\Managed -->
+    <!-- <ManagedDataPath>...</ManagedDataPath> -->
+
+    <!-- Set to false to skip copying the build into the plugin folder. -->
+    <!-- <DeployOnBuild>false</DeployOnBuild> -->
+
+    <!-- Set to true to also produce artifacts\sage-$(Version).zip on build. -->
+    <!-- <PackageOnBuild>true</PackageOnBuild> -->
+
+    <!-- LaunchPad Local mod folder. Default: %USERPROFILE%\Documents\My Games\Stationeers\mods -->
+    <!-- <LocalModsPath>C:\Users\&lt;you&gt;\Documents\My Games\Stationeers\mods</LocalModFolderName> -->
+
+    <!-- Folder under LocalModsPath that DeployLocalOnBuild copies into. Default: Sage. -->
+    <!-- <LocalModFolderName>Sage</LocalModFolderName> -->
+
+    <!-- Set to true to copy the build plus About/About.xml into the Local mods folder. -->
+    <!-- <DeployLocalOnBuild>true</DeployLocalOnBuild> -->
+  </PropertyGroup>
+</Project>

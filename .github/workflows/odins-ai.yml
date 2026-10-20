@@ -5,7 +5,7 @@ on:
     paths:
       - 'Valheim/**'
       - 'UnityStubs/**'
-      - 'valheim.targets'
+      - 'Valheim/valheim.targets'
       - 'lib/BepInEx/**'
       - 'lib/Jotunn/**'
       - 'global.json'
@@ -15,7 +15,7 @@ on:
     paths:
       - 'Valheim/**'
       - 'UnityStubs/**'
-      - 'valheim.targets'
+      - 'Valheim/valheim.targets'
       - 'lib/BepInEx/**'
       - 'lib/Jotunn/**'
       - 'global.json'

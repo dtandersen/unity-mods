@@ -4,7 +4,7 @@ on:
     branches: [main]
     paths:
       - 'Valheim/**'
-      - 'valheim.targets'
+      - 'Valheim/valheim.targets'
       - 'lib/Jotunn/**'
       - 'global.json'
       - 'local.props.example'
@@ -12,7 +12,7 @@ on:
   pull_request:
     paths:
       - 'Valheim/**'
-      - 'valheim.targets'
+      - 'Valheim/valheim.targets'
       - 'lib/Jotunn/**'
       - 'global.json'
       - 'local.props.example'

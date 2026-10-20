@@ -23,10 +23,12 @@ Caev/            netstandard2.0   Agent loop, tools, chat transports
 Common/          netstandard2.0   Shared bits used on both sides (trace log)
 UnityStubs/      net48 fakes      Minimal UnityEngine stand-ins (CI only)
 global.json                  # opts dotnet test into Microsoft.Testing.Platform (MTP) mode
-stationeers.targets          # shared MSBuild config for the Stationeers plugin
-valheim.targets              # shared MSBuild config for the Valheim plugin
-local.props                  # machine-specific paths (git-ignored)
-local.props.example          # template for local.props
+Stationeers/stationeers.targets  # MSBuild config for the Stationeers plugin
+Valheim/valheim.targets          # MSBuild config for the Valheim plugin
+DriverAssist/derailvalley.targets  # MSBuild config for the Driver Assist plugin
+Stationeers/local.props      # machine paths for Stationeers (git-ignored)
+Valheim/local.props          # machine paths for Valheim (git-ignored)
+DriverAssist/local.props     # machine paths for Derail Valley (git-ignored)
 ```
 
 Each mod keeps its game adapter thin: game-specific logic stays testable from
@@ -42,8 +44,9 @@ dotnet test Stationeers/Sage.sln -c Release -p:DeployOnBuild=false -p:DeployLoca
 dotnet test Valheim/OdinsAi.sln -c Release
 ```
 
-Copy `local.props.example` to `local.props` and set `GamePath` to the game
-for the solution you are building. Per-game details live in
+Copy each game's `local.props.example` to `local.props` beside it and set
+its game path (`StationeersGamePath`, `ValheimGamePath`, `DerailValleyPath`).
+Per-game details live in
 [Stationeers](Stationeers/README.md), [Valheim](Valheim/README.md), and
 [DriverAssist](DriverAssist/README.md).
 

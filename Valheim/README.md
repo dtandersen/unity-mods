@@ -24,8 +24,8 @@ and cannot be constructed outside the game.)
 
 ```
 global.json            # opts dotnet test into Microsoft.Testing.Platform (MTP) mode
-valheim.targets        # shared MSBuild config for the plugin: refs + deploy/packaging
-local.props            # machine-specific paths (git-ignored)
+valheim.targets        # MSBuild config for the plugin: refs + deploy/packaging
+local.props            # machine-specific ValheimGamePath (git-ignored)
 local.props.example    # template for local.props
 OdinsAi.sln
 OdinsAi.Core/
@@ -49,8 +49,8 @@ OdinsAi.Mod/
 
 ## Configure paths
 
-Copy `local.props.example` to `local.props` and set `GamePath`, `BepInExPath`, and
-`PluginDeployDir`. `valheim.targets` auto-detects `GamePath` from the Steam registry
+Copy `local.props.example` to `local.props` and set `ValheimGamePath`, `BepInExPath`, and
+`PluginDeployDir`. `valheim.targets` auto-detects `ValheimGamePath` from the Steam registry
 if `local.props` is absent.
 
 ## Build

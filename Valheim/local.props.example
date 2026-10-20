@@ -1,0 +1,26 @@
+<!-- Machine-specific Valheim paths (git-ignored). Copy local.props.example here and adjust. -->
+<Project>
+  <PropertyGroup>
+    <!-- Valheim install directory (contains valheim.exe and valheim_Data/). -->
+    <!-- <ValheimGamePath>D:\SteamLibrary\steamapps\common\Valheim</ValheimGamePath> -->
+
+    <!-- Where BepInEx.dll / 0Harmony.dll live. Default: $(ValheimGamePath)\BepInEx. -->
+    <!-- Valheim with r2modman: C:\Users\<you>\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Mods\BepInEx -->
+    <!-- <BepInExPath>C:\Users\&lt;you&gt;\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Mods\BepInEx</BepInExPath> -->
+
+    <!-- Where built plugins are copied. Default: $(BepInExPath)\plugins -->
+    <!-- <PluginDeployDir>C:\Users\&lt;you&gt;\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Mods\BepInEx\plugins</PluginDeployDir> -->
+
+    <!-- Folder under PluginDeployDir that builds deploy into. Default: $(ProjectName). -->
+    <!-- <DeployFolderName>Author-ModName</DeployFolderName> -->
+
+    <!-- Game managed assemblies. Default: $(ValheimGamePath)\valheim_Data\Managed -->
+    <!-- <ManagedDataPath>...</ManagedDataPath> -->
+
+    <!-- Set to false to skip copying the build into the plugin folder. -->
+    <!-- <DeployOnBuild>false</DeployOnBuild> -->
+
+    <!-- Set to true to also produce artifacts\<Mod>.zip on build. -->
+    <!-- <PackageOnBuild>true</PackageOnBuild> -->
+  </PropertyGroup>
+</Project>

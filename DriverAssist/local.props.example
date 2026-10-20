@@ -1,0 +1,14 @@
+<!-- Machine-specific Derail Valley paths (git-ignored). Copy local.props.example here and adjust. -->
+<Project>
+  <PropertyGroup>
+    <!-- Derail Valley install directory (contains DerailValley.exe and DerailValley_Data/).
+         Only needed when it can't be auto-detected (Steam App 588030). -->
+    <!-- <DerailValleyPath>D:\SteamLibrary\steamapps\common\Derail Valley</DerailValleyPath> -->
+
+    <!-- Game managed assemblies. Default: $(DerailValleyPath)\DerailValley_Data\Managed -->
+    <!-- <ManagedDataPath>...</ManagedDataPath> -->
+
+    <!-- Set to true to also produce artifacts\<Mod>.zip on build. -->
+    <!-- <PackageOnBuild>true</PackageOnBuild> -->
+  </PropertyGroup>
+</Project>

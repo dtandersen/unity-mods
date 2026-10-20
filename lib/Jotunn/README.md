@@ -6,6 +6,6 @@
 - Purpose: referenced with `Private=False`, so it is never shipped in the
   mod zip. Used when Jotunn isn't installed alongside the game (e.g. CI);
   a copy installed via the mod manager takes precedence (see
-  `valheim.targets`).
+  `Valheim/valheim.targets`).
 - License: see upstream. When updating, keep this note and the version in
   `OdinsAi.Mod/manifest.json` in sync.

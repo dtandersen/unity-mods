@@ -1,56 +1,28 @@
 <!--
-  Copy this file to "local.props" (git-ignored) and adjust the paths for your machine.
+  Copy per-game example files instead of this one:
 
-  This repo holds more than one game. Set GamePath to the game for the
-  solution you are building: Stationeers/Sage.sln uses the Stationeers
-  install, Valheim/OdinsAi.sln uses the Valheim install. Both targets
-  auto-detect GamePath via the Steam registry and fall back to common
-  install locations when local.props is absent.
+    Stationeers/local.props.example   -> Stationeers/local.props
+    Valheim/local.props.example       -> Valheim/local.props
+    DriverAssist/local.props.example  -> DriverAssist/local.props
+
+  Each *.targets reads the root local.props first (if present), then its own
+  per-game local.props (per-game wins). The per-game files use per-game
+  property names, so one game's path can never redirect another game's build:
+
+    StationeersGamePath   ValheimGamePath   DerailValleyPath
+
+  Legacy <GamePath> is honored only when it points at the matching game.
+  This root file is optional; prefer the per-game files above.
 -->
 <Project>
   <PropertyGroup>
     <!-- Stationeers install directory (contains rocketstation.exe and rocketstation_Data/). -->
-    <GamePath>D:\SteamLibrary\steamapps\common\Stationeers</GamePath>
+    <!-- <StationeersGamePath>D:\SteamLibrary\steamapps\common\Stationeers</StationeersGamePath> -->
 
     <!-- Valheim install directory (contains valheim.exe and valheim_Data/). -->
-    <!-- <GamePath>D:\SteamLibrary\steamapps\common\Valheim</GamePath> -->
+    <!-- <ValheimGamePath>D:\SteamLibrary\steamapps\common\Valheim</ValheimGamePath> -->
 
-    <!-- Where BepInEx.dll / 0Harmony.dll live. Default: $(GamePath)\BepInEx. -->
-    <!-- <BepInExPath>C:\Games\Stationeers\BepInEx</BepInExPath> -->
-    <!-- Valheim with r2modman: C:\Users\<you>\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Mods\BepInEx -->
-
-    <!-- Where built plugins are copied. Default: $(BepInExPath)\plugins -->
-    <!-- <PluginDeployDir>C:\Games\Stationeers\BepInEx\plugins</PluginDeployDir> -->
-    <!-- Valheim with r2modman: C:\Users\<you>\AppData\Roaming\r2modmanPlus-local\Valheim\profiles\Mods\BepInEx\plugins -->
-
-    <!-- Folder under PluginDeployDir that builds deploy into. Default: $(ProjectName). -->
-    <!-- <DeployFolderName>Author-ModName</DeployFolderName> -->
-
-    <!-- Game managed assemblies. -->
-    <!-- Stationeers default: $(GamePath)\rocketstation_Data\Managed -->
-    <!-- Valheim default: $(GamePath)\valheim_Data\Managed -->
-    <!-- <ManagedDataPath>...</ManagedDataPath> -->
-
-    <!-- Derail Valley install directory (contains DerailValley.exe and
-         DerailValley_Data/). Only needed when it can't be auto-detected
-         (Steam App 588030); local.props GamePath pointing at another game
-         is ignored for Derail Valley builds. -->
+    <!-- Derail Valley install directory (contains DerailValley.exe and DerailValley_Data/). -->
     <!-- <DerailValleyPath>D:\SteamLibrary\steamapps\common\Derail Valley</DerailValleyPath> -->
-
-    <!-- Set to false to skip copying the build into the plugin folder. -->
-    <!-- <DeployOnBuild>false</DeployOnBuild> -->
-
-    <!-- Set to true to also produce artifacts\<Mod>.zip on build. -->
-    <!-- <PackageOnBuild>true</PackageOnBuild> -->
-
-    <!-- LaunchPad Local mod folder (Stationeers only; holds About/About.xml plus the DLLs).
-         Default: %USERPROFILE%\Documents\My Games\Stationeers\mods -->
-    <!-- <LocalModsPath>C:\Users\&lt;you&gt;\Documents\My Games\Stationeers\mods</LocalModsPath> -->
-
-    <!-- Folder under LocalModsPath that DeployLocalOnBuild copies into. Default: Sage. -->
-    <!-- <LocalModFolderName>Sage</LocalModFolderName> -->
-
-    <!-- Set to true to copy the build plus About/About.xml into the Local mods folder. -->
-    <!-- <DeployLocalOnBuild>true</DeployLocalOnBuild> -->
   </PropertyGroup>
 </Project>

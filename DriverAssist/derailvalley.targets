@@ -1,12 +1,14 @@
 <Project>
 
-  <!-- Optional machine-specific overrides (git-ignored). -->
+  <!-- Optional machine-specific overrides (git-ignored).
+       Root local.props first, then DriverAssist/local.props (per-game wins). -->
+  <Import Project="$(MSBuildThisFileDirectory)..\local.props" Condition="Exists('$(MSBuildThisFileDirectory)..\local.props')" />
   <Import Project="$(MSBuildThisFileDirectory)local.props" Condition="Exists('$(MSBuildThisFileDirectory)local.props')" />
 
-  <!-- Find the Derail Valley install. Uses GamePath when it points at Derail
-       Valley (local.props may point GamePath at another game in this repo),
-       otherwise auto-detects via the Steam registry (App 588030) and common
-       install locations. Override with <DerailValleyPath> in local.props. -->
+  <!-- Find the Derail Valley install. Uses legacy GamePath only when it points
+       at Derail Valley, otherwise auto-detects via the Steam registry
+       (App 588030) and common install locations. Override with
+       <DerailValleyPath> in DriverAssist/local.props. -->
   <Choose>
     <When Condition="$(GamePath) != '' AND Exists('$(GamePath)/DerailValley_Data/Managed/Assembly-CSharp.dll')">
       <PropertyGroup>
@@ -44,7 +46,7 @@
   <!-- Derail Valley + related game assemblies. Skipped when compiling against source stubs. -->
   <Target Name="CheckGameRefs" BeforeTargets="BeforeBuild">
     <Error Condition="!Exists('$(ManagedDataPath)\Assembly-CSharp.dll') AND '$(UseGameStubs)' != 'true'"
-           Text="Derail Valley game DLL not found at $(ManagedDataPath)\Assembly-CSharp.dll. Set DerailValleyPath in local.props (e.g. D:\SteamLibrary\steamapps\common\Derail Valley)." />
+           Text="Derail Valley game DLL not found at $(ManagedDataPath)\Assembly-CSharp.dll. Set DerailValleyPath in DriverAssist/local.props (e.g. D:\SteamLibrary\steamapps\common\Derail Valley)." />
     <Message Condition="'$(UseGameStubs)' == 'true'"
              Text="Compiling against minimal Derail Valley stubs (no game install). Game behavior is faked for compile only." />
   </Target>
@@ -141,7 +143,7 @@
        the stubs only fake DV/LocoSim/I2 game types. Private=false keeps the
        fake DLL out of the output, deploy, and zip. -->
   <ItemGroup Condition="'$(UseGameStubs)' == 'true'">
-    <ProjectReference Include="$(MSBuildThisFileDirectory)DriverAssist/DerailValleyStubs\DerailValleyStubs.csproj">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)DerailValleyStubs\DerailValleyStubs.csproj">
       <Private>false</Private>
     </ProjectReference>
   </ItemGroup>

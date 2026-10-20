@@ -63,7 +63,7 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
   </ItemGroup>
 
-  <Import Project="$(MSBuildThisFileDirectory)..\..\derailvalley.targets" />
+  <Import Project="$(MSBuildThisFileDirectory)..\derailvalley.targets" />
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <!-- Copy to build folder -->

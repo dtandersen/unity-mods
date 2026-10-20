@@ -3,6 +3,8 @@
   <PropertyGroup>
     <Version>0.1.0</Version>
     <Description>Sage - an LLM assistant for Stationeers.</Description>
+    <!-- BepInEx loads one folder; match the README (plugins/Sage/). -->
+    <DeployFolderName>Sage</DeployFolderName>
   </PropertyGroup>
 
   <!-- The shell owns the plugin entry; the game adapter owns runtime objects. -->
@@ -13,7 +15,7 @@
     <ProjectReference Include="..\Sage.Game\Sage.Game.csproj" />
   </ItemGroup>
 
-  <Import Project="$(MSBuildThisFileDirectory)..\..\stationeers.targets" />
+  <Import Project="$(MSBuildThisFileDirectory)..\stationeers.targets" />
 
   <!-- Null checks on: overrides the disable in stationeers.targets. -->
   <PropertyGroup>

@@ -1,6 +1,8 @@
 <Project>
 
-  <!-- Optional machine-specific overrides (git-ignored). -->
+  <!-- Optional machine-specific overrides (git-ignored).
+       Root local.props first, then Valheim/local.props (per-game wins). -->
+  <Import Project="$(MSBuildThisFileDirectory)..\local.props" Condition="Exists('$(MSBuildThisFileDirectory)..\local.props')" />
   <Import Project="$(MSBuildThisFileDirectory)local.props" Condition="Exists('$(MSBuildThisFileDirectory)local.props')" />
 
   <PropertyGroup>
@@ -32,45 +34,53 @@
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
 
-  <!-- Find the game install if the user did not set GamePath (Steam App 544550). -->
+  <!-- Per-game install path. ValheimGamePath is the supported setting;
+       legacy GamePath is honored only when it actually points at Valheim
+       (so a shared local.props pointing at Stationeers can't redirect
+       a Valheim build into the wrong game folder). -->
+  <PropertyGroup>
+    <ValheimGamePath Condition="'$(ValheimGamePath)' == '' AND Exists('$(GamePath)/valheim_Data/Managed/assembly_valheim.dll')">$(GamePath)</ValheimGamePath>
+    <ValheimGamePath Condition="'$(ValheimGamePath)' == '' AND Exists('$(GamePath)/valheim_server_Data/Managed/assembly_valheim.dll')">$(GamePath)</ValheimGamePath>
+  </PropertyGroup>
   <Choose>
-    <When Condition="($(OS) == 'Unix' OR $(OS) == 'OSX') AND $(GamePath) == ''">
+    <When Condition="($(OS) == 'Unix' OR $(OS) == 'OSX') AND $(ValheimGamePath) == ''">
       <PropertyGroup>
-        <GamePath Condition="!Exists('$(GamePath)')">$(HOME)/.steam/steam/steamapps/common/Stationeers</GamePath>
+        <ValheimGamePath Condition="!Exists('$(ValheimGamePath)')">$(HOME)/.steam/steam/steamapps/common/Valheim</ValheimGamePath>
+        <ValheimGamePath Condition="!Exists('$(ValheimGamePath)')">$(HOME)/Library/Application Support/Steam/steamapps/common/Valheim/Contents/MacOS</ValheimGamePath>
       </PropertyGroup>
     </When>
-    <When Condition="$(OS) == 'Windows_NT' AND $(GamePath) == ''">
+    <When Condition="$(OS) == 'Windows_NT' AND $(ValheimGamePath) == ''">
       <PropertyGroup>
-        <GamePath Condition="!Exists('$(GamePath)')">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 544550', 'InstallLocation', null, RegistryView.Registry64, RegistryView.Registry32))</GamePath>
+        <ValheimGamePath Condition="!Exists('$(ValheimGamePath)')">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 892970', 'InstallLocation', null, RegistryView.Registry64, RegistryView.Registry32))</ValheimGamePath>
         <_SteamLibraryPath>$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Valve\Steam', 'SteamPath', null, RegistryView.Registry32))</_SteamLibraryPath>
-        <GamePath Condition="!Exists('$(GamePath)') AND '$(_SteamLibraryPath)' != ''">$(_SteamLibraryPath)\steamapps\common\Stationeers</GamePath>
-        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files (x86)\Steam\steamapps\common\Stationeers</GamePath>
+        <ValheimGamePath Condition="!Exists('$(ValheimGamePath)') AND '$(_SteamLibraryPath)' != ''">$(_SteamLibraryPath)\steamapps\common\Valheim</ValheimGamePath>
+        <ValheimGamePath Condition="!Exists('$(ValheimGamePath)')">C:\Program Files (x86)\Steam\steamapps\common\Valheim</ValheimGamePath>
       </PropertyGroup>
     </When>
   </Choose>
 
   <PropertyGroup>
-    <BepInExPath Condition="'$(BepInExPath)' == ''">$(GamePath)/BepInEx</BepInExPath>
-    <!-- Stationeers managed assemblies live under rocketstation_Data/Managed. -->
-    <ManagedDataPath Condition="'$(ManagedDataPath)' == '' AND Exists('$(GamePath)/rocketstation_Data/Managed')">$(GamePath)/rocketstation_Data/Managed</ManagedDataPath>
-    <ManagedDataPath Condition="'$(ManagedDataPath)' == ''">$(GamePath)/rocketstation_Data/Managed</ManagedDataPath>
+    <!-- Back-compat: keep $(GamePath) pointing at Valheim for any
+         override that still sets it. -->
+    <GamePath Condition="'$(GamePath)' == ''">$(ValheimGamePath)</GamePath>
+    <BepInExPath Condition="'$(BepInExPath)' == ''">$(ValheimGamePath)/BepInEx</BepInExPath>
+    <!-- Dedicated server (steamcmd app 896660) uses valheim_server_Data instead of valheim_Data. -->
+    <ManagedDataPath Condition="'$(ManagedDataPath)' == '' AND Exists('$(ValheimGamePath)/valheim_Data/Managed')">$(ValheimGamePath)/valheim_Data/Managed</ManagedDataPath>
+    <ManagedDataPath Condition="'$(ManagedDataPath)' == '' AND Exists('$(ValheimGamePath)/valheim_server_Data/Managed')">$(ValheimGamePath)/valheim_server_Data/Managed</ManagedDataPath>
+    <ManagedDataPath Condition="'$(ManagedDataPath)' == ''">$(ValheimGamePath)/valheim_Data/Managed</ManagedDataPath>
     <UnityPath Condition="'$(UnityPath)' == ''">$(ManagedDataPath)</UnityPath>
     <PluginDeployDir Condition="'$(PluginDeployDir)' == ''">$(BepInExPath)\plugins</PluginDeployDir>
-    <!-- Folder the plugin is deployed into under the plugins folder. -->
-    <DeployFolderName Condition="'$(DeployFolderName)' == ''">$(MSBuildProjectName)</DeployFolderName>
+    <!-- Folder the plugin is deployed into. Set this to the name r2modman used for a
+         locally imported mod so builds update the managed copy instead of adding a second one. -->
+    <DeployFolderName Condition="'$(DeployFolderName)' == ''">$(ProjectName)</DeployFolderName>
     <DeployOnBuild Condition="'$(DeployOnBuild)' == ''">true</DeployOnBuild>
     <PackageOnBuild Condition="'$(PackageOnBuild)' == ''">false</PackageOnBuild>
-    <!-- LaunchPad Local mod layout (Documents/My Games/Stationeers/mods/<LocalModFolderName>/
-         with About/About.xml plus the plugin DLLs at the root). Off by default;
-         pass -p:DeployLocalOnBuild=true to copy there on build. -->
-    <LocalModsPath Condition="'$(LocalModsPath)' == ''">$(USERPROFILE)\Documents\My Games\Stationeers\mods</LocalModsPath>
-    <LocalModFolderName Condition="'$(LocalModFolderName)' == ''">Sage</LocalModFolderName>
-    <DeployLocalOnBuild Condition="'$(DeployLocalOnBuild)' == ''">false</DeployLocalOnBuild>
     <!-- Compile against minimal source stubs when the game is absent (CI).
-         Auto-on when Assembly-CSharp.dll is missing; force with
+         Auto-on when assembly_valheim.dll is missing; force with
          -p:UseGameStubs=true to test the stub build locally. Real game DLLs
-         take precedence whenever they exist. -->
-    <UseGameStubs Condition="'$(UseGameStubs)' == '' AND !Exists('$(ManagedDataPath)\Assembly-CSharp.dll')">true</UseGameStubs>
+         take precedence whenever they exist. BepInEx/Jotunn/Harmony always
+         resolve from the real DLLs (game install first, lib/ fallback). -->
+    <UseGameStubs Condition="'$(UseGameStubs)' == '' AND !Exists('$(ManagedDataPath)\assembly_valheim.dll')">true</UseGameStubs>
     <UseGameStubs Condition="'$(UseGameStubs)' == ''">false</UseGameStubs>
   </PropertyGroup>
 
@@ -79,7 +89,7 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" />
   </ItemGroup>
 
-  <!-- BepInEx -->
+  <!-- BepInEx (game install first, vendored fallback for CI) -->
   <ItemGroup Condition="Exists('$(BepInExPath)\core\BepInEx.dll')">
     <Reference Include="BepInEx">
       <HintPath>$(BepInExPath)\core\BepInEx.dll</HintPath>
@@ -93,46 +103,56 @@
 
   <!-- Vendored fallback (e.g. CI): used only when BepInEx is not installed
        alongside the game. The game-local copy above takes precedence. -->
-  <ItemGroup Condition="!Exists('$(BepInExPath)\core\BepInEx.dll') AND Exists('$(MSBuildThisFileDirectory)lib\BepInEx\BepInEx.dll')">
+  <ItemGroup Condition="!Exists('$(BepInExPath)\core\BepInEx.dll') AND Exists('$(MSBuildThisFileDirectory)..\lib\BepInEx\BepInEx.dll')">
     <Reference Include="BepInEx">
-      <HintPath>$(MSBuildThisFileDirectory)lib\BepInEx\BepInEx.dll</HintPath>
+      <HintPath>$(MSBuildThisFileDirectory)..\lib\BepInEx\BepInEx.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="0Harmony">
-      <HintPath>$(MSBuildThisFileDirectory)lib\BepInEx\0Harmony.dll</HintPath>
+      <HintPath>$(MSBuildThisFileDirectory)..\lib\BepInEx\0Harmony.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
 
-  <!-- Stationeers assemblies. Skipped when compiling against source stubs. -->
-  <Target Name="CheckGameRefs" BeforeTargets="BeforeBuild">
-    <Error Condition="!Exists('$(ManagedDataPath)\Assembly-CSharp.dll') AND '$(UseGameStubs)' != 'true'"
-           Text="Stationeers game DLL not found at $(ManagedDataPath)\Assembly-CSharp.dll. Set GamePath in local.props (e.g. D:\SteamLibrary\steamapps\common\Stationeers)." />
-    <Message Condition="'$(UseGameStubs)' == 'true'"
-             Text="Compiling against minimal Stationeers stubs (no game install). Game behavior is faked for compile only." />
-    <Warning Condition="!Exists('$(BepInExPath)\core\BepInEx.dll') AND !Exists('$(MSBuildThisFileDirectory)lib\BepInEx\BepInEx.dll')"
-             Text="BepInEx not found at $(BepInExPath)\core\BepInEx.dll. Install BepInEx 5 (x64, Mono) into the game folder." />
-  </Target>
+  <!-- Jotunn (optional dependency; present when installed via the mod manager) -->
+  <ItemGroup Condition="Exists('$(PluginDeployDir)\ValheimModding-Jotunn\Jotunn.dll')">
+    <Reference Include="Jotunn">
+      <HintPath>$(PluginDeployDir)\ValheimModding-Jotunn\Jotunn.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Vendored fallback (e.g. CI): used only when Jotunn is not installed
+       alongside the game. The mod-manager copy above takes precedence. -->
+  <ItemGroup Condition="!Exists('$(PluginDeployDir)\ValheimModding-Jotunn\Jotunn.dll') AND Exists('$(MSBuildThisFileDirectory)..\lib\Jotunn\Jotunn.dll')">
+    <Reference Include="Jotunn">
+      <HintPath>$(MSBuildThisFileDirectory)..\lib\Jotunn\Jotunn.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Valheim assemblies. Skipped when compiling against source stubs. -->
   <ItemGroup Condition="'$(UseGameStubs)' != 'true'">
-    <Reference Include="Assembly-CSharp">
-      <HintPath>$(ManagedDataPath)\Assembly-CSharp.dll</HintPath>
+    <Reference Include="assembly_valheim">
+      <HintPath>$(ManagedDataPath)\assembly_valheim.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath>$(ManagedDataPath)\Assembly-CSharp-firstpass.dll</HintPath>
+    <Reference Include="assembly_utils">
+      <HintPath>$(ManagedDataPath)\assembly_utils.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="RG.ImGui">
-      <HintPath>$(ManagedDataPath)\RG.ImGui.dll</HintPath>
+    <Reference Include="assembly_guiutils">
+      <HintPath>$(ManagedDataPath)\assembly_guiutils.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="RG.ImGui.Unity">
-      <HintPath>$(ManagedDataPath)\RG.ImGui.Unity.dll</HintPath>
+    <Reference Include="gui_framework">
+      <HintPath>$(ManagedDataPath)\gui_framework.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
 
-  <!-- Unity assemblies. Skipped when compiling against source stubs. -->
+  <!-- Unity assemblies. Skipped when compiling against source stubs
+       (UnityEngine core types come from UnityStubs instead). -->
   <ItemGroup Condition="'$(UseGameStubs)' != 'true'">
     <Reference Include="UnityEngine">
       <HintPath>$(UnityPath)\UnityEngine.dll</HintPath>
@@ -202,17 +222,20 @@
 
   <!-- Minimal source stubs (CI): same namespaces as the game, compile only.
        Real game DLLs take precedence; this runs only when UseGameStubs=true.
-       Game stubs (Assembly-CSharp) pull in Unity stubs (UnityEngine)
-       transitively, which also satisfies BepInEx's UnityEngine reference.
-       Private=false keeps the fake DLLs out of the output, deploy, and zip. -->
+       BepInEx/Jotunn/Harmony still resolve from the real DLLs above.
+       Private=false keeps the fake DLL out of the output, deploy, and zip. -->
   <ItemGroup Condition="'$(UseGameStubs)' == 'true'">
-    <ProjectReference Include="$(MSBuildThisFileDirectory)Stationeers/StationeersStubs\StationeersStubs.csproj">
-      <Private>false</Private>
-    </ProjectReference>
-    <ProjectReference Include="$(MSBuildThisFileDirectory)UnityStubs\UnityStubs.csproj">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)ValheimStubs\ValheimStubs.csproj">
       <Private>false</Private>
     </ProjectReference>
   </ItemGroup>
+
+  <!-- Warn (not error) when the game is absent: stub builds compile but the
+       DLLs only resolve against the real game at runtime. -->
+  <Target Name="CheckGameRefs" BeforeTargets="BeforeBuild">
+    <Message Condition="'$(UseGameStubs)' == 'true'"
+             Text="Compiling against minimal Valheim stubs (no game install). Game behavior is faked for compile only." />
+  </Target>
 
   <!-- Copy the built plugin into the BepInEx plugins folder. -->
   <Target Name="Deploy" AfterTargets="Build" Condition="'$(DeployOnBuild)' == 'true'">
@@ -220,8 +243,12 @@
       <_DeployDir>$(PluginDeployDir)\$(DeployFolderName)</_DeployDir>
     </PropertyGroup>
     <ItemGroup>
-      <!-- Target DLL/pdb plus any copy-local dependencies. -->
+      <!-- Target DLL/pdb plus any copy-local dependencies (e.g. OdinsAi.Core.dll).
+           Stub compile outputs (UnityEngine/assembly_valheim fakes) are excluded:
+           they flow in transitively via ValheimStubs despite Private=false. -->
       <_ModFiles Include="$(TargetDir)*.dll" />
+      <_ModFiles Remove="$(TargetDir)UnityEngine.dll" />
+      <_ModFiles Remove="$(TargetDir)assembly_valheim.dll" />
       <_ModFiles Include="$(TargetDir)*.pdb" />
     </ItemGroup>
     <MakeDir Directories="$(_DeployDir)" />
@@ -229,48 +256,29 @@
     <Message Importance="high" Text="Deployed $(ProjectName) to $(_DeployDir)" />
   </Target>
 
-  <!-- Copy the built plugin into the LaunchPad Local mods folder, when asked.
-       Same DLLs as the BepInEx deploy, plus About/About.xml at the mod root.
-       LaunchPad loads any BaseUnityPlugin under the mod folder, so no code
-       change is needed for the second path. --> 
-  <Target Name="DeployLocal" AfterTargets="Build" Condition="'$(DeployLocalOnBuild)' == 'true'">
-    <PropertyGroup>
-      <_LocalDir>$(LocalModsPath)\$(LocalModFolderName)</_LocalDir>
-    </PropertyGroup>
-    <ItemGroup>
-      <_LocalFiles Include="$(TargetDir)*.dll" />
-      <_LocalFiles Include="$(TargetDir)*.pdb" />
-    </ItemGroup>
-    <MakeDir Directories="$(_LocalDir)\About" />
-    <Copy SourceFiles="@(_LocalFiles)" DestinationFolder="$(_LocalDir)" />
-    <Copy SourceFiles="$(MSBuildProjectDirectory)/About/About.xml" DestinationFolder="$(_LocalDir)\About" Condition="Exists('$(MSBuildProjectDirectory)/About/About.xml')" />
-    <Message Importance="high" Text="Deployed Local mod to $(_LocalDir)" />
-  </Target>
-
-  <!-- Optionally package a single distribution zip (sage-<version>.zip) that runs
-       either way. The zip holds the plugin DLLs plus About/About.xml at the
-       root: extract it into BepInEx/plugins/Sage/ for plain BepInEx, or into
-       Documents/My Games/Stationeers/mods/Sage/ for LaunchPad Local
-       (LaunchPad finds any BaseUnityPlugin under the mod folder). -->
+  <!-- Optionally package an importable (Thunderstore/r2modman) zip. -->
   <Target Name="Package" AfterTargets="Build" Condition="'$(PackageOnBuild)' == 'true'">
     <PropertyGroup>
       <_PackageStage>$(IntermediateOutputPath)package/</_PackageStage>
       <_ArtifactsDir>$(ProjectDir)artifacts/</_ArtifactsDir>
     </PropertyGroup>
     <ItemGroup>
-      <!-- Target DLL plus copy-local dependencies. -->
+      <!-- Target DLL plus copy-local dependencies (e.g. OdinsAi.Core.dll).
+           Stub compile outputs excluded (see Deploy above). -->
       <_PackageFiles Include="$(TargetDir)*.dll" />
+      <_PackageFiles Remove="$(TargetDir)UnityEngine.dll" />
+      <_PackageFiles Remove="$(TargetDir)assembly_valheim.dll" />
     </ItemGroup>
     <RemoveDir Directories="$(_PackageStage)" />
-    <MakeDir Directories="$(_PackageStage)About" />
-    <Copy SourceFiles="@(_PackageFiles)" DestinationFolder="$(_PackageStage)" />
-    <Copy SourceFiles="$(MSBuildProjectDirectory)/About/About.xml" DestinationFolder="$(_PackageStage)About" Condition="Exists('$(MSBuildProjectDirectory)/About/About.xml')" />
-    <Copy SourceFiles="$(MSBuildProjectDirectory)/../../README.md" DestinationFolder="$(_PackageStage)" Condition="Exists('$(MSBuildProjectDirectory)/../../README.md')" />
+    <MakeDir Directories="$(_PackageStage)plugins" />
+    <Copy SourceFiles="@(_PackageFiles)" DestinationFolder="$(_PackageStage)plugins" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/manifest.json" DestinationFolder="$(_PackageStage)" Condition="Exists('$(MSBuildProjectDirectory)/manifest.json')" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/../README.md" DestinationFolder="$(_PackageStage)" Condition="Exists('$(MSBuildProjectDirectory)/../README.md')" />
     <MakeDir Directories="$(_ArtifactsDir)" />
     <ZipDirectory SourceDirectory="$(_PackageStage)"
-                  DestinationFile="$(_ArtifactsDir)sage-$(Version).zip"
+                  DestinationFile="$(_ArtifactsDir)$(ProjectName).zip"
                   Overwrite="true" />
-    <Message Importance="high" Text="Packaged $(_ArtifactsDir)sage-$(Version).zip" />
+    <Message Importance="high" Text="Packaged $(_ArtifactsDir)$(ProjectName).zip" />
   </Target>
 
 </Project>

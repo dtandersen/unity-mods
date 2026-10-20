@@ -3,8 +3,8 @@
   <PropertyGroup>
     <Version>0.1.0</Version>
     <Description>Sage - Unity and Stationeers adapters (repositories, window, HTTP server, mod lifecycle).</Description>
-    <!-- Land beside the plugin so BepInEx loads one folder. -->
-    <DeployFolderName>Sage.Mod</DeployFolderName>
+    <!-- Library: its DLL is copy-localled into Sage.Mod and deployed from
+         there, so it never deploys itself. -->
   </PropertyGroup>
 
   <!-- The adapter consumes the Unity-free agent and core libraries. -->
@@ -14,11 +14,14 @@
     <ProjectReference Include="..\Sage.Core\Sage.Core.csproj" />
   </ItemGroup>
 
-  <Import Project="$(MSBuildThisFileDirectory)..\..\stationeers.targets" />
+  <Import Project="$(MSBuildThisFileDirectory)..\stationeers.targets" />
 
-  <!-- Null checks on: overrides the disable in stationeers.targets. -->
+  <!-- Null checks on: overrides the disable in stationeers.targets.
+       Library: never deploys itself; its DLL is copy-localled into
+       Sage.Mod and deployed from there. -->
   <PropertyGroup>
     <Nullable>enable</Nullable>
+    <DeployOnBuild>false</DeployOnBuild>
   </PropertyGroup>
 
 </Project>
