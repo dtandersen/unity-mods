@@ -1,0 +1,41 @@
+name: driver-assist
+
+on:
+  push:
+    paths:
+      - 'DriverAssist/**'
+      - 'Common/**'
+      - 'derailvalley.targets'
+      - 'global.json'
+      - 'local.props.example'
+      - '.github/workflows/driver-assist.yml'
+  pull_request:
+    paths:
+      - 'DriverAssist/**'
+      - 'Common/**'
+      - 'derailvalley.targets'
+      - 'global.json'
+      - 'local.props.example'
+      - '.github/workflows/driver-assist.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      # No Derail Valley install here: derailvalley.targets auto-uses the minimal
+      # source stubs (DriverAssist/DerailValleyStubs/) when Assembly-CSharp.dll is absent.
+      # The net48 test project compiles here but can't execute on Linux;
+      # run the DriverAssist tests locally on Windows with the game installed.
+      # PackageOnBuild stages a UMM-installable zip (Info.json + DLLs at the root);
+      # the DLLs resolve against the real game at runtime.
+      - run: dotnet build DriverAssist/DriverAssist.sln -c Release -p:PackageOnBuild=true
+      - name: Upload zip
+        uses: actions/upload-artifact@v5
+        with:
+          name: DriverAssist
+          path: DriverAssist/DriverAssist/artifacts/*.zip
+          if-no-files-found: error

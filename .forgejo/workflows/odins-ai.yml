@@ -1,8 +1,22 @@
-name: build
+name: odins-ai
 on:
   push:
     branches: [main]
+    paths:
+      - 'Valheim/**'
+      - 'valheim.targets'
+      - 'lib/Jotunn/**'
+      - 'global.json'
+      - 'local.props.example'
+      - '.forgejo/workflows/odins-ai.yml'
   pull_request:
+    paths:
+      - 'Valheim/**'
+      - 'valheim.targets'
+      - 'lib/Jotunn/**'
+      - 'global.json'
+      - 'local.props.example'
+      - '.forgejo/workflows/odins-ai.yml'
   workflow_dispatch:
 env:
   # Anonymous-downloadable dedicated server. Contains the same
@@ -16,28 +30,6 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      # No Stationeers install here: stationeers.targets auto-uses the minimal
-      # source stubs (Stationeers/StationeersStubs/) when Assembly-CSharp.dll is absent.
-      # This compiles the full solution, including Game/Mod, but game behavior
-      # is faked. The shipped zip holds only our DLLs, which resolve against
-      # the real game at runtime. Real behavior is only tested locally with
-      # the game installed.
-      - name: Test Stationeers
-        run: dotnet test Stationeers/Sage.sln -c Release -p:DeployOnBuild=false -p:DeployLocalOnBuild=false
-      - name: Build Sage mod zip
-        run: |
-          dotnet build Stationeers/Sage.Mod/Sage.Mod.csproj -c Release \
-            -p:DeployOnBuild=false \
-            -p:DeployLocalOnBuild=false \
-            -p:PackageOnBuild=true
-          echo "=== artifacts ==="
-          ls -la Stationeers/Sage.Mod/artifacts/
-      # No Derail Valley install here: derailvalley.targets auto-uses the minimal
-      # source stubs (DriverAssist/DerailValleyStubs/) when Assembly-CSharp.dll is absent.
-      # The net48 test project compiles here but can't execute on Linux;
-      # run the DriverAssist tests locally on Windows with the game installed.
-      - name: Build DriverAssist (stubs)
-        run: dotnet build DriverAssist/DriverAssist.sln -c Release
       # Cache the whole GAME_DIR (server + BepInEx). Cache hit restores it,
       # then steamcmd below only fetches the delta. Requires cache storage
       # enabled on the Forgejo instance; a miss just means a full download.
@@ -81,12 +73,6 @@ jobs:
           ls -la Valheim/OdinsAi.Mod/artifacts/
       # Forgejo's own fork: v4 API speaking the protocol Forgejo implements
       # (upstream v4+ hits GHESNotSupportedError against this instance).
-      - name: Upload Sage zip
-        uses: https://data.forgejo.org/forgejo/upload-artifact@v4
-        with:
-          name: Sage.Mod
-          path: Stationeers/Sage.Mod/artifacts/*.zip
-          if-no-files-found: error
       - name: Upload OdinsAi zip
         uses: https://data.forgejo.org/forgejo/upload-artifact@v4
         with:

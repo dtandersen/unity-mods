@@ -1,0 +1,45 @@
+name: driver-assist
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'DriverAssist/**'
+      - 'Common/**'
+      - 'derailvalley.targets'
+      - 'global.json'
+      - 'local.props.example'
+      - '.forgejo/workflows/driver-assist.yml'
+  pull_request:
+    paths:
+      - 'DriverAssist/**'
+      - 'Common/**'
+      - 'derailvalley.targets'
+      - 'global.json'
+      - 'local.props.example'
+      - '.forgejo/workflows/driver-assist.yml'
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: steamcmd
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      # No Derail Valley install here: derailvalley.targets auto-uses the minimal
+      # source stubs (DriverAssist/DerailValleyStubs/) when Assembly-CSharp.dll is absent.
+      # The net48 test project compiles here but can't execute on Linux;
+      # run the DriverAssist tests locally on Windows with the game installed.
+      # PackageOnBuild stages a UMM-installable zip (Info.json + DLLs at the root);
+      # the DLLs resolve against the real game at runtime.
+      - name: Build DriverAssist + zip
+        run: |
+          dotnet build DriverAssist/DriverAssist.sln -c Release -p:PackageOnBuild=true
+          echo "=== artifacts ==="
+          ls -la DriverAssist/DriverAssist/artifacts/
+      # Forgejo's own fork: v4 API speaking the protocol Forgejo implements
+      # (upstream v4+ hits GHESNotSupportedError against this instance).
+      - name: Upload DriverAssist zip
+        uses: https://data.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          name: DriverAssist
+          path: DriverAssist/DriverAssist/artifacts/*.zip
+          if-no-files-found: error

@@ -38,6 +38,7 @@
          take precedence whenever they exist. -->
     <UseGameStubs Condition="'$(UseGameStubs)' == '' AND !Exists('$(ManagedDataPath)\Assembly-CSharp.dll')">true</UseGameStubs>
     <UseGameStubs Condition="'$(UseGameStubs)' == ''">false</UseGameStubs>
+    <PackageOnBuild Condition="'$(PackageOnBuild)' == ''">false</PackageOnBuild>
   </PropertyGroup>
 
   <!-- Derail Valley + related game assemblies. Skipped when compiling against source stubs. -->
@@ -144,5 +145,30 @@
       <Private>false</Private>
     </ProjectReference>
   </ItemGroup>
+
+  <!-- Package a UMM-installable zip (Info.json + DLLs at the zip root).
+       Runs on stub builds too, so CI can archive it; the DLLs resolve
+       against the real game at runtime. Enable with -p:PackageOnBuild=true. -->
+  <Target Name="Package" AfterTargets="Build" Condition="'$(PackageOnBuild)' == 'true'">
+    <PropertyGroup>
+      <_PackageStage>$(IntermediateOutputPath)package/</_PackageStage>
+      <_ArtifactsDir>$(ProjectDir)artifacts/</_ArtifactsDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <_PackageDll Include="$(TargetPath)" />
+      <_PackageCommon Include="$(TargetDir)Common.dll" Condition="Exists('$(TargetDir)Common.dll')" />
+    </ItemGroup>
+    <RemoveDir Directories="$(_PackageStage)" />
+    <MakeDir Directories="$(_PackageStage)" />
+    <Copy SourceFiles="@(_PackageDll)" DestinationFolder="$(_PackageStage)" />
+    <Copy SourceFiles="@(_PackageCommon)" DestinationFolder="$(_PackageStage)" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/../Info.json" DestinationFolder="$(_PackageStage)" Condition="Exists('$(MSBuildProjectDirectory)/../Info.json')" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/../LICENSE" DestinationFolder="$(_PackageStage)" Condition="Exists('$(MSBuildProjectDirectory)/../LICENSE')" />
+    <MakeDir Directories="$(_ArtifactsDir)" />
+    <ZipDirectory SourceDirectory="$(_PackageStage)"
+                  DestinationFile="$(_ArtifactsDir)$(ProjectName).zip"
+                  Overwrite="true" />
+    <Message Importance="high" Text="Packaged $(_ArtifactsDir)$(ProjectName).zip" />
+  </Target>
 
 </Project>

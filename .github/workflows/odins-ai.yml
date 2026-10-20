@@ -1,0 +1,33 @@
+name: odins-ai
+
+on:
+  push:
+    paths:
+      - 'Valheim/**'
+      - 'valheim.targets'
+      - 'lib/Jotunn/**'
+      - 'global.json'
+      - 'local.props.example'
+      - '.github/workflows/odins-ai.yml'
+  pull_request:
+    paths:
+      - 'Valheim/**'
+      - 'valheim.targets'
+      - 'lib/Jotunn/**'
+      - 'global.json'
+      - 'local.props.example'
+      - '.github/workflows/odins-ai.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      # OdinsAi.Core/Test are Unity-free (netstandard2.0/net8.0) and run here.
+      # OdinsAi.Mod needs the Valheim dedicated-server assemblies, so it is
+      # built and zipped on Forgejo only (see .forgejo/workflows/odins-ai.yml).
+      - run: dotnet build Valheim/OdinsAi.Core/OdinsAi.Core.csproj
+      - run: dotnet test Valheim/OdinsAi.Test/OdinsAi.Test.csproj
