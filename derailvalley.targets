@@ -45,7 +45,7 @@
   <Target Name="CheckGameRefs" BeforeTargets="BeforeBuild">
     <Error Condition="!Exists('$(ManagedDataPath)\Assembly-CSharp.dll') AND '$(UseGameStubs)' != 'true'"
            Text="Derail Valley game DLL not found at $(ManagedDataPath)\Assembly-CSharp.dll. Set DerailValleyPath in local.props (e.g. D:\SteamLibrary\steamapps\common\Derail Valley)." />
-    <Warning Condition="'$(UseGameStubs)' == 'true'"
+    <Message Condition="'$(UseGameStubs)' == 'true'"
              Text="Compiling against minimal Derail Valley stubs (no game install). Game behavior is faked for compile only." />
   </Target>
   <ItemGroup Condition="'$(UseGameStubs)' != 'true'">

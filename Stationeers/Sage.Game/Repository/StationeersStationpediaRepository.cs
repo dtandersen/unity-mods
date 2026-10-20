@@ -309,8 +309,8 @@ public sealed class StationeersStationpediaRepository : IStationpediaRepository
                     continue;
                 }
 
-                var name = UnityRichText.Strip(insert.LogicName).Trim();
-                var access = UnityRichText.Strip(insert.LogicAccessTypes).Trim();
+                var name = (UnityRichText.Strip(insert.LogicName) ?? string.Empty).Trim();
+                var access = (UnityRichText.Strip(insert.LogicAccessTypes) ?? string.Empty).Trim();
                 if (string.IsNullOrWhiteSpace(name))
                 {
                     continue;
@@ -348,8 +348,8 @@ public sealed class StationeersStationpediaRepository : IStationpediaRepository
                     continue;
                 }
 
-                var name = UnityRichText.Strip(insert.LogicName).Trim();
-                var index = UnityRichText.Strip(insert.LogicAccessTypes).Trim();
+                var name = (UnityRichText.Strip(insert.LogicName) ?? string.Empty).Trim();
+                var index = (UnityRichText.Strip(insert.LogicAccessTypes) ?? string.Empty).Trim();
                 if (string.IsNullOrWhiteSpace(name))
                 {
                     continue;

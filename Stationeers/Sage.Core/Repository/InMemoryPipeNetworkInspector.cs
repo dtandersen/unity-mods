@@ -43,7 +43,7 @@ public sealed class InMemoryPipeNetworkInspector : IPipeNetworkInspector
             return Array.Empty<PipeNetworkDetails>();
         }
 
-        var key = device.Trim();
+        var key = device!.Trim();
         if (_devices.TryGetValue(key, out var ids))
         {
             var found = new List<PipeNetworkDetails>();

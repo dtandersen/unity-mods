@@ -35,7 +35,7 @@ public sealed class ReadPipeNetworkTool : ITool
         if (!string.IsNullOrWhiteSpace(networkText))
         {
             long id;
-            if (!long.TryParse(networkText.Trim(), out id))
+            if (!long.TryParse(networkText!.Trim(), out id))
             {
                 return new ToolFailure($"Pipe network '{networkText}' is not a number.");
             }

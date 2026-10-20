@@ -112,7 +112,7 @@ public sealed class StationeersPipeNetworkInspector : IPipeNetworkInspector
             return FromStructure(matches[0]);
         }
 
-        var tank = FindTank(device);
+        var tank = FindTank(device!);
         if (tank != null)
         {
             var tankAir = ReadTank(tank);
@@ -122,7 +122,7 @@ public sealed class StationeersPipeNetworkInspector : IPipeNetworkInspector
         }
 
         long id;
-        if (long.TryParse(device.Trim(), out id))
+        if (long.TryParse(device!.Trim(), out id))
         {
             var direct = DescribeInner(id);
             return direct == null

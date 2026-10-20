@@ -242,7 +242,7 @@ public sealed class SageRouter
 
                 if (json == null)
                 {
-                    json = ParseJson(body);
+                    json = ParseJson(body!);
                 }
 
                 var token = json.GetValue(binding.Key, StringComparison.OrdinalIgnoreCase);
@@ -264,7 +264,7 @@ public sealed class SageRouter
                 continue;
             }
 
-            binding.Property.SetValue(model, Convert(value, binding));
+            binding.Property.SetValue(model, Convert(value!, binding));
         }
 
         return model;

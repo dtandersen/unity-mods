@@ -549,7 +549,7 @@ public sealed class StationeersStructureInspector : IStructureInspector
         return entries;
     }
 
-    private static IReadOnlyList<StructureLogicValue> ReadLogic(ILogicable logicable)
+    private static IReadOnlyList<StructureLogicValue> ReadLogic(ILogicable? logicable)
     {
         var values = new List<StructureLogicValue>();
         if (logicable == null)
@@ -576,7 +576,7 @@ public sealed class StationeersStructureInspector : IStructureInspector
         return values;
     }
 
-    private static IReadOnlyList<StructureSlotInfo> ReadSlots(ILogicable logicable)
+    private static IReadOnlyList<StructureSlotInfo> ReadSlots(ILogicable? logicable)
     {
         var slots = new List<StructureSlotInfo>();
         if (logicable == null)
@@ -730,8 +730,13 @@ public sealed class StationeersStructureInspector : IStructureInspector
         }
     }
 
-    private static string? SafeName(Thing thing)
+    private static string? SafeName(Thing? thing)
     {
+        if (thing == null)
+        {
+            return null;
+        }
+
         try
         {
             return thing.DisplayName;
@@ -742,8 +747,13 @@ public sealed class StationeersStructureInspector : IStructureInspector
         }
     }
 
-    private static string? SafeType(Thing thing)
+    private static string? SafeType(Thing? thing)
     {
+        if (thing == null)
+        {
+            return null;
+        }
+
         try
         {
             return thing.PrefabName;
@@ -754,8 +764,13 @@ public sealed class StationeersStructureInspector : IStructureInspector
         }
     }
 
-    private static long SafeId(Thing thing)
+    private static long SafeId(Thing? thing)
     {
+        if (thing == null)
+        {
+            return 0;
+        }
+
         try
         {
             return thing.ReferenceId;

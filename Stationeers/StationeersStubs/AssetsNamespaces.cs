@@ -265,7 +265,7 @@ namespace Assets.Scripts.Objects.Entities
         public Slot StomachSlot => null;
         public UnityEngine.Vector3 EntityForward => UnityEngine.Vector3.zero;
         public UnityEngine.Vector3 ThingTransformPosition => UnityEngine.Vector3.zero;
-        public GridSystem.Room Room => null;
+        public new GridSystem.Room Room => null;
     }
 }
 

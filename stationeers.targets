@@ -108,7 +108,7 @@
   <Target Name="CheckGameRefs" BeforeTargets="BeforeBuild">
     <Error Condition="!Exists('$(ManagedDataPath)\Assembly-CSharp.dll') AND '$(UseGameStubs)' != 'true'"
            Text="Stationeers game DLL not found at $(ManagedDataPath)\Assembly-CSharp.dll. Set GamePath in local.props (e.g. D:\SteamLibrary\steamapps\common\Stationeers)." />
-    <Warning Condition="'$(UseGameStubs)' == 'true'"
+    <Message Condition="'$(UseGameStubs)' == 'true'"
              Text="Compiling against minimal Stationeers stubs (no game install). Game behavior is faked for compile only." />
     <Warning Condition="!Exists('$(BepInExPath)\core\BepInEx.dll') AND !Exists('$(MSBuildThisFileDirectory)lib\BepInEx\BepInEx.dll')"
              Text="BepInEx not found at $(BepInExPath)\core\BepInEx.dll. Install BepInEx 5 (x64, Mono) into the game folder." />
