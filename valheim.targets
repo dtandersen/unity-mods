@@ -63,6 +63,13 @@
     <DeployFolderName Condition="'$(DeployFolderName)' == ''">$(ProjectName)</DeployFolderName>
     <DeployOnBuild Condition="'$(DeployOnBuild)' == ''">true</DeployOnBuild>
     <PackageOnBuild Condition="'$(PackageOnBuild)' == ''">false</PackageOnBuild>
+    <!-- Compile against minimal source stubs when the game is absent (CI).
+         Auto-on when assembly_valheim.dll is missing; force with
+         -p:UseGameStubs=true to test the stub build locally. Real game DLLs
+         take precedence whenever they exist. BepInEx/Jotunn/Harmony always
+         resolve from the real DLLs (game install first, lib/ fallback). -->
+    <UseGameStubs Condition="'$(UseGameStubs)' == '' AND !Exists('$(ManagedDataPath)\assembly_valheim.dll')">true</UseGameStubs>
+    <UseGameStubs Condition="'$(UseGameStubs)' == ''">false</UseGameStubs>
   </PropertyGroup>
 
   <!-- Makes the project build even on machines without the .NET Framework 4.8 targeting pack. -->
@@ -70,14 +77,27 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" />
   </ItemGroup>
 
-  <!-- BepInEx -->
-  <ItemGroup>
+  <!-- BepInEx (game install first, vendored fallback for CI) -->
+  <ItemGroup Condition="Exists('$(BepInExPath)\core\BepInEx.dll')">
     <Reference Include="BepInEx">
       <HintPath>$(BepInExPath)\core\BepInEx.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="0Harmony">
       <HintPath>$(BepInExPath)\core\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Vendored fallback (e.g. CI): used only when BepInEx is not installed
+       alongside the game. The game-local copy above takes precedence. -->
+  <ItemGroup Condition="!Exists('$(BepInExPath)\core\BepInEx.dll') AND Exists('$(MSBuildThisFileDirectory)lib\BepInEx\BepInEx.dll')">
+    <Reference Include="BepInEx">
+      <HintPath>$(MSBuildThisFileDirectory)lib\BepInEx\BepInEx.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(MSBuildThisFileDirectory)lib\BepInEx\0Harmony.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
@@ -99,8 +119,8 @@
     </Reference>
   </ItemGroup>
 
-  <!-- Valheim assemblies -->
-  <ItemGroup>
+  <!-- Valheim assemblies. Skipped when compiling against source stubs. -->
+  <ItemGroup Condition="'$(UseGameStubs)' != 'true'">
     <Reference Include="assembly_valheim">
       <HintPath>$(ManagedDataPath)\assembly_valheim.dll</HintPath>
       <Private>False</Private>
@@ -119,8 +139,9 @@
     </Reference>
   </ItemGroup>
 
-  <!-- Unity assemblies -->
-  <ItemGroup>
+  <!-- Unity assemblies. Skipped when compiling against source stubs
+       (UnityEngine core types come from UnityStubs instead). -->
+  <ItemGroup Condition="'$(UseGameStubs)' != 'true'">
     <Reference Include="UnityEngine">
       <HintPath>$(UnityPath)\UnityEngine.dll</HintPath>
       <Private>False</Private>
@@ -187,14 +208,35 @@
     </Reference>
   </ItemGroup>
 
+  <!-- Minimal source stubs (CI): same namespaces as the game, compile only.
+       Real game DLLs take precedence; this runs only when UseGameStubs=true.
+       BepInEx/Jotunn/Harmony still resolve from the real DLLs above.
+       Private=false keeps the fake DLL out of the output, deploy, and zip. -->
+  <ItemGroup Condition="'$(UseGameStubs)' == 'true'">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)Valheim/ValheimStubs\ValheimStubs.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+  <!-- Warn (not error) when the game is absent: stub builds compile but the
+       DLLs only resolve against the real game at runtime. -->
+  <Target Name="CheckGameRefs" BeforeTargets="BeforeBuild">
+    <Message Condition="'$(UseGameStubs)' == 'true'"
+             Text="Compiling against minimal Valheim stubs (no game install). Game behavior is faked for compile only." />
+  </Target>
+
   <!-- Copy the built plugin into the BepInEx plugins folder. -->
   <Target Name="Deploy" AfterTargets="Build" Condition="'$(DeployOnBuild)' == 'true'">
     <PropertyGroup>
       <_DeployDir>$(PluginDeployDir)\$(DeployFolderName)</_DeployDir>
     </PropertyGroup>
     <ItemGroup>
-      <!-- Target DLL/pdb plus any copy-local dependencies (e.g. OdinsAi.Core.dll). -->
+      <!-- Target DLL/pdb plus any copy-local dependencies (e.g. OdinsAi.Core.dll).
+           Stub compile outputs (UnityEngine/assembly_valheim fakes) are excluded:
+           they flow in transitively via ValheimStubs despite Private=false. -->
       <_ModFiles Include="$(TargetDir)*.dll" />
+      <_ModFiles Remove="$(TargetDir)UnityEngine.dll" />
+      <_ModFiles Remove="$(TargetDir)assembly_valheim.dll" />
       <_ModFiles Include="$(TargetDir)*.pdb" />
     </ItemGroup>
     <MakeDir Directories="$(_DeployDir)" />
@@ -209,8 +251,11 @@
       <_ArtifactsDir>$(ProjectDir)artifacts/</_ArtifactsDir>
     </PropertyGroup>
     <ItemGroup>
-      <!-- Target DLL plus copy-local dependencies (e.g. OdinsAi.Core.dll). -->
+      <!-- Target DLL plus copy-local dependencies (e.g. OdinsAi.Core.dll).
+           Stub compile outputs excluded (see Deploy above). -->
       <_PackageFiles Include="$(TargetDir)*.dll" />
+      <_PackageFiles Remove="$(TargetDir)UnityEngine.dll" />
+      <_PackageFiles Remove="$(TargetDir)assembly_valheim.dll" />
     </ItemGroup>
     <RemoveDir Directories="$(_PackageStage)" />
     <MakeDir Directories="$(_PackageStage)plugins" />
