@@ -83,7 +83,7 @@ GET /sage/status
 GET /sage/devices?q=vent
 ```
 
-Each answer is full JSON. Specs live in `StationeersAi.Test/Features/Server/SageServer.feature`.
+Each answer is full JSON. Specs live in `Stationeers/Sage.Test/Features/Server/SageServer.feature`.
 
 ## Development
 

@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # No game install here: stationeers.targets auto-uses the minimal
-      # source stubs (StationeersStubs/) when Assembly-CSharp.dll is absent.
+      # source stubs (Stationeers/StationeersStubs/) when Assembly-CSharp.dll is absent.
       # This compiles the full solution, including Game/Mod, but game behavior
       # is faked. The shipped zip holds only our DLLs, which resolve against
       # the real game at runtime. Real behavior is only tested locally with
@@ -20,17 +20,17 @@ jobs:
         run: dotnet test StationeersMods.sln -c Release -p:DeployOnBuild=false -p:DeployLocalOnBuild=false
       - name: Build mod zip
         run: |
-          dotnet build StationeersAi.Mod/StationeersAi.Mod.csproj -c Release \
+          dotnet build Stationeers/Sage.Mod/Sage.Mod.csproj -c Release \
             -p:DeployOnBuild=false \
             -p:DeployLocalOnBuild=false \
             -p:PackageOnBuild=true
           echo "=== artifacts ==="
-          ls -la StationeersAi.Mod/artifacts/
+          ls -la Stationeers/Sage.Mod/artifacts/
       # Forgejo's own fork: v4 API speaking the protocol Forgejo implements
       # (upstream v4+ hits GHESNotSupportedError against this instance).
       - name: Upload zip
         uses: https://data.forgejo.org/forgejo/upload-artifact@v4
         with:
-          name: StationeersAi.Mod
-          path: StationeersAi.Mod/artifacts/*.zip
+          name: Sage.Mod
+          path: Stationeers/Sage.Mod/artifacts/*.zip
           if-no-files-found: error

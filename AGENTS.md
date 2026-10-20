@@ -16,6 +16,10 @@ Create Reqnroll features instead of TUnit test cases when able.
 - Never use the passive where you can use the active.
 - Never use a foreign phrase, a scientific word, or a jargon word if you can think of an everyday English equivalent.
 
+## Before commit
+
+Run `gitleaks detect` and `gitleaks protect --staged`. Fix all leaks before you commit.
+
 ## Development
 
 Read development.md for build, test, and layout.

@@ -1,0 +1,41 @@
+using Sage.Command;
+using Caev.Tools;
+
+namespace Sage.Tool;
+
+/// <summary>Tool: describe the player's current status (position, world, condition).</summary>
+public sealed class DescribePlayerTool : ITool
+{
+    private readonly DescribePlayerCommand _command;
+
+    public DescribePlayerTool(DescribePlayerCommand command)
+    {
+        _command = command;
+    }
+
+    public ToolDefinition Definition { get; } = new ToolDefinition(
+        "describe_player",
+        "Describe the player's current status: position, world, and condition summary. Takes no arguments.",
+        new ToolParameter[0]);
+
+    public ToolResult Execute(ToolArguments arguments)
+    {
+        var answer = _command.Execute(new NoRequest());
+        if (answer.Status != Status.SUCCESS)
+        {
+            return new ToolFailure(ToolAnswer.Line(answer, "Player status is unavailable."));
+        }
+
+        var status = answer.Player!;
+
+        var content = $"Position: ({status.X:0.0}, {status.Y:0.0}, {status.Z:0.0})\nWorld: {status.World ?? "unknown"}\nRoom: {(status.RoomId.HasValue ? status.RoomId.Value.ToString() : "outside")}";
+        if (!string.IsNullOrWhiteSpace(status.Details))
+        {
+            content += $"\n{status.Details}";
+        }
+
+        return new ToolSuccess<DescribePlayerResult>(
+            new DescribePlayerResult(status),
+            content);
+    }
+}

@@ -41,3 +41,6 @@ data/
 
 # Local run scratch (power watch CSVs, ad-hoc captures)
 .run/
+
+# Local MCP servers (machine-specific browser ports, paths)
+.pi/mcp.json

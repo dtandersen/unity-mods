@@ -13,16 +13,16 @@ jobs:
         with:
           dotnet-version: 10.0.x
       # No game install on GitHub: stationeers.targets auto-uses the minimal
-      # source stubs (StationeersStubs/) when Assembly-CSharp.dll is absent.
+      # source stubs (Stationeers/StationeersStubs/) when Assembly-CSharp.dll is absent.
       # This compiles the full solution, including Game/Mod, but game behavior
       # is faked. Real behavior is only tested locally with the game installed.
-      - run: dotnet build StationeersMods.sln --nologo -p:DeployOnBuild=false -p:DeployLocalOnBuild=false
-      - run: dotnet test StationeersMods.sln --no-build --nologo
+      - run: dotnet build StationeersMods.sln -p:DeployOnBuild=false -p:DeployLocalOnBuild=false
+      - run: dotnet test StationeersMods.sln --no-build
       - name: Build mod zip
-        run: dotnet build StationeersAi.Mod/StationeersAi.Mod.csproj -c Release -p:DeployOnBuild=false -p:DeployLocalOnBuild=false -p:PackageOnBuild=true
+        run: dotnet build Stationeers/Sage.Mod/Sage.Mod.csproj -c Release -p:DeployOnBuild=false -p:DeployLocalOnBuild=false -p:PackageOnBuild=true
       - name: Upload zip
         uses: actions/upload-artifact@v4
         with:
-          name: StationeersAi.Mod
-          path: StationeersAi.Mod/artifacts/*.zip
+          name: Sage.Mod
+          path: Stationeers/Sage.Mod/artifacts/*.zip
           if-no-files-found: error

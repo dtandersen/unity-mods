@@ -206,10 +206,10 @@
        transitively, which also satisfies BepInEx's UnityEngine reference.
        Private=false keeps the fake DLLs out of the output, deploy, and zip. -->
   <ItemGroup Condition="'$(UseGameStubs)' == 'true'">
-    <ProjectReference Include="$(MSBuildThisFileDirectory)StationeersStubs\StationeersStubs.csproj">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)Stationeers/StationeersStubs\StationeersStubs.csproj">
       <Private>false</Private>
     </ProjectReference>
-    <ProjectReference Include="$(MSBuildThisFileDirectory)StationeersStubs.Unity\UnityStubs.csproj">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)UnityStubs\UnityStubs.csproj">
       <Private>false</Private>
     </ProjectReference>
   </ItemGroup>
@@ -265,7 +265,7 @@
     <MakeDir Directories="$(_PackageStage)About" />
     <Copy SourceFiles="@(_PackageFiles)" DestinationFolder="$(_PackageStage)" />
     <Copy SourceFiles="$(MSBuildProjectDirectory)/About/About.xml" DestinationFolder="$(_PackageStage)About" Condition="Exists('$(MSBuildProjectDirectory)/About/About.xml')" />
-    <Copy SourceFiles="$(MSBuildProjectDirectory)/../README.md" DestinationFolder="$(_PackageStage)" Condition="Exists('$(MSBuildProjectDirectory)/../README.md')" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/../../README.md" DestinationFolder="$(_PackageStage)" Condition="Exists('$(MSBuildProjectDirectory)/../../README.md')" />
     <MakeDir Directories="$(_ArtifactsDir)" />
     <ZipDirectory SourceDirectory="$(_PackageStage)"
                   DestinationFile="$(_ArtifactsDir)sage-$(Version).zip"

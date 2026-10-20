@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <Description>Sage - an LLM assistant for Stationeers.</Description>
+  </PropertyGroup>
+
+  <!-- The shell owns the plugin entry; the game adapter owns runtime objects. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\Caev\Caev.csproj" />
+    <ProjectReference Include="..\..\Common\Common.csproj" />
+    <ProjectReference Include="..\Sage.Core\Sage.Core.csproj" />
+    <ProjectReference Include="..\Sage.Game\Sage.Game.csproj" />
+  </ItemGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory)..\..\stationeers.targets" />
+
+  <!-- Null checks on: overrides the disable in stationeers.targets. -->
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
