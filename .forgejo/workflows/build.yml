@@ -57,10 +57,10 @@ jobs:
             -p:GamePath="$GAME_DIR"
           echo "=== artifacts ==="
           ls -la OdinsAi.Mod/artifacts/
-      # Pinned to v3: v4+ needs the GHES artifact API Forgejo doesn't
-      # implement (GHESNotSupportedError). Same inputs, drop-in.
+      # Forgejo's own fork: v4 API speaking the protocol Forgejo implements
+      # (upstream v4+ hits GHESNotSupportedError against this instance).
       - name: Upload zip
-        uses: actions/upload-artifact@v3
+        uses: https://data.forgejo.org/forgejo/upload-artifact@v4
         with:
           name: OdinsAi.Mod
           path: OdinsAi.Mod/artifacts/*.zip
