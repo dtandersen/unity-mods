@@ -5,6 +5,22 @@ questions and it looks up live game data — items, structures, manufacturing
 recipes, Stationpedia pages, your inventory, and your position — before
 answering.
 
+## Install
+
+Pick one path (the same zip runs either way — it holds the DLLs
+plus `About/About.xml`; BepInEx ignores the `About` folder and LaunchPad
+uses it):
+
+- **BepInEx:** extract `sage-<version>.zip` (e.g.
+  `sage-0.1.0.zip`) into `steamapps/common/Stationeers/BepInEx/plugins/Sage/`.
+  Needs BepInEx 5 only.
+- **LaunchPad Local mod:** extract `sage-<version>.zip` (e.g.
+  `sage-0.1.0.zip`) into `Documents/My Games/Stationeers/mods/Sage/`, Needs BepInEx 5
+  plus the StationeersLaunchPad plugin. Do not drop the `.zip` in
+  unopened — LaunchPad only finds mods by their `About/About.xml` file.
+
+Do not install both at once.
+
 ## Usage
 
 There are two ways to interact with SAGE. You can mention `@sage <prompt>` in a chat message or use `ai <prompt>` in the Stationeers console.
@@ -30,7 +46,7 @@ ai compact   # summarise history into one message
 ```
 
 First set `AI/ApiKey` (and optionally `Endpoint`/`Model`) in the BepInEx
-config (`BepInEx/config/davidandersen.stationeersai.cfg`) — any
+config (`BepInEx/config/dtandersen.sage.cfg`) — any
 OpenAI-compatible endpoint works.
 
 Sage can call these tools:

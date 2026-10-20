@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModMetadata xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <Name>Sage</Name>
+    <ModID>dtandersen.sage</ModID>
+    <Author>dtandersen</Author>
+    <Version>0.1.0</Version>
+
+    <Description>
+        Sage is an assistant for Stationeers. Ask it questions in chat (@sage) or
+        the console (ai) and it reads live game data — items, structures,
+        recipes, Stationpedia pages, inventory, and position — before answering.
+
+        This is a BepInEx plugin mod. It runs as a plain BepInEx plugin and as a
+        StationeersLaunchPad Local mod. It needs BepInEx 5. LaunchPad is only
+        needed for the Local mod path.
+
+        Set AI/ApiKey in the BepInEx config before use. Any OpenAI-compatible
+        endpoint works. See: https://github.com/dtandersen/stationeers-mods
+    </Description>
+
+    <ChangeLog>
+        0.1.0
+        - First packaged release: BepInEx plugin + LaunchPad Local mod layouts.
+    </ChangeLog>
+
+    <Tags>
+        <Tag>Utility</Tag>
+        <Tag>AI</Tag>
+        <Tag>BepInEx</Tag>
+        <Tag>StationeersLaunchPad</Tag>
+    </Tags>
+
+    <InGameDescription>
+        <![CDATA[
+<size=30><color=#ffa500>Sage</color></size>
+An assistant for Stationeers. Ask in chat with <b>@sage</b> or in the console with <b>ai</b>.
+
+Reads live game data before answering. Set <b>AI/ApiKey</b> in the BepInEx config first.
+]]>
+    </InGameDescription>
+</ModMetadata>

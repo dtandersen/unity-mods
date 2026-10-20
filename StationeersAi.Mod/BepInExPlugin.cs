@@ -24,10 +24,6 @@ public class BepInExPlugin : BaseUnityPlugin
     public const string ModName = "SAGE";
     public const string ModVersion = "0.1.0";
 
-    // Roots the shell (and through it, the mod) so the scene wipe cannot
-    // collect them mid-level. Harmony patches call back through this.
-    private static BepInExPlugin? _instance;
-
     private SageConfig? _settings;
     private MainThreadExecutor? _executor;
     private BepinExLogger? _log;
@@ -35,7 +31,6 @@ public class BepInExPlugin : BaseUnityPlugin
 
     public void Awake()
     {
-        _instance = this;
         if (Logger == null)
         {
             throw new InvalidOperationException($"{ModName}: BepInEx log source is unavailable.");

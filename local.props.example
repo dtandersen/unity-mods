@@ -9,17 +9,13 @@
     <!-- Stationeers install directory (contains rocketstation.exe and rocketstation_Data/). -->
     <GamePath>D:\SteamLibrary\steamapps\common\Stationeers</GamePath>
 
-    <!-- Where BepInEx.dll / 0Harmony.dll live. Default: $(GamePath)\BepInEx.
-         With r2modman this lives at
-         %APPDATA%\r2modmanPlus-local\Stationeers\profiles\<profile>\BepInEx. -->
-    <!-- <BepInExPath>C:\Users\<you>\AppData\Roaming\r2modmanPlus-local\Stationeers\profiles\Mods\BepInEx</BepInExPath> -->
+    <!-- Where BepInEx.dll / 0Harmony.dll live. Default: $(GamePath)\BepInEx. -->
+    <!-- <BepInExPath>C:\Games\Stationeers\BepInEx</BepInExPath> -->
 
     <!-- Where built plugins are copied. Default: $(BepInExPath)\plugins -->
-    <!-- <PluginDeployDir>C:\Users\<you>\AppData\Roaming\r2modmanPlus-local\Stationeers\profiles\Mods\BepInEx\plugins</PluginDeployDir> -->
+    <!-- <PluginDeployDir>C:\Games\Stationeers\BepInEx\plugins</PluginDeployDir> -->
 
-    <!-- Folder under PluginDeployDir that builds deploy into. Default: $(ProjectName).
-         Set to the folder r2modman used for a locally imported mod so builds update
-         that copy rather than creating a second one. -->
+    <!-- Folder under PluginDeployDir that builds deploy into. Default: $(ProjectName). -->
     <!-- <DeployFolderName>Author-ModName</DeployFolderName> -->
 
     <!-- Stationeers managed assemblies. Default: $(GamePath)\rocketstation_Data\Managed -->
@@ -30,5 +26,15 @@
 
     <!-- Set to true to also produce artifacts\<Mod>.zip on build. -->
     <!-- <PackageOnBuild>true</PackageOnBuild> -->
+
+    <!-- LaunchPad Local mod folder (holds About/About.xml plus the DLLs).
+         Default: %USERPROFILE%\Documents\My Games\Stationeers\mods -->
+    <!-- <LocalModsPath>C:\Users\&lt;you&gt;\Documents\My Games\Stationeers\mods</LocalModsPath> -->
+
+    <!-- Folder under LocalModsPath that DeployLocalOnBuild copies into. Default: Sage. -->
+    <!-- <LocalModFolderName>Sage</LocalModFolderName> -->
+
+    <!-- Set to true to copy the build plus About/About.xml into the Local mods folder. -->
+    <!-- <DeployLocalOnBuild>true</DeployLocalOnBuild> -->
   </PropertyGroup>
 </Project>

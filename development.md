@@ -78,7 +78,7 @@ game. The mod reads those four and hands the line over; `NetworkManager` and
 
 - **Stationeers** installed (`D:\SteamLibrary\steamapps\common\Stationeers`).
 - **BepInEx 5 (x64, Mono)** installed, and the game launched at least once —
-  either in the game folder or via r2modman. When the game has no BepInEx,
+  in the game folder. When the game has no BepInEx,
   compilation falls back to the bundled `lib/BepInEx` references
   automatically; the fallback never ships.
 - **.NET SDK 10**. `StationeersAi.Core` targets `netstandard2.0`, the specs
@@ -105,8 +105,29 @@ To create a distributable zip:
 
 ```bash
 dotnet build StationeersAi.Mod/StationeersAi.Mod.csproj -c Release -p:PackageOnBuild=true
-# -> StationeersAi.Mod/artifacts/StationeersAi.Mod.zip
+# -> StationeersAi.Mod/artifacts/sage-<version>.zip  (DLLs + About/About.xml at the root)
 ```
+
+## Install paths (BepInEx or LaunchPad Local)
+
+The same DLLs run either way — LaunchPad finds any `BaseUnityPlugin` under
+the mod folder, so no code change is needed for the second path. Install
+one of them, not both.
+
+- **BepInEx plugin:** extract the zip into
+  `<Game>/BepInEx/plugins/Sage/` (this is what `DeployOnBuild` does, minus the
+  `About` folder). Needs BepInEx 5 only.
+- **LaunchPad Local mod:** extract the zip into
+  `Documents/My Games/Stationeers/mods/Sage/`, so it holds
+  `About/About.xml` plus the DLLs. Do not drop the `.zip` in unopened —
+  LaunchPad only finds mods by their `About/About.xml` file. Needs
+  BepInEx 5 plus the StationeersLaunchPad plugin. Pass `-p:DeployLocalOnBuild=true` to copy
+  there on build (override the folder with `LocalModsPath` /
+  `LocalModFolderName` in `local.props`).
+
+`StationeersAi.Mod/About/About.xml` carries the LaunchPad metadata
+(`ModID` `dtandersen.sage`, version `0.1.0`). Bump it with `ModVersion` in
+`BepInExPlugin.cs` and `Version` in `StationeersAi.Mod.csproj` on release.
 
 BepInEx cannot reload plugins, so every change means rebuild + restart the
 game, then check `BepInEx/LogOutput.log`. BepInEx holds disk writes back

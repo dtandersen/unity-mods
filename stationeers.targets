@@ -56,11 +56,16 @@
     <ManagedDataPath Condition="'$(ManagedDataPath)' == ''">$(GamePath)/rocketstation_Data/Managed</ManagedDataPath>
     <UnityPath Condition="'$(UnityPath)' == ''">$(ManagedDataPath)</UnityPath>
     <PluginDeployDir Condition="'$(PluginDeployDir)' == ''">$(BepInExPath)\plugins</PluginDeployDir>
-    <!-- Folder the plugin is deployed into. Set this to the name r2modman used for a
-         locally imported mod so builds update the managed copy instead of adding a second one. -->
+    <!-- Folder the plugin is deployed into under the plugins folder. -->
     <DeployFolderName Condition="'$(DeployFolderName)' == ''">$(MSBuildProjectName)</DeployFolderName>
     <DeployOnBuild Condition="'$(DeployOnBuild)' == ''">true</DeployOnBuild>
     <PackageOnBuild Condition="'$(PackageOnBuild)' == ''">false</PackageOnBuild>
+    <!-- LaunchPad Local mod layout (Documents/My Games/Stationeers/mods/<LocalModFolderName>/
+         with About/About.xml plus the plugin DLLs at the root). Off by default;
+         pass -p:DeployLocalOnBuild=true to copy there on build. -->
+    <LocalModsPath Condition="'$(LocalModsPath)' == ''">$(USERPROFILE)\Documents\My Games\Stationeers\mods</LocalModsPath>
+    <LocalModFolderName Condition="'$(LocalModFolderName)' == ''">Sage</LocalModFolderName>
+    <DeployLocalOnBuild Condition="'$(DeployLocalOnBuild)' == ''">false</DeployLocalOnBuild>
   </PropertyGroup>
 
   <!-- Makes the project build even on machines without the .NET Framework 4.8 targeting pack. -->
@@ -98,7 +103,7 @@
     <Error Condition="!Exists('$(ManagedDataPath)\Assembly-CSharp.dll')"
            Text="Stationeers game DLL not found at $(ManagedDataPath)\Assembly-CSharp.dll. Set GamePath in local.props (e.g. D:\SteamLibrary\steamapps\common\Stationeers)." />
     <Warning Condition="!Exists('$(BepInExPath)\core\BepInEx.dll') AND !Exists('$(MSBuildThisFileDirectory)lib\BepInEx\BepInEx.dll')"
-             Text="BepInEx not found at $(BepInExPath)\core\BepInEx.dll. Install BepInEx 5 (x64, Mono) into the game folder or point BepInExPath at your r2modman profile. See README.md." />
+             Text="BepInEx not found at $(BepInExPath)\core\BepInEx.dll. Install BepInEx 5 (x64, Mono) into the game folder." />
   </Target>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
@@ -202,7 +207,29 @@
     <Message Importance="high" Text="Deployed $(ProjectName) to $(_DeployDir)" />
   </Target>
 
-  <!-- Optionally package an importable (Thunderstore/r2modman) zip. -->
+  <!-- Copy the built plugin into the LaunchPad Local mods folder, when asked.
+       Same DLLs as the BepInEx deploy, plus About/About.xml at the mod root.
+       LaunchPad loads any BaseUnityPlugin under the mod folder, so no code
+       change is needed for the second path. --> 
+  <Target Name="DeployLocal" AfterTargets="Build" Condition="'$(DeployLocalOnBuild)' == 'true'">
+    <PropertyGroup>
+      <_LocalDir>$(LocalModsPath)\$(LocalModFolderName)</_LocalDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <_LocalFiles Include="$(TargetDir)*.dll" />
+      <_LocalFiles Include="$(TargetDir)*.pdb" />
+    </ItemGroup>
+    <MakeDir Directories="$(_LocalDir)\About" />
+    <Copy SourceFiles="@(_LocalFiles)" DestinationFolder="$(_LocalDir)" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/About/About.xml" DestinationFolder="$(_LocalDir)\About" Condition="Exists('$(MSBuildProjectDirectory)/About/About.xml')" />
+    <Message Importance="high" Text="Deployed Local mod to $(_LocalDir)" />
+  </Target>
+
+  <!-- Optionally package a single distribution zip (sage-<version>.zip) that runs
+       either way. The zip holds the plugin DLLs plus About/About.xml at the
+       root: extract it into BepInEx/plugins/Sage/ for plain BepInEx, or into
+       Documents/My Games/Stationeers/mods/Sage/ for LaunchPad Local
+       (LaunchPad finds any BaseUnityPlugin under the mod folder). -->
   <Target Name="Package" AfterTargets="Build" Condition="'$(PackageOnBuild)' == 'true'">
     <PropertyGroup>
       <_PackageStage>$(IntermediateOutputPath)package/</_PackageStage>
@@ -213,15 +240,15 @@
       <_PackageFiles Include="$(TargetDir)*.dll" />
     </ItemGroup>
     <RemoveDir Directories="$(_PackageStage)" />
-    <MakeDir Directories="$(_PackageStage)plugins" />
-    <Copy SourceFiles="@(_PackageFiles)" DestinationFolder="$(_PackageStage)plugins" />
-    <Copy SourceFiles="$(MSBuildProjectDirectory)/manifest.json" DestinationFolder="$(_PackageStage)" Condition="Exists('$(MSBuildProjectDirectory)/manifest.json')" />
+    <MakeDir Directories="$(_PackageStage)About" />
+    <Copy SourceFiles="@(_PackageFiles)" DestinationFolder="$(_PackageStage)" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/About/About.xml" DestinationFolder="$(_PackageStage)About" Condition="Exists('$(MSBuildProjectDirectory)/About/About.xml')" />
     <Copy SourceFiles="$(MSBuildProjectDirectory)/../README.md" DestinationFolder="$(_PackageStage)" Condition="Exists('$(MSBuildProjectDirectory)/../README.md')" />
     <MakeDir Directories="$(_ArtifactsDir)" />
     <ZipDirectory SourceDirectory="$(_PackageStage)"
-                  DestinationFile="$(_ArtifactsDir)$(ProjectName).zip"
+                  DestinationFile="$(_ArtifactsDir)sage-$(Version).zip"
                   Overwrite="true" />
-    <Message Importance="high" Text="Packaged $(_ArtifactsDir)$(ProjectName).zip" />
+    <Message Importance="high" Text="Packaged $(_ArtifactsDir)sage-$(Version).zip" />
   </Target>
 
 </Project>
