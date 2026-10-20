@@ -7,7 +7,7 @@ using Sage.Entity;
 using Sage.Game;
 using IngredientEntity = Sage.Entity.Ingredient;
 using RecipeEntity = Sage.Entity.Recipe;
-using Logger = Sage.Core.Logger;
+using Logger = Crowbus.Common.Logger;
 
 namespace Sage.Repository;
 

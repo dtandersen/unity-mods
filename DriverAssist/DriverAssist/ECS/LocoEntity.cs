@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DriverAssist.Cruise;
+using Crowbus.Common;
 
 namespace DriverAssist.ECS
 {

@@ -1,7 +1,6 @@
 using DriverAssist.ECS;
 using DriverAssist.Test;
-using Xunit;
-using Xunit.Abstractions;
+using Shouldly;
 
 namespace DriverAssist.Cruise
 {
@@ -15,9 +14,9 @@ namespace DriverAssist.Cruise
         private CruiseControlContext context;
         private const float STEP = 1 / 11f;
 
-        public AccelTest(ITestOutputHelper output)
+        public AccelTest()
         {
-            XunitLogger.Init(output);
+            TUnitLogger.Init();
 
             de2settings = new FakeLocoConfig
             {
@@ -67,7 +66,7 @@ namespace DriverAssist.Cruise
         /// The train is stopped.
         /// It should speed up.
         /// </summary>
-        [Fact]
+        [Test]
         public void AccelerateFromStop()
         {
             context.Time = 5;
@@ -76,7 +75,7 @@ namespace DriverAssist.Cruise
 
             train.SpeedKmh = 0;
             WhenAccel();
-            Assert.Equal(STEP, loco.Throttle);
+            loco.Throttle.ShouldBe(STEP);
         }
 
         /// <summary> 
@@ -84,7 +83,7 @@ namespace DriverAssist.Cruise
         /// but the throttle is only in the first notch.
         /// It should maintain speed.
         /// </summary>
-        [Fact]
+        [Test]
         public void DontExceedMaxAccel()
         {
             context.DesiredSpeed = 5;
@@ -93,7 +92,7 @@ namespace DriverAssist.Cruise
 
             WhenAccel();
 
-            Assert.Equal(STEP, loco.Throttle);
+            loco.Throttle.ShouldBe(STEP);
         }
 
         /// <summary> 
@@ -101,7 +100,7 @@ namespace DriverAssist.Cruise
         /// and the throttle is past the first notch.
         /// It should slow down.
         /// </summary>
-        [Fact]
+        [Test]
         public void DontExceedMaxAccel2()
         {
             context.DesiredSpeed = 5;
@@ -112,14 +111,14 @@ namespace DriverAssist.Cruise
 
             WhenAccel();
 
-            Assert.Equal(STEP, loco.Throttle);
+            loco.Throttle.ShouldBe(STEP);
         }
 
         /// <summary> 
         /// Torque is below MinTorque.
         /// The locomotive should speed up.
         /// </summary>
-        [Fact]
+        [Test]
         public void SpeedUpIfLowTorque()
         {
             context.DesiredSpeed = 5;
@@ -128,13 +127,13 @@ namespace DriverAssist.Cruise
 
             WhenAccel();
 
-            Assert.Equal(2 * STEP, loco.Throttle);
+            loco.Throttle.ShouldBe(2 * STEP);
 
             WhenAccel();
             WhenAccel();
             WhenAccel();
 
-            Assert.Equal(3 * STEP, loco.Throttle);
+            loco.Throttle.ShouldBe(3 * STEP);
         }
 
         /// <summary> 
@@ -143,7 +142,7 @@ namespace DriverAssist.Cruise
         /// and the temperature is not decreasing.
         /// It should slow down.
         /// </summary>
-        [Fact]
+        [Test]
         public void SlowDownIfHeatIsOverOperatingTemp()
         {
             context.DesiredSpeed = 5;
@@ -154,16 +153,16 @@ namespace DriverAssist.Cruise
             loco.TemperatureChange = 0;
 
             WhenAccel();
-            Assert.Equal(2 * STEP, loco.Throttle);
+            loco.Throttle.ShouldBe(2 * STEP);
 
             WhenAccel();
-            Assert.Equal(2 * STEP, loco.Throttle);
+            loco.Throttle.ShouldBe(2 * STEP);
 
             WhenAccel();
-            Assert.Equal(2 * STEP, loco.Throttle);
+            loco.Throttle.ShouldBe(2 * STEP);
 
             WhenAccel();
-            Assert.Equal(1 * STEP, loco.Throttle);
+            loco.Throttle.ShouldBe(1 * STEP);
         }
 
         /// <summary> 
@@ -172,7 +171,7 @@ namespace DriverAssist.Cruise
         /// and the temperature is decreasing.
         /// It should maintain the current throttle position.
         /// </summary>
-        [Fact]
+        [Test]
         public void MaintainThrottleIfTemperatureIsFalling()
         {
             context.DesiredSpeed = 5;
@@ -186,7 +185,7 @@ namespace DriverAssist.Cruise
 
             WhenAccel();
 
-            Assert.Equal(3 * STEP, loco.Throttle);
+            loco.Throttle.ShouldBe(3 * STEP);
         }
 
         /// <summary> 
@@ -196,7 +195,7 @@ namespace DriverAssist.Cruise
         /// and the temperature is increasing.
         /// It should maintain the current throttle position.
         /// </summary>
-        [Fact]
+        [Test]
         public void MaintainThrottleIfTemperatureIsFalling2()
         {
             context.DesiredSpeed = 5;
@@ -210,7 +209,7 @@ namespace DriverAssist.Cruise
 
             WhenAccel();
 
-            Assert.Equal(3 * STEP, loco.Throttle);
+            loco.Throttle.ShouldBe(3 * STEP);
         }
 
         /// <summary> 
@@ -220,7 +219,7 @@ namespace DriverAssist.Cruise
         /// and the temperature is increasing.
         /// It should maintain the current throttle position.
         /// </summary>
-        [Fact]
+        [Test]
         public void MaintainThrottleIfTemperatureIsFalling3()
         {
             context.DesiredSpeed = 5;
@@ -234,7 +233,7 @@ namespace DriverAssist.Cruise
 
             WhenAccel();
 
-            Assert.Equal(4 * STEP, loco.Throttle);
+            loco.Throttle.ShouldBe(4 * STEP);
         }
 
         /// <summary>
@@ -242,7 +241,7 @@ namespace DriverAssist.Cruise
         /// and it has exceeded operating temperature.
         /// It should speed up.
         /// </summary>
-        [Fact]
+        [Test]
         public void SpeedUpWhenAccelerationIsLow()
         {
             context.DesiredSpeed = 5;
@@ -252,7 +251,7 @@ namespace DriverAssist.Cruise
 
             WhenAccel();
 
-            Assert.Equal(4 * STEP, loco.Throttle);
+            loco.Throttle.ShouldBe(4 * STEP);
         }
 
         // /// <summary> 
@@ -272,14 +271,14 @@ namespace DriverAssist.Cruise
 
         //     WhenAccel();
 
-        //     Assert.Equal(2 * step, train.Throttle);
+        //     train.Throttle.ShouldBe(2 * step);
         // }
 
         /// <summary> 
         /// The traction motor is about to explode.
         /// The train should slow down.
         /// </summary>
-        [Fact]
+        [Test]
         public void SlowDownIfTemperatureIsCritical()
         {
             context.DesiredSpeed = 5;
@@ -290,14 +289,14 @@ namespace DriverAssist.Cruise
 
             WhenAccel();
 
-            Assert.Equal(2 * STEP, loco.Throttle);
+            loco.Throttle.ShouldBe(2 * STEP);
         }
 
         /// <summary> 
         /// The traction motor is about to explode.
         /// The train should slow down.
         /// </summary>
-        [Fact]
+        [Test]
         public void SlowDownIfAmpsIsCritical()
         {
             context.DesiredSpeed = 5;
@@ -308,14 +307,14 @@ namespace DriverAssist.Cruise
 
             WhenAccel();
 
-            Assert.Equal(2 * STEP, loco.Throttle);
+            loco.Throttle.ShouldBe(2 * STEP);
         }
 
         /// <summary> 
         /// The wheels are slipping.
         /// The train should slow down.
         /// </summary>
-        [Fact]
+        [Test]
         public void SlowsDownIfWheelsAreSlipping()
         {
             context.DesiredSpeed = 5;
@@ -327,14 +326,14 @@ namespace DriverAssist.Cruise
 
             WhenAccel();
 
-            Assert.Equal(2 * STEP, loco.Throttle);
+            loco.Throttle.ShouldBe(2 * STEP);
         }
 
         /// <summary> 
         /// The DE4 has no traction motor,
         /// It should speed up.
         /// </summary>
-        [Fact]
+        [Test]
         public void DE4HasNoAmps()
         {
             context = new CruiseControlContext(dh4settings, loco)
@@ -350,14 +349,14 @@ namespace DriverAssist.Cruise
 
             WhenAccel();
 
-            Assert.Equal(4 * STEP, loco.Throttle);
+            loco.Throttle.ShouldBe(4 * STEP);
         }
 
         /// <summary> 
         /// Torque is above MinTorque.
         /// The train should maintain speed.
         /// </summary>
-        [Fact]
+        [Test]
         public void MaintainThrottleIfTorqueHigh()
         {
             context.DesiredSpeed = 5;
@@ -366,14 +365,14 @@ namespace DriverAssist.Cruise
 
             WhenAccel();
 
-            Assert.Equal(2 * STEP, loco.Throttle);
+            loco.Throttle.ShouldBe(2 * STEP);
         }
 
         /// <summary> 
         /// The train did not shift.
         /// LastShift should not change.
         /// </summary>
-        [Fact]
+        [Test]
         public void DontUpdateShiftTimeIfWeDontShift()
         {
             context.Time = 5;
@@ -384,7 +383,7 @@ namespace DriverAssist.Cruise
 
             WhenAccel();
 
-            Assert.Equal(0, accelerator.LastThrottleChange);
+            accelerator.LastThrottleChange.ShouldBe(0);
         }
 
 

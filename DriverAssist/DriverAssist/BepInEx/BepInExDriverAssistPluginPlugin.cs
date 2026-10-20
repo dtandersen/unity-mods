@@ -1,4 +1,4 @@
-﻿#if BEPINEX
+#if BEPINEX
 
 using BepInEx;
 using DriverAssist.Implementation;
@@ -9,11 +9,12 @@ namespace DriverAssist.BepInEx
     public class DriverAssistBepInExPlugin : BaseUnityPlugin
     {
         private UnityPresenter presenter;
+        private Crowbus.Common.Logger log = new NullLogger();
 
         private void Awake()
         {
-            PluginLoggerSingleton.Instance = new BepInExLogger(Logger);
-            PluginLoggerSingleton.Instance.Prefix = "--------------------------------------------------> ";
+            LogFactory.Factory.Value = (scope) => new BepInExLogger(Logger, "--------------------------------------------------> ");
+            log = LogFactory.GetLogger(typeof(DriverAssistBepInExPlugin));
 
             BepInExDriverAssistSettings config = new BepInExDriverAssistSettings(Config);
 
@@ -23,7 +24,7 @@ namespace DriverAssist.BepInEx
 
         private void OnDestroy()
         {
-            PluginLoggerSingleton.Instance.Info($"OnDestroy");
+            log.Info($"OnDestroy");
             presenter.Unload();
             presenter.OnDestroy();
         }

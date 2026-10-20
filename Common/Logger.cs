@@ -1,4 +1,4 @@
-namespace Sage.Core;
+namespace Crowbus.Common;
 
 /// <summary>
 /// Where the core writes its trace (questions, tool calls, answers). The

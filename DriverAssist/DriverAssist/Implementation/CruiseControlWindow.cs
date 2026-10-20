@@ -2,6 +2,7 @@ using System;
 using DriverAssist.Cruise;
 using DriverAssist.ECS;
 using DriverAssist.Localization;
+using Logger = Crowbus.Common.Logger;
 using UnityEngine;
 
 namespace DriverAssist.Implementation

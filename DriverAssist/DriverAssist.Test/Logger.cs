@@ -1,24 +1,20 @@
-using Xunit.Abstractions;
+using System;
+using Crowbus.Common;
 
 namespace DriverAssist.Test
 {
-    public class XunitLogger : Logger
+    public class TUnitLogger : Logger
     {
-        private readonly ITestOutputHelper output;
-
-        public static void Init(ITestOutputHelper output)
+        public static void Init()
         {
-            LogFactory.Factory.Value = (scope) => new XunitLogger(output);
+            LogFactory.Factory.Value = (scope) => new TUnitLogger(scope);
         }
 
-        public XunitLogger(ITestOutputHelper output)
-        {
-            this.output = output;
-        }
+        private readonly string scope;
 
-        public void Debug(string message)
+        public TUnitLogger(string scope = "")
         {
-            WriteLog(message, "DEBUG");
+            this.scope = scope;
         }
 
         public void Info(string message)
@@ -31,9 +27,15 @@ namespace DriverAssist.Test
             WriteLog(message, "WARN");
         }
 
+        public void Error(Exception error)
+        {
+            WriteLog(error.ToString(), "ERROR");
+        }
+
         private void WriteLog(string message, string severity)
         {
-            output.WriteLine($"{severity} {message}");
+            // TUnit intercepts Console output per test.
+            Console.WriteLine($"{severity} [{scope}] {message}");
         }
     }
 }

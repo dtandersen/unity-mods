@@ -1,8 +1,7 @@
 using DriverAssist.ECS;
 using DriverAssist.Localization;
 using DriverAssist.Test;
-using Xunit;
-using Xunit.Abstractions;
+using Shouldly;
 
 namespace DriverAssist.Cruise
 {
@@ -18,9 +17,9 @@ namespace DriverAssist.Cruise
         private readonly FakeClock clock;
         private readonly EntityManager entityManager;
 
-        public CruiseControlTest(ITestOutputHelper output)
+        public CruiseControlTest()
         {
-            XunitLogger.Init(output);
+            TUnitLogger.Init();
 
             localization = TranslationManager.Current;
             config = new FakeCruiseControlConfig
@@ -53,7 +52,7 @@ namespace DriverAssist.Cruise
             loco.Components.CruiseControl = new CruiseControlComponent();
         }
 
-        [Fact]
+        [Test]
         public void ShouldAccelerate()
         {
             loco.Throttle = 0;
@@ -63,41 +62,41 @@ namespace DriverAssist.Cruise
 
             train.SpeedKmh = 29.9f;
             WhenCruise();
-            Assert.Equal("Coasting", cruiseControl.Status);
-            Assert.Equal(0, loco.Throttle);
+            cruiseControl.Status.ShouldBe("Coasting");
+            loco.Throttle.ShouldBe(0);
 
             train.SpeedKmh = 25;
             WhenCruise();
-            Assert.Equal("Coasting", cruiseControl.Status);
-            Assert.Equal(0, loco.Throttle);
+            cruiseControl.Status.ShouldBe("Coasting");
+            loco.Throttle.ShouldBe(0);
 
             train.SpeedKmh = 24.9f;
             WhenCruise();
-            Assert.Equal("Accelerating to 27.5 km/h", cruiseControl.Status);
-            Assert.Equal(0.1f, loco.Throttle);
+            cruiseControl.Status.ShouldBe("Accelerating to 27.5 km/h");
+            loco.Throttle.ShouldBe(0.1f);
 
             train.SpeedKmh = 27.4f;
             WhenCruise();
-            Assert.Equal("Accelerating to 27.5 km/h", cruiseControl.Status);
-            Assert.Equal(0.2f, loco.Throttle);
+            cruiseControl.Status.ShouldBe("Accelerating to 27.5 km/h");
+            loco.Throttle.ShouldBe(0.2f);
 
             train.SpeedKmh = 27.5f;
             WhenCruise();
-            Assert.Equal("Coasting", cruiseControl.Status);
-            Assert.Equal(0f, loco.Throttle);
+            cruiseControl.Status.ShouldBe("Coasting");
+            loco.Throttle.ShouldBe(0f);
 
             train.SpeedKmh = 27.4f;
             WhenCruise();
-            Assert.Equal("Coasting", cruiseControl.Status);
-            Assert.Equal(0f, loco.Throttle);
+            cruiseControl.Status.ShouldBe("Coasting");
+            loco.Throttle.ShouldBe(0f);
 
             train.SpeedKmh = 24;
             WhenCruise();
-            Assert.Equal("Accelerating to 27.5 km/h", cruiseControl.Status);
-            Assert.Equal(0.1f, loco.Throttle);
+            cruiseControl.Status.ShouldBe("Accelerating to 27.5 km/h");
+            loco.Throttle.ShouldBe(0.1f);
         }
 
-        [Fact]
+        [Test]
         public void AccelerationNearZero()
         {
             config.Offset = 0;
@@ -108,11 +107,11 @@ namespace DriverAssist.Cruise
 
             train.SpeedKmh = 0;
             WhenCruise();
-            Assert.Equal("Accelerating to 5 km/h", cruiseControl.Status);
-            Assert.Equal(0.1f, loco.Throttle);
+            cruiseControl.Status.ShouldBe("Accelerating to 5 km/h");
+            loco.Throttle.ShouldBe(0.1f);
         }
 
-        [Fact]
+        [Test]
         public void ShouldDecelerate()
         {
             loco.TrainBrake = 0;
@@ -121,33 +120,33 @@ namespace DriverAssist.Cruise
 
             train.SpeedKmh = 20.1f;
             WhenCruise();
-            Assert.Equal("Decelerating to 17.5 km/h", cruiseControl.Status);
-            Assert.Equal(0.1f, loco.TrainBrake);
+            cruiseControl.Status.ShouldBe("Decelerating to 17.5 km/h");
+            loco.TrainBrake.ShouldBe(0.1f);
 
             // still going above 17.5, should brake
             train.SpeedKmh = 17.6f;
             WhenCruise();
-            Assert.Equal("Decelerating to 17.5 km/h", cruiseControl.Status);
-            Assert.Equal(0, loco.Throttle);
-            Assert.Equal(0.2f, loco.TrainBrake);
+            cruiseControl.Status.ShouldBe("Decelerating to 17.5 km/h");
+            loco.Throttle.ShouldBe(0);
+            loco.TrainBrake.ShouldBe(0.2f);
 
             train.SpeedKmh = 17.5f;
             WhenCruise();
 
-            Assert.Equal(0f, loco.TrainBrake);
+            loco.TrainBrake.ShouldBe(0f);
 
             train.SpeedKmh = 17.6f;
             WhenCruise();
 
-            Assert.Equal(0f, loco.TrainBrake);
+            loco.TrainBrake.ShouldBe(0f);
 
             train.SpeedKmh = 20.1f;
             WhenCruise();
 
-            Assert.Equal(0.1f, loco.TrainBrake);
+            loco.TrainBrake.ShouldBe(0.1f);
         }
 
-        [Fact]
+        [Test]
         public void ApplyBrakesWhenZeroSetpoint()
         {
             // cruiseControl.DesiredSpeed = 0;
@@ -158,22 +157,22 @@ namespace DriverAssist.Cruise
 
             WhenCruise();
 
-            Assert.Equal(1, loco.TrainBrake);
-            Assert.Equal(0, loco.Throttle);
-            Assert.Equal(localization.CC_STOPPING, cruiseControl.Status);
+            loco.TrainBrake.ShouldBe(1);
+            loco.Throttle.ShouldBe(0);
+            cruiseControl.Status.ShouldBe(localization.CC_STOPPING);
         }
 
         /// When the controls change
         /// Disable cruise control
-        [Fact]
+        [Test]
         public void DisableWhenControlsChange()
         {
             loco.Components.ControlsChanged = true;
             WhenCruise();
-            Assert.Null(loco.Components.CruiseControl);
+            loco.Components.CruiseControl.ShouldBeNull();
         }
 
-        [Fact]
+        [Test]
         public void DontDoAnythingIfDisabled()
         {
             loco.Components.CruiseControl = null;
@@ -181,11 +180,11 @@ namespace DriverAssist.Cruise
             // loco.Components.CruiseControl = CruiseControlComponent.Make(10, config.Diff, config.Offset);
             train.SpeedKmh = 20;
             WhenCruise();
-            Assert.Equal(0, loco.IndBrake);
-            Assert.Equal("Disabled", cruiseControl.Status);
+            loco.IndBrake.ShouldBe(0);
+            cruiseControl.Status.ShouldBe("Disabled");
         }
 
-        [Fact]
+        [Test]
         public void HaltTrainIfDesiredSpeedIsNegativeAndTrainIsInForwardGear()
         {
             // cruiseControl.DesiredSpeed = -10;
@@ -193,15 +192,15 @@ namespace DriverAssist.Cruise
             loco.Reverser = 1;
             loco.Throttle = 0.5f;
             WhenCruise();
-            Assert.Equal(0, loco.Throttle);
-            Assert.Equal(1, loco.TrainBrake);
-            Assert.Equal(localization.CC_CHANGING_DIRECTION, cruiseControl.Status);
+            loco.Throttle.ShouldBe(0);
+            loco.TrainBrake.ShouldBe(1);
+            cruiseControl.Status.ShouldBe(localization.CC_CHANGING_DIRECTION);
 
             WhenCruise();
-            Assert.NotNull(loco.Components.CruiseControl);
+            loco.Components.CruiseControl.ShouldNotBeNull();
         }
 
-        [Fact]
+        [Test]
         public void HaltTrainIfDesiredSpeedIsPositiveAndTrainIsInReverse()
         {
             // cruiseControl.DesiredSpeed = 10;
@@ -210,15 +209,15 @@ namespace DriverAssist.Cruise
             loco.Reverser = 0;
             loco.Throttle = 0.5f;
             WhenCruise();
-            Assert.Equal(0, loco.Throttle);
-            Assert.Equal(1, loco.TrainBrake);
-            Assert.Equal(localization.CC_CHANGING_DIRECTION, cruiseControl.Status);
+            loco.Throttle.ShouldBe(0);
+            loco.TrainBrake.ShouldBe(1);
+            cruiseControl.Status.ShouldBe(localization.CC_CHANGING_DIRECTION);
 
             WhenCruise();
-            Assert.NotNull(loco.Components.CruiseControl);
+            loco.Components.CruiseControl.ShouldNotBeNull();
         }
 
-        [Fact]
+        [Test]
         public void ChangeFromReverseToForward()
         {
             // cruiseControl.DesiredSpeed = 10;
@@ -226,14 +225,14 @@ namespace DriverAssist.Cruise
 
             loco.Reverser = 0;
             WhenCruise();
-            Assert.Equal(1, loco.Reverser);
-            Assert.Equal(0, loco.Throttle);
-            Assert.Equal(1, loco.TrainBrake);
-            Assert.Equal(localization.CC_CHANGING_DIRECTION, cruiseControl.Status);
+            loco.Reverser.ShouldBe(1);
+            loco.Throttle.ShouldBe(0);
+            loco.TrainBrake.ShouldBe(1);
+            cruiseControl.Status.ShouldBe(localization.CC_CHANGING_DIRECTION);
         }
 
         /// In this case the train skips the coasting state
-        [Fact]
+        [Test]
         public void ChangeFromForwardToReverse()
         {
             config.Offset = 0;
@@ -243,23 +242,23 @@ namespace DriverAssist.Cruise
             loco.Components.CruiseControl = CruiseControlComponent.Make(-5, config.Diff, config.Offset);
 
             WhenCruise();
-            Assert.Equal(string.Format(localization.CC_ACCELERATING, 5), cruiseControl.Status);
+            cruiseControl.Status.ShouldBe(string.Format(localization.CC_ACCELERATING, 5));
 
             train.SpeedKmh = -8;
             WhenCruise();
-            Assert.Equal(string.Format(localization.CC_DECELERATING, 5), cruiseControl.Status);
+            cruiseControl.Status.ShouldBe(string.Format(localization.CC_DECELERATING, 5));
 
             train.SpeedKmh = -6;
             WhenCruise();
-            Assert.Equal(string.Format(localization.CC_DECELERATING, 5), cruiseControl.Status);
+            cruiseControl.Status.ShouldBe(string.Format(localization.CC_DECELERATING, 5));
 
             train.SpeedKmh = -4.9f;
             WhenCruise();
-            Assert.Equal(localization.CC_COASTING, cruiseControl.Status);
+            cruiseControl.Status.ShouldBe(localization.CC_COASTING);
         }
 
         /// In this case the train skips the coasting state
-        [Fact]
+        [Test]
         public void ChangeFromForwardToReverse2()
         {
             config.Offset = 0;
@@ -269,22 +268,22 @@ namespace DriverAssist.Cruise
             loco.Components.CruiseControl = CruiseControlComponent.Make(5, config.Diff, config.Offset);
 
             WhenCruise();
-            Assert.Equal(string.Format(localization.CC_DECELERATING, 5), cruiseControl.Status);
+            cruiseControl.Status.ShouldBe(string.Format(localization.CC_DECELERATING, 5));
 
             train.SpeedKmh = 2;
             WhenCruise();
-            Assert.Equal(string.Format(localization.CC_ACCELERATING, 5), cruiseControl.Status);
+            cruiseControl.Status.ShouldBe(string.Format(localization.CC_ACCELERATING, 5));
 
             train.SpeedKmh = 4;
             WhenCruise();
-            Assert.Equal(string.Format(localization.CC_ACCELERATING, 5), cruiseControl.Status);
+            cruiseControl.Status.ShouldBe(string.Format(localization.CC_ACCELERATING, 5));
 
             train.SpeedKmh = 5.1f;
             WhenCruise();
-            Assert.Equal(localization.CC_COASTING, cruiseControl.Status);
+            cruiseControl.Status.ShouldBe(localization.CC_COASTING);
         }
 
-        [Fact]
+        [Test]
         public void AccelerateInReverse()
         {
             // cruiseControl.DesiredSpeed = -10;
@@ -293,27 +292,27 @@ namespace DriverAssist.Cruise
             train.SpeedKmh = -4;
             loco.Reverser = 0;
             WhenCruise();
-            Assert.Equal("Accelerating to 7.5 km/h", cruiseControl.Status);
-            Assert.Equal(0, loco.Reverser);
-            Assert.Equal(0.1f, loco.Throttle);
-            Assert.Equal(0, loco.TrainBrake);
+            cruiseControl.Status.ShouldBe("Accelerating to 7.5 km/h");
+            loco.Reverser.ShouldBe(0);
+            loco.Throttle.ShouldBe(0.1f);
+            loco.TrainBrake.ShouldBe(0);
 
             train.SpeedKmh = -7.5f;
             WhenCruise();
-            Assert.Equal("Coasting", cruiseControl.Status);
-            Assert.Equal(0, loco.Reverser);
-            Assert.Equal(0f, loco.Throttle);
-            Assert.Equal(0f, loco.TrainBrake);
+            cruiseControl.Status.ShouldBe("Coasting");
+            loco.Reverser.ShouldBe(0);
+            loco.Throttle.ShouldBe(0f);
+            loco.TrainBrake.ShouldBe(0f);
 
             train.SpeedKmh = -4;
             WhenCruise();
-            Assert.Equal("Accelerating to 7.5 km/h", cruiseControl.Status);
-            Assert.Equal(0, loco.Reverser);
-            Assert.Equal(0.1f, loco.Throttle);
-            Assert.Equal(0, loco.TrainBrake);
+            cruiseControl.Status.ShouldBe("Accelerating to 7.5 km/h");
+            loco.Reverser.ShouldBe(0);
+            loco.Throttle.ShouldBe(0.1f);
+            loco.TrainBrake.ShouldBe(0);
         }
 
-        [Fact]
+        [Test]
         public void DecelerateInReverse()
         {
             // cruiseControl.DesiredSpeed = -10;
@@ -323,41 +322,41 @@ namespace DriverAssist.Cruise
 
             train.SpeedKmh = -10f;
             WhenCruise();
-            Assert.Equal("Coasting", cruiseControl.Status);
-            Assert.Equal(0, loco.Reverser);
-            Assert.Equal(0f, loco.Throttle);
-            Assert.Equal(0f, loco.TrainBrake);
+            cruiseControl.Status.ShouldBe("Coasting");
+            loco.Reverser.ShouldBe(0);
+            loco.Throttle.ShouldBe(0f);
+            loco.TrainBrake.ShouldBe(0f);
 
             train.SpeedKmh = -9f;
             WhenCruise();
-            Assert.Equal("Coasting", cruiseControl.Status);
-            Assert.Equal(0, loco.Reverser);
-            Assert.Equal(0f, loco.Throttle);
-            Assert.Equal(0f, loco.TrainBrake);
+            cruiseControl.Status.ShouldBe("Coasting");
+            loco.Reverser.ShouldBe(0);
+            loco.Throttle.ShouldBe(0f);
+            loco.TrainBrake.ShouldBe(0f);
 
             train.SpeedKmh = -11;
             WhenCruise();
-            Assert.Equal("Decelerating to 7.5 km/h", cruiseControl.Status);
-            Assert.Equal(0, loco.Reverser);
-            Assert.Equal(0f, loco.Throttle);
-            Assert.Equal(0.1f, loco.TrainBrake);
+            cruiseControl.Status.ShouldBe("Decelerating to 7.5 km/h");
+            loco.Reverser.ShouldBe(0);
+            loco.Throttle.ShouldBe(0f);
+            loco.TrainBrake.ShouldBe(0.1f);
 
             train.SpeedKmh = -7.5f;
             WhenCruise();
-            Assert.Equal("Coasting", cruiseControl.Status);
-            Assert.Equal(0, loco.Reverser);
-            Assert.Equal(0f, loco.Throttle);
-            Assert.Equal(0f, loco.TrainBrake);
+            cruiseControl.Status.ShouldBe("Coasting");
+            loco.Reverser.ShouldBe(0);
+            loco.Throttle.ShouldBe(0f);
+            loco.TrainBrake.ShouldBe(0f);
 
             train.SpeedKmh = -11;
             WhenCruise();
-            Assert.Equal("Decelerating to 7.5 km/h", cruiseControl.Status);
-            Assert.Equal(0, loco.Reverser);
-            Assert.Equal(0f, loco.Throttle);
-            Assert.Equal(0.1f, loco.TrainBrake);
+            cruiseControl.Status.ShouldBe("Decelerating to 7.5 km/h");
+            loco.Reverser.ShouldBe(0);
+            loco.Throttle.ShouldBe(0f);
+            loco.TrainBrake.ShouldBe(0.1f);
         }
 
-        [Fact]
+        [Test]
         public void ZeroThrottleIfInNeutral()
         {
             // cruiseControl.DesiredSpeed = 10;
@@ -367,11 +366,11 @@ namespace DriverAssist.Cruise
             loco.Throttle = 1;
             loco.Reverser = .5f;
             WhenCruise();
-            Assert.Equal(0, loco.Throttle);
-            Assert.Equal("Idle: Engage reverser to start", cruiseControl.Status);
+            loco.Throttle.ShouldBe(0);
+            cruiseControl.Status.ShouldBe("Idle: Engage reverser to start");
         }
 
-        [Fact]
+        [Test]
         public void UseTheSettingsForTheLocoType()
         {
             train.Type = LocoType.DH4;
@@ -384,10 +383,10 @@ namespace DriverAssist.Cruise
 
             WhenCruise();
 
-            Assert.Equal(dh4settings, ((FakeAccelerator)cruiseControl.Accelerator).Settings);
+            ((FakeAccelerator)cruiseControl.Accelerator).Settings.ShouldBe(dh4settings);
         }
 
-        [Fact]
+        [Test]
         public void ReportIfLocoHasNoSettings()
         {
             train.Type = LocoType.DE6;
@@ -395,10 +394,10 @@ namespace DriverAssist.Cruise
 
             WhenCruise();
 
-            Assert.Equal(string.Format(localization.CC_UNSUPPORTED, LocoType.DE6), cruiseControl.Status);
+            cruiseControl.Status.ShouldBe(string.Format(localization.CC_UNSUPPORTED, LocoType.DE6));
         }
 
-        [Fact]
+        [Test]
         public void PassTimeToContext()
         {
             train.Type = LocoType.DH4;
@@ -411,7 +410,7 @@ namespace DriverAssist.Cruise
 
             WhenCruise();
 
-            Assert.Equal(5, ((FakeAccelerator)cruiseControl.Accelerator).Context.Time);
+            ((FakeAccelerator)cruiseControl.Accelerator).Context.Time.ShouldBe(5);
         }
 
         void WhenCruise()

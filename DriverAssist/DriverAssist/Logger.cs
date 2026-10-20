@@ -1,18 +1,12 @@
 using System;
 using System.Threading;
+using Crowbus.Common;
 
 namespace DriverAssist
 {
     public delegate Logger CreateLogger(string scope);
 
-    public interface Logger
-    {
-        public void Info(string message);
-        public void Warn(string message);
-        public void Debug(string message);
-    }
-
-    public class LogFactory
+    public static class LogFactory
     {
         public static readonly ThreadLocal<CreateLogger> Factory;
 
@@ -38,10 +32,10 @@ namespace DriverAssist
 
     public class NullLogger : Logger
     {
-        public void Debug(string message) { }
-
         public void Info(string message) { }
 
         public void Warn(string message) { }
+
+        public void Error(Exception error) { }
     }
 }

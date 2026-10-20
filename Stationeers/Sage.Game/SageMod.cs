@@ -7,7 +7,7 @@ using Sage.Presentation;
 using Sage.Game.Server;
 using Sage.Window;
 using UnityEngine;
-using Logger = Sage.Core.Logger;
+using Logger = Crowbus.Common.Logger;
 
 namespace Sage.Game;
 

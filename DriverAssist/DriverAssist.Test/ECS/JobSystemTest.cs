@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using DriverAssist.Implementation;
 using DriverAssist.Test;
-using Xunit;
-using Xunit.Abstractions;
+using Shouldly;
 
 namespace DriverAssist.ECS
 {
@@ -17,9 +16,9 @@ namespace DriverAssist.ECS
         private const int PARALLEL = 3;
         private readonly FakeJobView view;
 
-        public JobSystemTest(ITestOutputHelper output)
+        public JobSystemTest()
         {
-            XunitLogger.Init(output);
+            TUnitLogger.Init();
 
             system = new JobSystem();
             view = new FakeJobView();
@@ -32,7 +31,7 @@ namespace DriverAssist.ECS
         /// and a gear change has been requested.
         /// Proceed.
         /// </summary>
-        [Fact]
+        [Test]
         public void UpdatesAcceleration()
         {
             FakeJob job = new FakeJob()
@@ -46,7 +45,7 @@ namespace DriverAssist.ECS
             };
             system.AddJob(job);
 
-            Assert.Equal(new List<JobRow>(view.Rows.Values), new List<JobRow> {
+            new List<JobRow> {
                 new JobRow() {
                     ID = "SM-SU-33",
                     Tasks = {
@@ -55,13 +54,13 @@ namespace DriverAssist.ECS
                             Destination = "SM-A7L"
                     }}
                 }
-            });
+            }.ShouldBe(new List<JobRow>(view.Rows.Values));
 
             system.RemoveJob(job.ID);
-            Assert.Empty(view.Rows);
+            view.Rows.ShouldBeEmpty();
         }
 
-        [Fact]
+        [Test]
         public void JobNext()
         {
             FakeJob job = new FakeJob()
@@ -83,7 +82,7 @@ namespace DriverAssist.ECS
 
             system.AddJob(job);
 
-            Assert.Equal(new List<JobRow> {
+            new List<JobRow>(view.Rows.Values).ShouldBe(new List<JobRow> {
                 new JobRow() {
                     ID = "SM-SU-33",
                     Tasks = {
@@ -93,12 +92,12 @@ namespace DriverAssist.ECS
                             Complete=false
                     }}
                 }
-            }, new List<JobRow>(view.Rows.Values));
+            });
 
             task1.IsComplete = true;
             system.OnUpdate();
 
-            Assert.Equal(new List<JobRow> {
+            new List<JobRow>(view.Rows.Values).ShouldBe(new List<JobRow> {
                 new JobRow() {
                     ID = "SM-SU-33",
                     Tasks = {
@@ -108,16 +107,16 @@ namespace DriverAssist.ECS
                             Complete=false
                     }}
                 }
-            }, new List<JobRow>(view.Rows.Values));
+            });
 
             system.RemoveJob(job.ID);
-            Assert.Empty(view.Rows);
+            view.Rows.ShouldBeEmpty();
         }
 
         /// The job has two tasks.
         /// When the first task is completed,
         /// Then the view should update.
-        [Fact]
+        [Test]
         public void FirstJobUpdates()
         {
             FakeJob job = new FakeJob()
@@ -146,7 +145,7 @@ namespace DriverAssist.ECS
             task1.IsComplete = true;
             system.OnUpdate();
 
-            Assert.Equal(new List<JobRow> {
+            new List<JobRow>(view.Rows.Values).ShouldBe(new List<JobRow> {
                 new JobRow() {
                     ID = "MF-SU-53",
                     Tasks = {
@@ -162,12 +161,12 @@ namespace DriverAssist.ECS
                         }
                     }
                 }
-            }, new List<JobRow>(view.Rows.Values));
+            });
         }
 
         /// Job has multiple parallel tasks.
         /// Print them all.
-        [Fact]
+        [Test]
         public void ShowsAllParallelTasks()
         {
             // 1
@@ -234,7 +233,7 @@ namespace DriverAssist.ECS
                 Tasks = { parent }
             };
             system.AddJob(job);
-            Assert.Equal(new List<JobRow> {
+            new List<JobRow>(view.Rows.Values).ShouldBe(new List<JobRow> {
                 new JobRow() {
                     ID = "SM-SU-33",
                     Tasks = {
@@ -252,10 +251,10 @@ namespace DriverAssist.ECS
                         }
                     }
                 }
-            }, new List<JobRow>(view.Rows.Values));
+            });
 
             system.OnUpdate();
-            Assert.Equal(new List<JobRow> {
+            new List<JobRow>(view.Rows.Values).ShouldBe(new List<JobRow> {
                 new JobRow() {
                     ID = "SM-SU-33",
                     Tasks = {
@@ -273,12 +272,12 @@ namespace DriverAssist.ECS
                         }
                     }
                 }
-            }, new List<JobRow>(view.Rows.Values));
+            });
         }
 
         /// Job has multiple parallel tasks.
         /// Print them all.
-        [Fact]
+        [Test]
         public void KeepWhenJobIsComplete()
         {
             FakeJob job = new FakeJob()
@@ -295,7 +294,7 @@ namespace DriverAssist.ECS
                 IsComplete = false,
             });
             system.AddJob(job);
-            Assert.Equal(new List<JobRow> {
+            new List<JobRow>(view.Rows.Values).ShouldBe(new List<JobRow> {
                 new JobRow() {
                     ID = "SM-SU-33",
                     Tasks = {
@@ -306,11 +305,11 @@ namespace DriverAssist.ECS
                         }
                     }
                 }
-            }, new List<JobRow>(view.Rows.Values));
+            });
 
             task.IsComplete = true;
             system.OnUpdate();
-            Assert.Equal(new List<JobRow> {
+            new List<JobRow>(view.Rows.Values).ShouldBe(new List<JobRow> {
                 new JobRow() {
                     ID = "SM-SU-33",
                     Tasks = {
@@ -321,7 +320,7 @@ namespace DriverAssist.ECS
                         }
                     }
                 }
-            }, new List<JobRow>(view.Rows.Values));
+            });
         }
     }
 

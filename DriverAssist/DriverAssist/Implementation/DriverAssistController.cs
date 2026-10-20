@@ -7,6 +7,7 @@ using DriverAssist.Localization;
 using DV.Logic.Job;
 using DV.Utils;
 using I2.Loc;
+using Logger = Crowbus.Common.Logger;
 using UnityEngine;
 
 namespace DriverAssist.Implementation
@@ -282,7 +283,7 @@ namespace DriverAssist.Implementation
             {
                 DVTrainCarWrapper train = new(trainCar);
                 log.Info($"Entered train car {trainCar?.carType.ToString() ?? "null"}");
-                log.Debug($"trainCar.carType={trainCar?.carType.ToString()}");
+                log.Info($"trainCar.carType={trainCar?.carType.ToString()}");
                 if (locoEntity == null)
                 {
                     log.Warn("locoEntity is null, cannot change car");
@@ -294,7 +295,7 @@ namespace DriverAssist.Implementation
 
                 if (config.LocoSettings.TryGetValue(locoEntity.Type, out LocoSettings? settings))
                 {
-                    log.Debug(
+                    log.Info(
                         $"MinTorque={settings.MinTorque}" +
                         $", MaxAmps={settings.MaxAmps}" +
                         $", OperatingTemp={settings.OperatingTemp}" +
@@ -306,7 +307,7 @@ namespace DriverAssist.Implementation
                         $", CruiseAccel={settings.CruiseAccel}" +
                         $", MaxAccel={settings.MaxAccel}"
                     );
-                    log.Debug("Assigned settings to locoEntity");
+                    log.Info("Assigned settings to locoEntity");
                     locoEntity.Components.LocoSettings = settings;
                 }
                 else

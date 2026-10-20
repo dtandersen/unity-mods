@@ -1,6 +1,5 @@
 using DriverAssist.Test;
-using Xunit;
-using Xunit.Abstractions;
+using Shouldly;
 
 namespace DriverAssist.ECS
 {
@@ -10,15 +9,15 @@ namespace DriverAssist.ECS
         private readonly FakeSystem system1;
         private readonly FakeSystem system2;
 
-        public SystemTest(ITestOutputHelper output)
+        public SystemTest()
         {
-            XunitLogger.Init(output);
+            TUnitLogger.Init();
             systemManager = new SystemManager();
             system1 = new FakeSystem();
             system2 = new FakeSystem();
         }
 
-        [Fact]
+        [Test]
         public void UpdatesSystems()
         {
             systemManager.AddSystem(system1);
@@ -26,11 +25,11 @@ namespace DriverAssist.ECS
 
             WhenSystemsRun();
 
-            Assert.True(system1.Updated);
-            Assert.True(system2.Updated);
+            system1.Updated.ShouldBeTrue();
+            system2.Updated.ShouldBeTrue();
         }
 
-        [Fact]
+        [Test]
         public void DoesntUpdateDisabledSystems()
         {
             systemManager.AddSystem(system1);
@@ -40,8 +39,8 @@ namespace DriverAssist.ECS
 
             WhenSystemsRun();
 
-            Assert.False(system1.Updated);
-            Assert.False(system2.Updated);
+            system1.Updated.ShouldBeFalse();
+            system2.Updated.ShouldBeFalse();
         }
 
 

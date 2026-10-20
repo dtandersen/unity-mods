@@ -1,4 +1,5 @@
 using System.Globalization;
+using Logger = Crowbus.Common.Logger;
 using UnityEngine;
 
 namespace DriverAssist.Localization

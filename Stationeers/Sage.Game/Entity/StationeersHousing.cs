@@ -3,7 +3,7 @@ using Assets.Scripts.Objects.Electrical;
 using Sage.Core;
 using Sage.Game;
 using Sage.Repository;
-using Logger = Sage.Core.Logger;
+using Logger = Crowbus.Common.Logger;
 
 namespace Sage.Entity;
 

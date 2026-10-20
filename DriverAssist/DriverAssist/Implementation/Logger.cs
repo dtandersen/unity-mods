@@ -1,3 +1,5 @@
+using System;
+using Logger = Crowbus.Common.Logger;
 using UnityEngine;
 
 namespace DriverAssist.Implementation
@@ -21,9 +23,9 @@ namespace DriverAssist.Implementation
             UnityEngine.Debug.Log($"{prefix}{message}");
         }
 
-        public void Debug(string message)
+        public void Error(Exception error)
         {
-            UnityEngine.Debug.Log($"{prefix}{message}");
+            UnityEngine.Debug.Log($"{prefix}{error}");
         }
     }
 }

@@ -8,7 +8,7 @@ using Sage.Core;
 using Sage.Game;
 using Sage.Entity;
 using Sage.Repository;
-using Logger = Sage.Core.Logger;
+using Logger = Crowbus.Common.Logger;
 using GameStructure = Assets.Scripts.Objects.Structure;
 
 namespace Sage.Repository;

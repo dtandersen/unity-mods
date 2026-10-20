@@ -1,6 +1,6 @@
 using Sage.Repository;
 using Sage.Server;
-using Logger = Sage.Core.Logger;
+using Logger = Crowbus.Common.Logger;
 
 namespace Sage.Game;
 

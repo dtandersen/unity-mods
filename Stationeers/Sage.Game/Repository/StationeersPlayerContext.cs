@@ -6,7 +6,7 @@ using Assets.Scripts.Objects.Entities;
 using Assets.Scripts.Objects.Items;
 using Sage.Entity;
 using Sage.Game;
-using Logger = Sage.Core.Logger;
+using Logger = Crowbus.Common.Logger;
 
 namespace Sage.Repository;
 

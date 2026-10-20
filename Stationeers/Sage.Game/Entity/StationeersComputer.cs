@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Sage.Core;
 using Sage.Game;
-using Logger = Sage.Core.Logger;
+using Logger = Crowbus.Common.Logger;
 using Assets.Scripts.Objects.Electrical;
 using Assets.Scripts.Objects.Motherboards;
 using Sage.Formatting;

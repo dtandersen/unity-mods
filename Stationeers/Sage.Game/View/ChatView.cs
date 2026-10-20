@@ -2,7 +2,7 @@ using System;
 using Sage.Core;
 using Sage.Game.Ai;
 using Sage.View;
-using Logger = Sage.Core.Logger;
+using Logger = Crowbus.Common.Logger;
 
 namespace Sage.Game.View;
 

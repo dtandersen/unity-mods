@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Sage.Core;
 using Sage.Game;
-using Logger = Sage.Core.Logger;
+using Logger = Crowbus.Common.Logger;
 using Assets.Scripts;
 using Assets.Scripts.Objects;
 using Assets.Scripts.Objects.Items;

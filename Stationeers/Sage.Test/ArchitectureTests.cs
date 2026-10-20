@@ -6,7 +6,7 @@ using ArchUnitNET.Loader;
 using ArchUnitNET.TUnit;
 using Shouldly;
 using Caev;
-using Common;
+using Crowbus.Common;
 using Sage.Core;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
 
@@ -95,7 +95,7 @@ public class ArchitectureTests
     public void Libraries_should_not_depend_on_bepinex_stationeers_or_unity_namespaces()
     {
         IArchRule rule = Types()
-            .That().ResideInNamespaceMatching(@"(^Sage\.(Ai|Command|Core)|^Common)")
+            .That().ResideInNamespaceMatching(@"(^Sage\.(Ai|Command|Core)|^Crowbus\.Common)")
             .Should().NotDependOnAnyTypesThat()
             .ResideInNamespaceMatching(ForbiddenNamespacePattern)
             .Because("the Unity-free libraries must stay free of BepInEx/Stationeers/Unity so they are testable without the game");

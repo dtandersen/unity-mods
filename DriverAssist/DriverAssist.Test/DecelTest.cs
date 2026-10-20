@@ -1,7 +1,6 @@
 using DriverAssist.ECS;
 using DriverAssist.Test;
-using Xunit;
-using Xunit.Abstractions;
+using Shouldly;
 
 namespace DriverAssist.Cruise
 {
@@ -16,9 +15,9 @@ namespace DriverAssist.Cruise
         private const float STEP = 1 / 11f;
 
 
-        public DecelTest(ITestOutputHelper output)
+        public DecelTest()
         {
-            XunitLogger.Init(output);
+            TUnitLogger.Init();
 
             de2settings = new FakeLocoConfig
             {
@@ -68,7 +67,7 @@ namespace DriverAssist.Cruise
         /// The train brake is 50%.
         /// TrainBrake should be 60%.
         /// </summary>
-        [Fact]
+        [Test]
         public void AccelerateFromStop4()
         {
             context.DesiredSpeed = 5;
@@ -76,8 +75,8 @@ namespace DriverAssist.Cruise
             train.TrainBrake = 0.5f;
 
             WhenDecel();
-            Assert.Equal(0.5f + STEP, loco.TrainBrake);
-            Assert.Equal(0, loco.IndBrake);
+            loco.TrainBrake.ShouldBe(0.5f + STEP);
+            loco.IndBrake.ShouldBe(0);
         }
 
         /// <summary> 
@@ -85,7 +84,7 @@ namespace DriverAssist.Cruise
         /// and MinBrake is .1.
         /// TrainBrake should be 0.
         /// </summary>
-        [Fact]
+        [Test]
         public void AccelerateFromStop2()
         {
             de2settings.MinBrake = 0.1f;
@@ -95,8 +94,8 @@ namespace DriverAssist.Cruise
             train.SpeedKmh = 6;
 
             WhenDecel();
-            Assert.Equal(0.1f, loco.TrainBrake);
-            Assert.Equal(0, loco.IndBrake);
+            loco.TrainBrake.ShouldBe(0.1f);
+            loco.IndBrake.ShouldBe(0);
         }
 
 
@@ -106,7 +105,7 @@ namespace DriverAssist.Cruise
         /// and BrakeReleaseFactor is .5
         /// TrainBrake should be .5.
         /// </summary>
-        [Fact]
+        [Test]
         public void ShouldReduceBrakesByBrakeFactor()
         {
             de2settings.BrakeReleaseFactor = 0.5f;
@@ -116,8 +115,8 @@ namespace DriverAssist.Cruise
             train.SpeedKmh = 6;
 
             WhenDecel();
-            Assert.Equal(0.5f, loco.TrainBrake);
-            Assert.Equal(0, loco.IndBrake);
+            loco.TrainBrake.ShouldBe(0.5f);
+            loco.IndBrake.ShouldBe(0);
         }
 
         /// <summary> 
@@ -126,7 +125,7 @@ namespace DriverAssist.Cruise
         /// and BrakeReleaseFactor is .9
         /// TrainBrake should be .1.
         /// </summary>
-        [Fact]
+        [Test]
         public void AlwaysAppliesMinBrake()
         {
             de2settings.BrakeReleaseFactor = 0.9f;
@@ -136,8 +135,8 @@ namespace DriverAssist.Cruise
             train.SpeedKmh = 6;
 
             WhenDecel();
-            Assert.Equal(0.1f, loco.TrainBrake);
-            Assert.Equal(0, loco.IndBrake);
+            loco.TrainBrake.ShouldBe(0.1f);
+            loco.IndBrake.ShouldBe(0);
         }
 
         /// <summary> 
@@ -145,7 +144,7 @@ namespace DriverAssist.Cruise
         /// and MinBrake is .1.
         /// TrainBrake should be 0.
         /// </summary>
-        [Fact]
+        [Test]
         public void Dm3ReleasesBrake()
         {
             dm3settings.MinBrake = 0.1f;
@@ -156,15 +155,15 @@ namespace DriverAssist.Cruise
             train.SpeedKmh = 6;
 
             WhenDecel();
-            Assert.Equal(0, loco.TrainBrake);
-            Assert.Equal(0, loco.IndBrake);
+            loco.TrainBrake.ShouldBe(0);
+            loco.IndBrake.ShouldBe(0);
         }
 
         /// <summary> 
         /// A DM3 isn't decelerating enough to slow down,
         /// TrainBrake should be .666.
         /// </summary>
-        [Fact]
+        [Test]
         public void Dm3AppliesLappingBrake()
         {
             dm3settings.MinBrake = 0.1f;
@@ -174,8 +173,8 @@ namespace DriverAssist.Cruise
             train.SpeedKmh = 6;
 
             WhenDecel();
-            Assert.Equal(0.666f, loco.TrainBrake, 2);
-            Assert.Equal(0, loco.IndBrake);
+            loco.TrainBrake.ShouldBe(0.666f, 0.01);
+            loco.IndBrake.ShouldBe(0);
         }
 
         /// <summary> 
@@ -183,7 +182,7 @@ namespace DriverAssist.Cruise
         /// and IndBrake is 0.
         /// IndBrake should be .1.
         /// </summary>
-        [Fact]
+        [Test]
         public void SingleCarTrainAppliesIndependantBrake()
         {
             context.DesiredSpeed = 5;
@@ -193,8 +192,8 @@ namespace DriverAssist.Cruise
             train.Length = 1;
 
             WhenDecel();
-            Assert.Equal(2 * STEP, loco.IndBrake);
-            Assert.Equal(0, loco.TrainBrake);
+            loco.IndBrake.ShouldBe(2 * STEP);
+            loco.TrainBrake.ShouldBe(0);
         }
 
         /// <summary> 
@@ -202,7 +201,7 @@ namespace DriverAssist.Cruise
         /// and IndBrake is 0.
         /// IndBrake should be .1.
         /// </summary>
-        [Fact]
+        [Test]
         public void SingleCarTrainReleasesIndependantBrake()
         {
             context.DesiredSpeed = 5;
@@ -215,8 +214,8 @@ namespace DriverAssist.Cruise
             train.Length = 1;
 
             WhenDecel();
-            Assert.Equal(de2settings.MinBrake, loco.IndBrake, 3);
-            Assert.Equal(0, loco.TrainBrake);
+            loco.IndBrake.ShouldBe(de2settings.MinBrake, 0.001);
+            loco.TrainBrake.ShouldBe(0);
         }
 
         void WhenDecel()

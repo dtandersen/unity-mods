@@ -9,7 +9,7 @@ using Sage.Game.Ai;
 using Sage.Server;
 using Sage.Tool;
 using Sage.Core;
-using Logger = Sage.Core.Logger;
+using Logger = Crowbus.Common.Logger;
 
 namespace Sage.Game;
 

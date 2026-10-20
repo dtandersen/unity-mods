@@ -1,6 +1,5 @@
 using DriverAssist.Test;
-using Xunit;
-using Xunit.Abstractions;
+using Shouldly;
 
 namespace DriverAssist.ECS
 {
@@ -10,9 +9,9 @@ namespace DriverAssist.ECS
         private readonly FakeTrainCarWrapper train;
         private readonly LocoStatsSystem system;
 
-        public LocoStatsSystemTest(ITestOutputHelper output)
+        public LocoStatsSystemTest()
         {
-            XunitLogger.Init(output);
+            TUnitLogger.Init();
 
             train = new FakeTrainCarWrapper
             {
@@ -30,7 +29,7 @@ namespace DriverAssist.ECS
         /// and a gear change has been requested.
         /// Proceed.
         /// </summary>
-        [Fact]
+        [Test]
         public void UpdatesAcceleration()
         {
             loco.Components.LocoStats = new LocoStats()
@@ -40,7 +39,7 @@ namespace DriverAssist.ECS
             train.SpeedMs = 2;
             WhenSystemUpdates();
 
-            Assert.Equal(1, loco.Components.LocoStats.AccelerationMs2);
+            loco.Components.LocoStats.AccelerationMs2.ShouldBe(1);
         }
 
         private void WhenSystemUpdates()

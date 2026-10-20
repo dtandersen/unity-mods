@@ -1,7 +1,6 @@
 using System;
 using DriverAssist.Test;
-using Xunit;
-using Xunit.Abstractions;
+using Shouldly;
 
 namespace DriverAssist.ECS
 {
@@ -11,9 +10,9 @@ namespace DriverAssist.ECS
         private readonly EntityManager entityManager;
         private readonly LastControlsSystem system;
 
-        public LastControlsSystemTest(ITestOutputHelper output)
+        public LastControlsSystemTest()
         {
-            XunitLogger.Init(output);
+            TUnitLogger.Init();
 
             entityManager = new();
             loco = entityManager.Loco = new LocoEntity(1f / 60f);
@@ -21,7 +20,7 @@ namespace DriverAssist.ECS
             system = new LastControlsSystem(entityManager);
         }
 
-        [Fact]
+        [Test]
         public void SavesStateOfBrakes()
         {
             loco.IndBrake = 0.5f;
@@ -29,11 +28,11 @@ namespace DriverAssist.ECS
 
             WhenSystemUpdates();
 
-            Assert.Equal(loco.IndBrake, loco.Components.LastControls.Value.IndBrake);
-            Assert.Equal(loco.TrainBrake, loco.Components.LastControls.Value.TrainBrake);
+            loco.Components.LastControls.Value.IndBrake.ShouldBe(loco.IndBrake);
+            loco.Components.LastControls.Value.TrainBrake.ShouldBe(loco.TrainBrake);
         }
 
-        [Fact]
+        [Test]
         public void NullLoco()
         {
             entityManager.Loco = null;

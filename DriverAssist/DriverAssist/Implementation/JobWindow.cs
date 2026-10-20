@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using DriverAssist.ECS;
 using DriverAssist.Localization;
+using Logger = Crowbus.Common.Logger;
 using UnityEngine;
 
 namespace DriverAssist.Implementation
@@ -154,6 +155,23 @@ namespace DriverAssist.Implementation
                 Tasks.SequenceEqual(other.Tasks);
         }
 
+        public override bool Equals(object obj)
+        {
+            return obj is JobRow other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+                hash = hash * 23 + (ID != null ? ID.GetHashCode() : 0);
+                foreach (var task in Tasks)
+                    hash = hash * 23 + (task != null ? task.GetHashCode() : 0);
+                return hash;
+            }
+        }
+
         public override string ToString()
         {
             return $"JobRow[ID={ID}, Tasks=[{string.Join(",", Tasks)}]";
@@ -172,6 +190,23 @@ namespace DriverAssist.Implementation
                 Origin == other.Origin &&
                 Destination == other.Destination &&
                 Complete == other.Complete;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is TaskRow other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+                hash = hash * 23 + (Origin != null ? Origin.GetHashCode() : 0);
+                hash = hash * 23 + (Destination != null ? Destination.GetHashCode() : 0);
+                hash = hash * 23 + Complete.GetHashCode();
+                return hash;
+            }
         }
 
         public override string ToString()

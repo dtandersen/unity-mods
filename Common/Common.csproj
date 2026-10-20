@@ -1,19 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net46</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <AssemblyName>Common</AssemblyName>
-    <RootNamespace>Common</RootNamespace>
+    <RootNamespace>Crowbus.Common</RootNamespace>
     <Version>0.1.0</Version>
-    <Description>Shared primitives for the Stationeers AI libraries. References nothing.</Description>
+    <Description>Shared primitives (Crowbus.Common). References nothing.</Description>
   </PropertyGroup>
 
   <!--
     Primitives used on both sides of the agent/domain split (tracing).
     This project must stay dependency-free so it cannot drag anything with it.
   -->
+
+  <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
+  </ItemGroup>
 
 </Project>

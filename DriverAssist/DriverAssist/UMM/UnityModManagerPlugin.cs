@@ -11,6 +11,7 @@ using HarmonyLib;
 using I2.Loc;
 using UnityEngine;
 using UnityModManagerNet;
+using Logger = Crowbus.Common.Logger;
 using static UnityModManagerNet.UnityModManager;
 using static UnityModManagerNet.UnityModManager.ModEntry;
 
@@ -364,7 +365,7 @@ namespace DriverAssist.UMM
         public float MaxAccel { get { return 0.25f; } }
     }
 
-    class UmmLogger : Logger
+    class UmmLogger : Crowbus.Common.Logger
     {
         private readonly ModLogger logger;
         private readonly string scope;
@@ -375,11 +376,6 @@ namespace DriverAssist.UMM
             this.scope = scope;
         }
 
-        public void Debug(string message)
-        {
-            logger.Log($"{scope,-25} DEBUG {message}");
-        }
-
         public void Info(string message)
         {
             logger.Log($"{scope,-25} INFO  {message}");
@@ -388,6 +384,11 @@ namespace DriverAssist.UMM
         public void Warn(string message)
         {
             logger.Log($"{scope,-25} WARN  {message}");
+        }
+
+        public void Error(System.Exception error)
+        {
+            logger.Log($"{scope,-25} ERROR {error}");
         }
     }
 

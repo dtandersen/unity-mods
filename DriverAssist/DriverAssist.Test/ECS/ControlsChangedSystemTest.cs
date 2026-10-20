@@ -1,6 +1,5 @@
 using DriverAssist.Test;
-using Xunit;
-using Xunit.Abstractions;
+using Shouldly;
 
 namespace DriverAssist.ECS
 {
@@ -10,9 +9,9 @@ namespace DriverAssist.ECS
         private readonly EntityManager entityManager;
         private readonly ControlsChangedSystem system;
 
-        public ControlsChangedSystemTest(ITestOutputHelper output)
+        public ControlsChangedSystemTest()
         {
-            XunitLogger.Init(output);
+            TUnitLogger.Init();
 
             entityManager = new();
             loco = entityManager.Loco = new LocoEntity(1f / 60f);
@@ -22,7 +21,7 @@ namespace DriverAssist.ECS
 
         /// When the indepdentdant brake is applied
         /// Then the controls have changed
-        [Fact]
+        [Test]
         public void SavesStateOfBrakes()
         {
             loco.Components.CruiseControl = new CruiseControlComponent();
@@ -34,13 +33,13 @@ namespace DriverAssist.ECS
 
             WhenSystemUpdates();
 
-            Assert.True(loco.Components.ControlsChanged);
-            Assert.Null(loco.Components.CruiseControl);
+            loco.Components.ControlsChanged.ShouldBe(true);
+            loco.Components.CruiseControl.ShouldBeNull();
         }
 
         /// When the train brake is applied
         /// Then the controls have changed
-        [Fact]
+        [Test]
         public void SavsesStateOfBrakes()
         {
             loco.Components.CruiseControl = new CruiseControlComponent();
@@ -52,13 +51,13 @@ namespace DriverAssist.ECS
 
             WhenSystemUpdates();
 
-            Assert.True(loco.Components.ControlsChanged);
-            Assert.Null(loco.Components.CruiseControl);
+            loco.Components.ControlsChanged.ShouldBe(true);
+            loco.Components.CruiseControl.ShouldBeNull();
         }
 
         /// When the controls are the same
         /// Then the controls haven't changed
-        [Fact]
+        [Test]
         public void SavsesStateOfBrakess()
         {
             loco.Components.CruiseControl = new CruiseControlComponent();
@@ -73,11 +72,11 @@ namespace DriverAssist.ECS
 
             WhenSystemUpdates();
 
-            Assert.Null(loco.Components.ControlsChanged);
-            Assert.NotNull(loco.Components.CruiseControl);
+            loco.Components.ControlsChanged.ShouldBeNull();
+            loco.Components.CruiseControl.ShouldNotBeNull();
         }
 
-        [Fact]
+        [Test]
         public void NullLoco()
         {
             entityManager.Loco = null;
@@ -85,14 +84,14 @@ namespace DriverAssist.ECS
             WhenSystemUpdates();
         }
 
-        [Fact]
+        [Test]
         public void NullControls()
         {
             entityManager.Loco.Components.LastControls = null;
 
             WhenSystemUpdates();
 
-            Assert.Null(entityManager.Loco.Components.LastControls);
+            entityManager.Loco.Components.LastControls.ShouldBeNull();
         }
 
         private void WhenSystemUpdates()

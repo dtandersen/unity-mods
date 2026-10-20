@@ -1,6 +1,5 @@
 using DriverAssist.Test;
-using Xunit;
-using Xunit.Abstractions;
+using Shouldly;
 
 namespace DriverAssist.ECS
 {
@@ -10,9 +9,9 @@ namespace DriverAssist.ECS
         private readonly FakeTrainCarWrapper train;
         private readonly ShiftSystem system;
 
-        public ShiftSystemTest(ITestOutputHelper output)
+        public ShiftSystemTest()
         {
-            XunitLogger.Init(output);
+            TUnitLogger.Init();
 
             train = new FakeTrainCarWrapper
             {
@@ -28,7 +27,7 @@ namespace DriverAssist.ECS
         /// The train is a DM3
         /// and a gear change has been requested.
         /// Proceed.
-        [Fact]
+        [Test]
         public void ShiftGearsInDm3()
         {
             train.Type = LocoType.DM3;
@@ -39,29 +38,29 @@ namespace DriverAssist.ECS
             train.GearChangeInProgress = false;
             loco.ChangeGear(3);
             WhenSystemUpdates();
-            Assert.Equal(0, train.GearboxA);
-            Assert.Equal(0, train.GearboxB);
-            Assert.Equal(0, train.Throttle);
+            train.GearboxA.ShouldBe(0);
+            train.GearboxB.ShouldBe(0);
+            train.Throttle.ShouldBe(0);
 
             WhenSystemUpdates();
-            Assert.Equal(0.5f, train.GearboxA);
-            Assert.Equal(0.5f, train.GearboxB);
-            Assert.Equal(0, train.Throttle);
+            train.GearboxA.ShouldBe(0.5f);
+            train.GearboxB.ShouldBe(0.5f);
+            train.Throttle.ShouldBe(0);
 
             train.GearChangeInProgress = true;
             WhenSystemUpdates();
-            Assert.Equal(0, train.Throttle);
+            train.Throttle.ShouldBe(0);
 
             train.GearChangeInProgress = false;
             WhenSystemUpdates();
-            Assert.Equal(1f, train.Throttle);
-            Assert.Null(loco.Components.GearChangeRequest);
+            train.Throttle.ShouldBe(1f);
+            loco.Components.GearChangeRequest.ShouldBeNull();
         }
 
         /// A gear change has been requested,
         /// but the train has not completely throttled down.
         /// Wait.
-        [Fact]
+        [Test]
         public void WaitForZeroThrottleBeforeShifting()
         {
             train.Type = LocoType.DM3;
@@ -74,21 +73,21 @@ namespace DriverAssist.ECS
             train.GearChangeInProgress = true;
 
             WhenSystemUpdates();
-            Assert.Equal(0, train.GearboxA);
-            Assert.Equal(0, train.GearboxB);
-            Assert.Equal(0, train.Throttle);
+            train.GearboxA.ShouldBe(0);
+            train.GearboxB.ShouldBe(0);
+            train.Throttle.ShouldBe(0);
 
             // throttle is now 0
             train.Throttle = 0f;
 
             WhenSystemUpdates();
-            Assert.Equal(0.5f, train.GearboxA);
-            Assert.Equal(0.5f, train.GearboxB);
+            train.GearboxA.ShouldBe(0.5f);
+            train.GearboxB.ShouldBe(0.5f);
         }
 
         /// RPM >= 750.
         /// Dont restore throttle.
-        [Fact]
+        [Test]
         public void WaitForLowRpmBeforeThrottle()
         {
             train.Type = LocoType.DM3;
@@ -101,14 +100,14 @@ namespace DriverAssist.ECS
             train.GearChangeInProgress = false;
 
             WhenSystemUpdates();
-            Assert.Equal(0, train.Throttle);
+            train.Throttle.ShouldBe(0);
         }
 
         /// The train is a DM3
         /// and Throttle is 0.
         /// and a gear change has been requested.
         /// The gear change should be instant.
-        [Fact]
+        [Test]
         public void ChangeGearInstantlyIfZeroThrottle()
         {
             train.Type = LocoType.DM3;
@@ -118,17 +117,17 @@ namespace DriverAssist.ECS
 
             loco.ChangeGear(3);
             WhenSystemUpdates();
-            Assert.Equal(0.5f, train.GearboxA);
-            Assert.Equal(0.5f, train.GearboxB);
-            Assert.Equal(0, train.Throttle);
-            Assert.Null(loco.Components.GearChangeRequest);
+            train.GearboxA.ShouldBe(0.5f);
+            train.GearboxB.ShouldBe(0.5f);
+            train.Throttle.ShouldBe(0);
+            loco.Components.GearChangeRequest.ShouldBeNull();
         }
 
         /// The train is a DM3
         /// and Throttle is 1
         /// and no gear change has been requested.
         /// Leave Throttle at 1.
-        [Fact]
+        [Test]
         public void DoesntAdjustThrottleIfNotShifting()
         {
             train.Type = LocoType.DM3;
@@ -141,16 +140,16 @@ namespace DriverAssist.ECS
             loco.ChangeGear(0);
 
             WhenSystemUpdates();
-            Assert.Equal(0, train.GearboxA);
-            Assert.Equal(0, train.GearboxB);
-            Assert.Equal(1, train.Throttle);
+            train.GearboxA.ShouldBe(0);
+            train.GearboxB.ShouldBe(0);
+            train.Throttle.ShouldBe(1);
         }
 
         /// The train is a DM3
         /// and Throttle is 1
         /// and no gear change has been requested.
         /// Leave Throttle at 1.
-        [Fact]
+        [Test]
         public void DoesntRestoreThrottleIfNotRequested()
         {
             train.Type = LocoType.DM3;
@@ -158,22 +157,22 @@ namespace DriverAssist.ECS
 
             loco.ChangeGear(1);
             train.Throttle = 1;
-            Assert.Null(loco.Components.GearChangeRequest.Value.RestoreThrottle);
+            loco.Components.GearChangeRequest.Value.RestoreThrottle.ShouldBeNull();
 
             WhenSystemUpdates();
-            Assert.NotNull(loco.Components.GearChangeRequest);
-            Assert.Null(loco.Components.GearChangeRequest.Value.RestoreThrottle);
-            Assert.Equal(0, train.Throttle);
+            loco.Components.GearChangeRequest.ShouldNotBeNull();
+            loco.Components.GearChangeRequest.Value.RestoreThrottle.ShouldBeNull();
+            train.Throttle.ShouldBe(0);
 
             WhenSystemUpdates();
-            Assert.Null(loco.Components.GearChangeRequest);
-            Assert.Equal(0, train.Throttle);
+            loco.Components.GearChangeRequest.ShouldBeNull();
+            train.Throttle.ShouldBe(0);
         }
 
         /// The train is a DE2
         /// and a gear change has been requested.
         /// Ignore it.
-        [Fact]
+        [Test]
         public void DoesntAutoShiftIfTrainNotMechanical()
         {
             train.Throttle = 1;
@@ -183,9 +182,9 @@ namespace DriverAssist.ECS
             loco.ChangeGear(2);
             WhenSystemUpdates();
 
-            Assert.Equal(0, train.GearboxA);
-            Assert.Equal(0, train.GearboxB);
-            Assert.Equal(1, train.Throttle);
+            train.GearboxA.ShouldBe(0);
+            train.GearboxB.ShouldBe(0);
+            train.Throttle.ShouldBe(1);
         }
 
         private void WhenSystemUpdates()

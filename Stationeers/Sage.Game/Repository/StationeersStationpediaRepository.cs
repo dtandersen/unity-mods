@@ -15,7 +15,7 @@ using StationpediaMakeEntity = Sage.Entity.StationpediaMake;
 using StationpediaCombustionEntity = Sage.Entity.StationpediaCombustion;
 using StationpediaCombustionOutputEntity = Sage.Entity.StationpediaCombustionOutput;
 using Sage.Game;
-using Logger = Sage.Core.Logger;
+using Logger = Crowbus.Common.Logger;
 
 namespace Sage.Repository;
 

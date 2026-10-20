@@ -1,7 +1,6 @@
 using DriverAssist.ECS;
 using DriverAssist.Test;
-using Xunit;
-using Xunit.Abstractions;
+using Shouldly;
 
 namespace DriverAssist.Cruise
 {
@@ -10,9 +9,9 @@ namespace DriverAssist.Cruise
         private readonly LocoEntity loco;
         private readonly FakeTrainCarWrapper train;
 
-        public LocoEntityTest(ITestOutputHelper output)
+        public LocoEntityTest()
         {
-            XunitLogger.Init(output);
+            TUnitLogger.Init();
 
             train = new FakeTrainCarWrapper
             {
@@ -28,7 +27,7 @@ namespace DriverAssist.Cruise
         /// and a throttle change has been requested,
         /// but a gear change is in progress.
         /// Ignore it.
-        [Fact]
+        [Test]
         public void PreventsThrottleChangeDuringShift()
         {
             train.Type = LocoType.DM3;
@@ -40,13 +39,13 @@ namespace DriverAssist.Cruise
             // should ignore this
             loco.Throttle = 1;
 
-            Assert.Equal(0, train.Throttle);
+            train.Throttle.ShouldBe(0);
         }
 
         /// The train is a DE2
         /// and Gear is set.
         /// Ignore it.
-        [Fact]
+        [Test]
         public void DoesntWriteToGearboxes()
         {
             train.GearboxA = 0;
@@ -54,14 +53,14 @@ namespace DriverAssist.Cruise
 
             loco.Gear = 2;
 
-            Assert.Equal(0, train.GearboxA);
-            Assert.Equal(0, train.GearboxB);
+            train.GearboxA.ShouldBe(0);
+            train.GearboxB.ShouldBe(0);
         }
 
         /// The train is a DE2
         /// and Gear is read.
         /// Return -1.
-        [Fact]
+        [Test]
         public void DoesntReadFromGearboxes()
         {
             train.GearboxA = 1;
@@ -69,25 +68,25 @@ namespace DriverAssist.Cruise
 
             loco.Gear = 0;
 
-            Assert.Equal(-1, loco.Gear);
+            loco.Gear.ShouldBe(-1);
         }
 
         /// The train is a DE2
         /// and a gear change is requested.
         /// Deny it.
-        [Fact]
+        [Test]
         public void DenyDe2Shift()
         {
             loco.Gear = 0;
             loco.ChangeGear(1);
 
-            Assert.Null(loco.Components.GearChangeRequest);
+            loco.Components.GearChangeRequest.ShouldBeNull();
         }
 
         /// The train is a DM3
         /// and a gear change is requested for gear 1 and throttle 1.
         /// Request a gear change to gear 1 and original throttle of 1.
-        [Fact]
+        [Test]
         public void AllowDm3GearShift()
         {
             train.Type = LocoType.DM3;
@@ -98,14 +97,14 @@ namespace DriverAssist.Cruise
             train.Throttle = 1;
             loco.ChangeGear(1);
 
-            Assert.Equal(1, loco.Components.GearChangeRequest.Value.RequestedGear);
-            Assert.Equal(1f, loco.Components.GearChangeRequest.Value.RestoreThrottle);
+            loco.Components.GearChangeRequest.Value.RequestedGear.ShouldBe(1);
+            loco.Components.GearChangeRequest.Value.RestoreThrottle.ShouldBe(1f);
         }
 
         /// The train is a DM3
         /// and a gear change is requested for gear 1 and throttle 1.
         /// Request a gear change to gear 1 and original throttle of 1.
-        [Fact]
+        [Test]
         public void DontRestoreThrottleIfThrottleIsZero()
         {
             train.Type = LocoType.DM3;
@@ -115,14 +114,14 @@ namespace DriverAssist.Cruise
             train.Throttle = 0;
             loco.ChangeGear(1);
 
-            Assert.Equal(1, loco.Components.GearChangeRequest.Value.RequestedGear);
-            Assert.Null(loco.Components.GearChangeRequest.Value.RestoreThrottle);
+            loco.Components.GearChangeRequest.Value.RequestedGear.ShouldBe(1);
+            loco.Components.GearChangeRequest.Value.RestoreThrottle.ShouldBeNull();
         }
 
         /// The train is a DM3
         /// and a gear change is requested for gear 1 and throttle 1.
         /// Request a gear change to gear 1 and original throttle of 1.
-        [Fact]
+        [Test]
         public void DoesntShiftIfShifting()
         {
             train.Type = LocoType.DM3;
@@ -138,15 +137,15 @@ namespace DriverAssist.Cruise
             loco.Components.GearChangeRequest = request;
             loco.ChangeGear(1);
 
-            Assert.Equal(8, loco.Components.GearChangeRequest.Value.RequestedGear);
-            Assert.Equal(1, loco.Components.GearChangeRequest.Value.RestoreThrottle);
+            loco.Components.GearChangeRequest.Value.RequestedGear.ShouldBe(8);
+            loco.Components.GearChangeRequest.Value.RestoreThrottle.ShouldBe(1);
         }
 
         /// The train is a DM3
         /// and Gear is 0
         /// and the gear -1 is requested.
         /// Ignore it.
-        [Fact]
+        [Test]
         public void CantShiftBelowMinGear()
         {
             train.Type = LocoType.DM3;
@@ -154,14 +153,14 @@ namespace DriverAssist.Cruise
             loco.Gear = 0;
             loco.ChangeGear(-1);
 
-            Assert.Null(loco.Components.GearChangeRequest);
+            loco.Components.GearChangeRequest.ShouldBeNull();
         }
 
         /// The train is a DM3
         /// and Gear is 8
         /// and the gear 9 is requested.
         /// Ignore it.
-        [Fact]
+        [Test]
         public void CantShiftAboveMaxGear()
         {
             train.Type = LocoType.DM3;
@@ -169,14 +168,14 @@ namespace DriverAssist.Cruise
             loco.Gear = 8;
             loco.ChangeGear(9);
 
-            Assert.Null(loco.Components.GearChangeRequest);
+            loco.Components.GearChangeRequest.ShouldBeNull();
         }
 
         /// The train is a DM3
         /// and Gear is 1
         /// and the gear 1 is requested.
         /// Ignore it.
-        [Fact]
+        [Test]
         public void DoesntShiftToSameGear()
         {
             train.Type = LocoType.DM3;
@@ -184,7 +183,7 @@ namespace DriverAssist.Cruise
             loco.Gear = 1;
             loco.ChangeGear(1);
 
-            Assert.Null(loco.Components.GearChangeRequest);
+            loco.Components.GearChangeRequest.ShouldBeNull();
         }
     }
 }
