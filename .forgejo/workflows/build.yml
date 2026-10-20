@@ -32,6 +32,12 @@ jobs:
             -p:PackageOnBuild=true
           echo "=== artifacts ==="
           ls -la Stationeers/Sage.Mod/artifacts/
+      # No Derail Valley install here: derailvalley.targets auto-uses the minimal
+      # source stubs (DriverAssist/DerailValleyStubs/) when Assembly-CSharp.dll is absent.
+      # The net48 test project compiles here but can't execute on Linux;
+      # run the DriverAssist tests locally on Windows with the game installed.
+      - name: Build DriverAssist (stubs)
+        run: dotnet build DriverAssist/DriverAssist.sln -c Release
       # Cache the whole GAME_DIR (server + BepInEx). Cache hit restores it,
       # then steamcmd below only fetches the delta. Requires cache storage
       # enabled on the Forgejo instance; a miss just means a full download.

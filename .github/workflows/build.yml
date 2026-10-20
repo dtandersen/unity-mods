@@ -20,6 +20,11 @@ jobs:
       - run: dotnet test Stationeers/Sage.sln --no-build
       - name: Build mod zip
         run: dotnet build Stationeers/Sage.Mod/Sage.Mod.csproj -c Release -p:DeployOnBuild=false -p:DeployLocalOnBuild=false -p:PackageOnBuild=true
+      # No Derail Valley install here: derailvalley.targets auto-uses the minimal
+      # source stubs (DriverAssist/DerailValleyStubs/) when Assembly-CSharp.dll is absent.
+      # The net48 test project compiles here but can't execute on Linux;
+      # run the DriverAssist tests locally on Windows with the game installed.
+      - run: dotnet build DriverAssist/DriverAssist.sln -c Release
       - name: Upload zip
         uses: actions/upload-artifact@v4
         with:

@@ -31,6 +31,12 @@
     <!-- Valheim default: $(GamePath)\valheim_Data\Managed -->
     <!-- <ManagedDataPath>...</ManagedDataPath> -->
 
+    <!-- Derail Valley install directory (contains DerailValley.exe and
+         DerailValley_Data/). Only needed when it can't be auto-detected
+         (Steam App 588030); local.props GamePath pointing at another game
+         is ignored for Derail Valley builds. -->
+    <!-- <DerailValleyPath>D:\SteamLibrary\steamapps\common\Derail Valley</DerailValleyPath> -->
+
     <!-- Set to false to skip copying the build into the plugin folder. -->
     <!-- <DeployOnBuild>false</DeployOnBuild> -->
 

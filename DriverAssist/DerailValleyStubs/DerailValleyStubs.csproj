@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Compile-only fakes of the Derail Valley API surface the mod uses.
+         Referenced only when the real game DLLs are absent (CI). Never shipped,
+         never deployed. UnityEngine core types come from the UnityEngine.Modules
+         NuGet package; these stubs only fake DV/LocoSim/I2 game types.
+         Keep net46 so it links cleanly with the mod. -->
+    <AssemblyName>DerailValleyStubs</AssemblyName>
+    <RootNamespace>DerailValleyStubs</RootNamespace>
+    <TargetFramework>net46</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <!-- Stub events mirror game events raised by the real game; never raised here. -->
+    <NoWarn>$(NoWarn);CS0067;CS0069</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" />
+    <PackageReference Include="UnityEngine.Modules" Version="2019.4.40" IncludeAssets="compile" />
+  </ItemGroup>
+
+</Project>

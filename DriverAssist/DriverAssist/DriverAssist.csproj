@@ -14,7 +14,7 @@
     <DefineConstants>UMM</DefineConstants>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(UseGameStubs)' != 'true'">
     <!-- Derail Valley -->
     <Reference Include="Assembly-CSharp" />
     <Reference Include="CommandTerminal" />
@@ -37,6 +37,10 @@
     <Reference Include="Unity.Entities" />
     <Reference Include="Unity.TextMeshPro" />
     <Reference Include="I2.Localization" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Unity core compile assets: needed with real game DLLs and with stubs. -->
     <PackageReference Include="UnityEngine.Modules" Version="2019.4.40" IncludeAssets="compile" />
   </ItemGroup>
 
@@ -59,12 +63,14 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
   </ItemGroup>
 
+  <Import Project="$(MSBuildThisFileDirectory)..\..\derailvalley.targets" />
+
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <!-- Copy to build folder -->
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="../build/" />
 
-    <!-- Package after Release build -->
-    <Exec Condition="'$(ConfigurationName)' == 'Release' And '$(OS)' == 'Windows_NT'" Command="powershell -executionpolicy bypass -Command &quot;(../package.ps1)&quot;" />
-    <Exec Condition="'$(ConfigurationName)' == 'Release' And '$(OS)' != 'Windows_NT'" Command="pwsh  -Command &quot;(../package.ps1)&quot;" />
+    <!-- Package after Release build (skipped for stub/CI builds: no game paths there). -->
+    <Exec Condition="'$(ConfigurationName)' == 'Release' And '$(UseGameStubs)' != 'true' And '$(OS)' == 'Windows_NT'" Command="powershell -executionpolicy bypass -Command &quot;(../package.ps1)&quot;" />
+    <Exec Condition="'$(ConfigurationName)' == 'Release' And '$(UseGameStubs)' != 'true' And '$(OS)' != 'Windows_NT'" Command="pwsh  -Command &quot;(../package.ps1)&quot;" />
   </Target>
 </Project> 

@@ -1,0 +1,148 @@
+<Project>
+
+  <!-- Optional machine-specific overrides (git-ignored). -->
+  <Import Project="$(MSBuildThisFileDirectory)local.props" Condition="Exists('$(MSBuildThisFileDirectory)local.props')" />
+
+  <!-- Find the Derail Valley install. Uses GamePath when it points at Derail
+       Valley (local.props may point GamePath at another game in this repo),
+       otherwise auto-detects via the Steam registry (App 588030) and common
+       install locations. Override with <DerailValleyPath> in local.props. -->
+  <Choose>
+    <When Condition="$(GamePath) != '' AND Exists('$(GamePath)/DerailValley_Data/Managed/Assembly-CSharp.dll')">
+      <PropertyGroup>
+        <DerailValleyPath>$(GamePath)</DerailValleyPath>
+      </PropertyGroup>
+    </When>
+    <When Condition="($(OS) == 'Unix' OR $(OS) == 'OSX') AND $(DerailValleyPath) == ''">
+      <PropertyGroup>
+        <DerailValleyPath Condition="!Exists('$(DerailValleyPath)')">$(HOME)/.steam/steam/steamapps/common/Derail Valley</DerailValleyPath>
+      </PropertyGroup>
+    </When>
+    <When Condition="$(OS) == 'Windows_NT' AND $(DerailValleyPath) == ''">
+      <PropertyGroup>
+        <DerailValleyPath Condition="!Exists('$(DerailValleyPath)/DerailValley_Data/Managed/Assembly-CSharp.dll')">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 588030', 'InstallLocation', null, RegistryView.Registry64, RegistryView.Registry32))</DerailValleyPath>
+        <_SteamLibraryPath>$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Valve\Steam', 'SteamPath', null, RegistryView.Registry32))</_SteamLibraryPath>
+        <DerailValleyPath Condition="!Exists('$(DerailValleyPath)/DerailValley_Data/Managed/Assembly-CSharp.dll') AND '$(_SteamLibraryPath)' != ''">$(_SteamLibraryPath)\steamapps\common\Derail Valley</DerailValleyPath>
+        <DerailValleyPath Condition="!Exists('$(DerailValleyPath)/DerailValley_Data/Managed/Assembly-CSharp.dll')">C:\Program Files (x86)\Steam\steamapps\common\Derail Valley</DerailValleyPath>
+        <DerailValleyPath Condition="!Exists('$(DerailValleyPath)/DerailValley_Data/Managed/Assembly-CSharp.dll')">D:\SteamLibrary\steamapps\common\Derail Valley</DerailValleyPath>
+      </PropertyGroup>
+    </When>
+  </Choose>
+
+  <PropertyGroup>
+    <!-- Derail Valley managed assemblies live under DerailValley_Data/Managed. -->
+    <ManagedDataPath Condition="'$(ManagedDataPath)' == ''">$(DerailValleyPath)/DerailValley_Data/Managed</ManagedDataPath>
+    <!-- Compile against minimal source stubs when the game is absent (CI).
+         Auto-on when Assembly-CSharp.dll is missing; force with
+         -p:UseGameStubs=true to test the stub build locally. Real game DLLs
+         take precedence whenever they exist. -->
+    <UseGameStubs Condition="'$(UseGameStubs)' == '' AND !Exists('$(ManagedDataPath)\Assembly-CSharp.dll')">true</UseGameStubs>
+    <UseGameStubs Condition="'$(UseGameStubs)' == ''">false</UseGameStubs>
+  </PropertyGroup>
+
+  <!-- Derail Valley + related game assemblies. Skipped when compiling against source stubs. -->
+  <Target Name="CheckGameRefs" BeforeTargets="BeforeBuild">
+    <Error Condition="!Exists('$(ManagedDataPath)\Assembly-CSharp.dll') AND '$(UseGameStubs)' != 'true'"
+           Text="Derail Valley game DLL not found at $(ManagedDataPath)\Assembly-CSharp.dll. Set DerailValleyPath in local.props (e.g. D:\SteamLibrary\steamapps\common\Derail Valley)." />
+    <Warning Condition="'$(UseGameStubs)' == 'true'"
+             Text="Compiling against minimal Derail Valley stubs (no game install). Game behavior is faked for compile only." />
+  </Target>
+  <ItemGroup Condition="'$(UseGameStubs)' != 'true'">
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(ManagedDataPath)\Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="CommandTerminal">
+      <HintPath>$(ManagedDataPath)\CommandTerminal.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="DV.BrakeSystem">
+      <HintPath>$(ManagedDataPath)\DV.BrakeSystem.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="DV.Common">
+      <HintPath>$(ManagedDataPath)\DV.Common.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="DV.Interaction">
+      <HintPath>$(ManagedDataPath)\DV.Interaction.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="DV.Inventory">
+      <HintPath>$(ManagedDataPath)\DV.Inventory.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="DV.Localization">
+      <HintPath>$(ManagedDataPath)\DV.Localization.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="DV.PointSet">
+      <HintPath>$(ManagedDataPath)\DV.PointSet.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="DV.Simulation">
+      <HintPath>$(ManagedDataPath)\DV.Simulation.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="DV.TerrainSystem">
+      <HintPath>$(ManagedDataPath)\DV.TerrainSystem.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="DV.TerrainTools">
+      <HintPath>$(ManagedDataPath)\DV.TerrainTools.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="DV.ThingTypes">
+      <HintPath>$(ManagedDataPath)\DV.ThingTypes.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="DV.UI">
+      <HintPath>$(ManagedDataPath)\DV.UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="DV.UIFramework">
+      <HintPath>$(ManagedDataPath)\DV.UIFramework.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="DV.UserManagement">
+      <HintPath>$(ManagedDataPath)\DV.UserManagement.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="DV.Utils">
+      <HintPath>$(ManagedDataPath)\DV.Utils.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="DV.WeatherSystem">
+      <HintPath>$(ManagedDataPath)\DV.WeatherSystem.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(ManagedDataPath)\UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.Entities">
+      <HintPath>$(ManagedDataPath)\Unity.Entities.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>$(ManagedDataPath)\Unity.TextMeshPro.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="I2.Localization">
+      <HintPath>$(ManagedDataPath)\I2.Localization.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Minimal source stubs (CI): same namespaces as the game, compile only.
+       Real game DLLs take precedence; this runs only when UseGameStubs=true.
+       UnityEngine core types come from the UnityEngine.Modules NuGet package;
+       the stubs only fake DV/LocoSim/I2 game types. Private=false keeps the
+       fake DLL out of the output, deploy, and zip. -->
+  <ItemGroup Condition="'$(UseGameStubs)' == 'true'">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)DriverAssist/DerailValleyStubs\DerailValleyStubs.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+</Project>
