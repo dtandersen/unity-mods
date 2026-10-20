@@ -16,8 +16,8 @@ jobs:
       # source stubs (Stationeers/StationeersStubs/) when Assembly-CSharp.dll is absent.
       # This compiles the full solution, including Game/Mod, but game behavior
       # is faked. Real behavior is only tested locally with the game installed.
-      - run: dotnet build StationeersMods.sln -p:DeployOnBuild=false -p:DeployLocalOnBuild=false
-      - run: dotnet test StationeersMods.sln --no-build
+      - run: dotnet build Stationeers/Sage.sln -p:DeployOnBuild=false -p:DeployLocalOnBuild=false
+      - run: dotnet test Stationeers/Sage.sln --no-build
       - name: Build mod zip
         run: dotnet build Stationeers/Sage.Mod/Sage.Mod.csproj -c Release -p:DeployOnBuild=false -p:DeployLocalOnBuild=false -p:PackageOnBuild=true
       - name: Upload zip

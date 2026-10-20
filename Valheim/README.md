@@ -27,7 +27,7 @@ global.json            # opts dotnet test into Microsoft.Testing.Platform (MTP) 
 valheim.targets        # shared MSBuild config for the plugin: refs + deploy/packaging
 local.props            # machine-specific paths (git-ignored)
 local.props.example    # template for local.props
-ValheimMods.sln
+OdinsAi.sln
 OdinsAi.Core/
 OdinsAi.Test/
   reqnroll.json        # Reqnroll configuration
@@ -56,7 +56,7 @@ if `local.props` is absent.
 ## Build
 
 ```bash
-dotnet build ValheimMods.sln -c Debug
+dotnet build OdinsAi.sln -c Debug
 ```
 
 A successful plugin build copies `OdinsAi.Mod.dll` **and** `OdinsAi.Core.dll` into

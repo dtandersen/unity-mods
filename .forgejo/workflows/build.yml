@@ -23,7 +23,7 @@ jobs:
       # the real game at runtime. Real behavior is only tested locally with
       # the game installed.
       - name: Test Stationeers
-        run: dotnet test StationeersMods.sln -c Release -p:DeployOnBuild=false -p:DeployLocalOnBuild=false
+        run: dotnet test Stationeers/Sage.sln -c Release -p:DeployOnBuild=false -p:DeployLocalOnBuild=false
       - name: Build Sage mod zip
         run: |
           dotnet build Stationeers/Sage.Mod/Sage.Mod.csproj -c Release \
@@ -64,15 +64,15 @@ jobs:
           echo "=== bepinex ==="
           ls "$GAME_DIR/BepInEx/core" | head
       - name: Test Valheim
-        run: dotnet test ValheimMods.sln -c Release
+        run: dotnet test Valheim/OdinsAi.sln -c Release
       - name: Build OdinsAi mod zip
         run: |
-          dotnet build OdinsAi.Mod/OdinsAi.Mod.csproj -c Release \
+          dotnet build Valheim/OdinsAi.Mod/OdinsAi.Mod.csproj -c Release \
             -p:DeployOnBuild=false \
             -p:PackageOnBuild=true \
             -p:GamePath="$GAME_DIR"
           echo "=== artifacts ==="
-          ls -la OdinsAi.Mod/artifacts/
+          ls -la Valheim/OdinsAi.Mod/artifacts/
       # Forgejo's own fork: v4 API speaking the protocol Forgejo implements
       # (upstream v4+ hits GHESNotSupportedError against this instance).
       - name: Upload Sage zip
@@ -85,5 +85,5 @@ jobs:
         uses: https://data.forgejo.org/forgejo/upload-artifact@v4
         with:
           name: OdinsAi.Mod
-          path: OdinsAi.Mod/artifacts/*.zip
+          path: Valheim/OdinsAi.Mod/artifacts/*.zip
           if-no-files-found: error

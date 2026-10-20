@@ -34,7 +34,7 @@ global.json            # runs dotnet test in Microsoft.Testing.Platform (MTP) mo
 stationeers.targets    # shared MSBuild config for the plugin: references, deploy, packaging
 local.props            # machine-specific paths (git-ignored)
 local.props.example    # template for local.props
-StationeersMods.sln
+Stationeers/Sage.sln
 lib/BepInEx/           # bundled BepInEx 5.4.22 references (compile fallback when the
                        #   game has no BepInEx installed; never shipped)
 Stationeers/StationeersStubs/      # minimal hand-written fakes of the game API (Assembly-CSharp).
@@ -55,7 +55,14 @@ Stationeers/Sage.Game/
   SageConfig.cs      # BepInEx config entries
   AiConsoleCommand.cs  # the `ai` console command
   View/ChatView.cs   # posts lines to game chat on the main thread
+Valheim/OdinsAi.sln
+Valheim/OdinsAi.Core/   # Unity-free Valheim logic (models, tools, LLM loop)
+Valheim/OdinsAi.Test/   # TUnit + Reqnroll specs for the Valheim core
+Valheim/OdinsAi.Mod/    # BepInEx plugin: Unity/HTTP/Harmony adapter
 ```
+
+Valheim needs its game assemblies to build the Mod project; Core and Test
+build anywhere. See [Valheim](Valheim/README.md) for the Valheim setup.
 
 ## Turn lifecycle
 
@@ -99,7 +106,7 @@ auto-detects `GamePath` from the Steam registry if `local.props` is absent.
 ## Build
 
 ```bash
-dotnet build StationeersMods.sln -c Debug
+dotnet build Stationeers/Sage.sln -c Debug
 ```
 
 A successful plugin build copies `Sage.Mod.dll`,
@@ -144,10 +151,14 @@ errors and on unload, so crash context still lands without that setting.
 ## Test
 
 ```bash
-dotnet test
+dotnet test Stationeers/Sage.sln
 ```
 
-CI (`.github/workflows/ci.yml`) builds and tests the full solution on
+Per-game details live in [Stationeers](Stationeers/README.md) and
+[Valheim](Valheim/README.md). There is no root solution: build and test
+one game at a time.
+
+CI (`.github/workflows/build.yml`) builds and tests the full solution on
 GitHub with no game installed: `stationeers.targets` auto-sets
 `UseGameStubs=true` when `Assembly-CSharp.dll` is absent, compiling
 `Game`/`Mod` against `Stationeers/StationeersStubs/` instead. Force the stub build
