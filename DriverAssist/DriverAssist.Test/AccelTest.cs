@@ -336,7 +336,7 @@ namespace DriverAssist.Cruise
         [Test]
         public void DE4HasNoAmps()
         {
-            context = new CruiseControlContext(dh4settings, loco)
+            var de4Context = new CruiseControlContext(dh4settings, loco)
             {
                 DesiredSpeed = 5
             };
@@ -347,7 +347,7 @@ namespace DriverAssist.Cruise
             train.Type = LocoType.DH4;
             train.Amps = 0;
 
-            WhenAccel();
+            WhenAccel(de4Context);
 
             loco.Throttle.ShouldBe(4 * STEP);
         }
@@ -389,8 +389,13 @@ namespace DriverAssist.Cruise
 
         void WhenAccel()
         {
-            accelerator.Tick(context);
-            context.Time += 1;
+            WhenAccel(context);
+        }
+
+        void WhenAccel(CruiseControlContext target)
+        {
+            accelerator.Tick(target);
+            target.Time += 1;
         }
     }
 

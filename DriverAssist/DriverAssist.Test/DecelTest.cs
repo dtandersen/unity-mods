@@ -148,13 +148,13 @@ namespace DriverAssist.Cruise
         public void Dm3ReleasesBrake()
         {
             dm3settings.MinBrake = 0.1f;
-            context = new CruiseControlContext(dm3settings, loco);
+            var dm3Context = new CruiseControlContext(dm3settings, loco);
             train.Type = LocoType.DM3;
-            context.DesiredSpeed = 5;
+            dm3Context.DesiredSpeed = 5;
             loco.AccelerationMs = -1;
             train.SpeedKmh = 6;
 
-            WhenDecel();
+            WhenDecel(dm3Context);
             loco.TrainBrake.ShouldBe(0);
             loco.IndBrake.ShouldBe(0);
         }
@@ -167,12 +167,12 @@ namespace DriverAssist.Cruise
         public void Dm3AppliesLappingBrake()
         {
             dm3settings.MinBrake = 0.1f;
-            context = new CruiseControlContext(dm3settings, loco);
+            var dm3Context = new CruiseControlContext(dm3settings, loco);
             train.Type = LocoType.DM3;
-            context.DesiredSpeed = 5;
+            dm3Context.DesiredSpeed = 5;
             train.SpeedKmh = 6;
 
-            WhenDecel();
+            WhenDecel(dm3Context);
             loco.TrainBrake.ShouldBe(0.666f, 0.01);
             loco.IndBrake.ShouldBe(0);
         }
@@ -220,8 +220,13 @@ namespace DriverAssist.Cruise
 
         void WhenDecel()
         {
-            accelerator.Tick(context);
-            context.Time += 1;
+            WhenDecel(context);
+        }
+
+        void WhenDecel(CruiseControlContext target)
+        {
+            accelerator.Tick(target);
+            target.Time += 1;
         }
     }
 }

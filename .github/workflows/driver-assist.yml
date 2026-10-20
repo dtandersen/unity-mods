@@ -34,7 +34,7 @@ jobs:
       # the DLLs resolve against the real game at runtime.
       - run: dotnet build DriverAssist/DriverAssist.sln -c Release -p:PackageOnBuild=true
       - name: Upload zip
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: DriverAssist
           path: DriverAssist/DriverAssist/artifacts/*.zip

@@ -43,7 +43,7 @@ jobs:
       - name: Build mod zip
         run: dotnet build Stationeers/Sage.Mod/Sage.Mod.csproj -c Release -p:DeployOnBuild=false -p:DeployLocalOnBuild=false -p:PackageOnBuild=true
       - name: Upload zip
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Sage.Mod
           path: Stationeers/Sage.Mod/artifacts/*.zip
